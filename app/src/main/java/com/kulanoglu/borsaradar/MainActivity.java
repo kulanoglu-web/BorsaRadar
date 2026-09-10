@@ -130,6 +130,17 @@ public class MainActivity extends Activity {
         return "Neye göre: " + android.text.TextUtils.join(" • ", why) + ".";
     }
 
+    private String indicatorConsensus(IndicatorEngine.Snapshot s) {
+        int buy = 0, sell = 0, neutral = 0;
+        if (s.trendUp) buy++; else if (s.close < s.ema50) sell++; else neutral++;
+        if (s.rsi14 >= 45 && s.rsi14 <= 68) buy++; else if (s.rsi14 > 72) sell++; else neutral++;
+        if (s.macd > s.macdSignal) buy++; else sell++;
+        if (s.cmf20 > 0.05) buy++; else if (s.cmf20 < -0.08) sell++; else neutral++;
+        if (s.breakout20 || s.preBreakout) buy++; else neutral++;
+        if (s.trap) sell++; else neutral++;
+        return "İndikatör uzlaşması: " + buy + " AL • " + neutral + " NÖTR • " + sell + " SAT";
+    }
+
     private TextView decisionBanner(IndicatorEngine.Snapshot s) {
         TextView v = coloredText(decision(s), 22, Color.WHITE);
         v.setGravity(android.view.Gravity.CENTER);
@@ -208,6 +219,7 @@ public class MainActivity extends Activity {
             double pnlPct = h.cost == 0 ? 0 : (s.close / h.cost - 1.0) * 100.0;
             row.addView(coloredText("Son: " + money(s.close) + " • P/L: " + money(pnl) + " (%" + IndicatorEngine.fmt(pnlPct) + ")", 15, pnl >= 0 ? GREEN : RED));
             row.addView(decisionBanner(s));
+            row.addView(coloredText(indicatorConsensus(s), 15, decisionColor(s)));
             row.addView(coloredText(decisionWhy(s), 14, decisionColor(s)));
             row.addView(title("Teknik ayrıntı: " + s.signal + " • " + s.reason, 13));
             row.addView(title("ATR stop referansı: " + money(Math.max(s.close - 2.2 * s.atr14, s.ema50 * 0.985)), 13));
@@ -379,6 +391,7 @@ public class MainActivity extends Activity {
             if ("radar".equals(returnSection) && !lastRadarResults.isEmpty())
                 renderRadarResults(new ArrayList<>(lastRadarResults));
             else if ("radar".equals(returnSection)) showRadar();
+            else if ("strategies".equals(returnSection)) showStrategies();
             else showPortfolio();
         };
         detailOpen = true;
@@ -397,9 +410,16 @@ public class MainActivity extends Activity {
                     Button back = btn("← Geri");
                     back.setOnClickListener(v -> detailBackAction.run());
                     content.addView(back);
+                    TextView currentPrice = coloredText("GÜNCEL FİYAT: " + money(s.close), 24, NAVY);
+                    currentPrice.setGravity(android.view.Gravity.CENTER);
+                    currentPrice.setTypeface(null, android.graphics.Typeface.BOLD);
+                    currentPrice.setPadding(20, 24, 20, 24);
+                    content.addView(currentPrice);
+                    content.addView(new PriceChartView(this, data), new LinearLayout.LayoutParams(-1, 760));
                     content.addView(decisionBanner(s));
+                    content.addView(coloredText(indicatorConsensus(s), 16, decisionColor(s)));
                     content.addView(coloredText(decisionWhy(s), 15, decisionColor(s)));
-                    content.addView(title("Teknik sinyal: " + s.signal + " • skor " + s.score, 16));
+                    content.addView(title("Teknik sinyal: " + s.signal + " • Teknik skor: " + s.score + " • Ölçek: -8…+9", 16));
                     content.addView(title(r.summary, 17));
                     content.addView(title("Mantık: güçlü AL/ERKEN sinyaliyle giriş; ATR + EMA50 tabanlı ilk stop; ATR trailing ve trend/MACD bozulmasında çıkış.", 14));
                     content.addView(title("Not: komisyon, kayma, vergi ve gün içi gerçekleşme farkları dahil değildir. Sonuç yatırım garantisi değildir.", 13));
@@ -416,13 +436,52 @@ public class MainActivity extends Activity {
     private void showStrategies() {
         currentSection = "strategies"; detailOpen = false;
         shell("100.000 TL • 3 Strateji");
-        content.addView(title("Kısa vade / al-sat: 33.333 TL", 18));
-        content.addView(title("• Radar skoru ≥ 7 öncelik • ATR stop • tek pozisyonda sermayenin tamamı kullanılmaz.", 14));
-        content.addView(title("Temettü: 33.333 TL", 18));
-        content.addView(title("• Bu sürümde teknik trend filtresi aktif. Temettü verimi/bilanço verisi sonraki temel analiz modülüne ayrıldı.", 14));
-        content.addView(title("Uzun vade: 33.334 TL", 18));
-        content.addView(title("• EMA50 üstü trend, para akışı ve geri çekilme disiplini öncelikli.", 14));
-        content.addView(title("Radar sinyalleri karar desteğidir; otomatik alım-satım emri göndermez.", 13));
+        if (lastRadarResults.isEmpty()) {
+            content.addView(title("Aktif tavsiye üretmek için önce tüm BIST radarını tara.", 17));
+            Button go = btn("BIST Radarına Git");
+            go.setOnClickListener(v -> showRadar());
+            content.addView(go);
+            return;
+        }
+
+        List<Ranked> shortTerm = new ArrayList<>();
+        List<Ranked> longTerm = new ArrayList<>();
+        List<Ranked> dividend = new ArrayList<>();
+        List<String> dividendWatch = Arrays.asList("AKBNK","AYGAZ","BIMAS","ENKAI","EREGL","FROTO","ISDMR","SISE","TCELL","TOASO","TTKOM","TTRAK");
+        for (Ranked r : lastRadarResults) {
+            if (r.s.score >= 5 && !r.s.trap) shortTerm.add(r);
+            if (r.s.trendUp && r.s.cmf20 > 0 && !r.s.trap) longTerm.add(r);
+            if (dividendWatch.contains(r.symbol) && r.s.score >= 2 && !r.s.trap) dividend.add(r);
+        }
+        longTerm.sort((a, b) -> Double.compare(b.bt.netPct, a.bt.netPct));
+        dividend.sort((a, b) -> Integer.compare(b.s.score, a.s.score));
+        addStrategyGroup("KISA VADE / AL-SAT", 33333, shortTerm, "Teknik skor, hacim, kırılım ve backtest öncelikli.");
+        addStrategyGroup("TEMETTÜ TEKNİK ÖN ELEME", 33333, dividend, "Temettü verimi ve bilanço doğrulanmadan kesin alım önerisi değildir.");
+        addStrategyGroup("UZUN VADE TEKNİK ADAY", 33334, longTerm, "Trend, para akışı ve geçmiş strateji dayanıklılığı öncelikli.");
+        content.addView(title("Dağılım örnektir; canlı derinlik ve aracı kurum dağılımı mevcut veri kaynağında yoktur.", 13));
+    }
+
+    private void addStrategyGroup(String heading, int budget, List<Ranked> candidates, String note) {
+        TextView h = coloredText(heading + " • " + budget + " TL", 19, Color.WHITE);
+        h.setBackgroundColor(NAVY);
+        h.setTypeface(null, android.graphics.Typeface.BOLD);
+        content.addView(h);
+        content.addView(title(note, 13));
+        int count = Math.min(3, candidates.size());
+        if (count == 0) {
+            content.addView(coloredText("Şu an ölçütleri karşılayan aday yok; nakitte bekle.", 15, RED));
+            return;
+        }
+        int perStock = budget / count;
+        for (int i = 0; i < count; i++) {
+            Ranked r = candidates.get(i);
+            int lots = Math.max(0, (int) Math.floor(perStock / r.s.close));
+            Button pick = btn((i + 1) + ". " + r.symbol + " • " + decision(r.s));
+            pick.setOnClickListener(v -> runSingleBacktest(r.symbol));
+            content.addView(pick);
+            content.addView(title("Fiyat " + money(r.s.close) + " • yaklaşık " + lots + " lot / " + perStock + " TL • skor " + r.s.score + " (-8…+9)", 14));
+            content.addView(title(indicatorConsensus(r.s), 13));
+        }
     }
 
     @Override public void onBackPressed() {
