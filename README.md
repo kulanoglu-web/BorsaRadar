@@ -1,4 +1,4 @@
-# BorsaRadar v0.9.6
+# BorsaRadar v0.9.8
 
 Android package: `com.kulanoglu.borsaradar`
 
@@ -22,6 +22,10 @@ Bu sürümde:
 - 645 Borsa İstanbul payı için kod veya şirket adıyla anlık arama ve öneri
 - Portföyde tüm hisseler; bağımsız radarda TUPRS hariç tüm pay evreni
 - Google servislerine ihtiyaç duymayan Poco ve Huawei P40 uyumlu tek APK
+- Backtest ekranında bir yıllık fiyat grafiği ve güncel fiyat
+- İndikatörlerin AL / NÖTR / SAT uzlaşma sayıları
+- Son radar sonuçlarından aktif kısa vade, temettü ön eleme ve uzun vade adayları
+- Backtest/karar ekranında büyük güncel fiyat ve açık teknik skor ölçeği (-8…+9)
 - Huawei/HarmonyOS paket yükleyicisi için tüm sonraki APK'larda sabit uygulama imzası
 
 ## Veri notu
