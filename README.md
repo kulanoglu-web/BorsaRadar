@@ -1,4 +1,4 @@
-# BorsaRadar v0.9.3
+# BorsaRadar v0.9.4
 
 Android package: `com.kulanoglu.borsaradar`
 
@@ -18,6 +18,7 @@ Bu sürümde:
 - Büyük AL / KADEMELİ AL / TUT-BEKLE / SAT-RİSK AZALT / YENİ ALIM YAPMA karar kutuları
 - Kararın trend, RSI, MACD, hacim, para akışı ve kırılım/tuzak gerekçeleri
 - Backtest ekranında uygulama içi ve Android geri tuşu desteği
+- Backtestten geri dönünce radar tarama sonuçlarını kaybetmeden aynı listeyi gösterme
 
 ## Veri notu
 Yahoo Finance verisi ücretsiz ve anahtarsız kullanılır; gecikmeli olabilir, bazı sembollerde geçici erişim/rate-limit sorunu olabilir. Uygulama veri yokken sahte fiyat/sinyal üretmez.
