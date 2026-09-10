@@ -317,7 +317,8 @@ public class MainActivity extends Activity {
                         if (qty <= 0 || cost <= 0) throw new IllegalArgumentException();
                         if (edit == null) holdings.add(new Holding(sym, qty, cost));
                         else { edit.symbol = sym; edit.qty = qty; edit.cost = cost; }
-                        save(); showPortfolio();
+                        save();
+                        refreshPortfolio();
                     } catch (Exception ex) {
                         Toast.makeText(this, "Lot ve fiyatı kontrol et", Toast.LENGTH_LONG).show();
                     }
