@@ -36,6 +36,9 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
     private static final String PREFS = "portfolio";
+    private static final int NAVY = Color.rgb(11, 31, 58);
+    private static final int RED = Color.rgb(200, 16, 46);
+    private static final int GREEN = Color.rgb(0, 128, 96);
     private static final String[] BIST = {
             "ADEL","AEFES","AGHOL","AKBNK","AKCNS","AKSA","AKSEN","ALARK","ALBRK","ALFAS",
             "ARCLK","ASELS","ASTOR","BERA","BIMAS","BRSAN","BRYAT","BTCIM","CANTE","CCOLA",
@@ -92,17 +95,35 @@ public class MainActivity extends Activity {
     private Button btn(String t) {
         Button b = new Button(this);
         b.setText(t);
+        b.setTextColor(Color.WHITE);
+        b.setBackgroundColor(NAVY);
+        b.setAllCaps(false);
         return b;
+    }
+
+    private TextView coloredText(String t, int sp, int color) {
+        TextView v = title(t, sp);
+        v.setTextColor(color);
+        return v;
     }
 
     private void shell(String page) {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(14, 14, 14, 14);
+        root.setBackgroundColor(Color.rgb(247, 249, 252));
+
+        TextView brand = coloredText("BORSA RADAR", 27, Color.WHITE);
+        brand.setBackgroundColor(NAVY);
+        brand.setPadding(24, 22, 24, 22);
+        root.addView(brand);
 
         LinearLayout nav = new LinearLayout(this);
         nav.setOrientation(LinearLayout.HORIZONTAL);
         Button p = btn("Portföyüm"), r = btn("BIST Radar"), a = btn("3 Strateji");
+        p.setBackgroundColor(RED);
+        r.setBackgroundColor(RED);
+        a.setBackgroundColor(RED);
         nav.addView(p, new LinearLayout.LayoutParams(0, -2, 1));
         nav.addView(r, new LinearLayout.LayoutParams(0, -2, 1));
         nav.addView(a, new LinearLayout.LayoutParams(0, -2, 1));
@@ -117,6 +138,9 @@ public class MainActivity extends Activity {
         content.setOrientation(LinearLayout.VERTICAL);
         s.addView(content);
         root.addView(s, new LinearLayout.LayoutParams(-1, 0, 1));
+        TextView credit = coloredText("Programcı: Erdoğan Kulanoğlu", 12, Color.rgb(95, 105, 118));
+        credit.setGravity(android.view.Gravity.CENTER);
+        root.addView(credit);
         setContentView(root);
     }
 
@@ -149,13 +173,15 @@ public class MainActivity extends Activity {
         } else {
             double pnl = (s.close - h.cost) * h.qty;
             double pnlPct = h.cost == 0 ? 0 : (s.close / h.cost - 1.0) * 100.0;
-            row.addView(title("Son: " + money(s.close) + " • P/L: " + money(pnl) + " (%" + IndicatorEngine.fmt(pnlPct) + ")", 15));
-            row.addView(title("Sinyal: " + s.signal + " • " + s.reason, 14));
+            row.addView(coloredText("Son: " + money(s.close) + " • P/L: " + money(pnl) + " (%" + IndicatorEngine.fmt(pnlPct) + ")", 15, pnl >= 0 ? GREEN : RED));
+            int signalColor = (s.signal.contains("AL") || s.signal.contains("ERKEN")) ? GREEN : (s.signal.contains("SAT") || s.signal.contains("RİSK") || s.signal.contains("KOVALAMA")) ? RED : NAVY;
+            row.addView(coloredText("Sinyal: " + s.signal + " • " + s.reason, 14, signalColor));
             row.addView(title("ATR stop referansı: " + money(Math.max(s.close - 2.2 * s.atr14, s.ema50 * 0.985)), 13));
         }
 
         LinearLayout buttons = new LinearLayout(this);
         Button edit = btn("Düzenle"), bt = btn("1Y Backtest"), del = btn("Sil");
+        del.setBackgroundColor(RED);
         buttons.addView(edit, new LinearLayout.LayoutParams(0, -2, 1));
         buttons.addView(bt, new LinearLayout.LayoutParams(0, -2, 1));
         buttons.addView(del, new LinearLayout.LayoutParams(0, -2, 1));
@@ -293,7 +319,8 @@ public class MainActivity extends Activity {
             card.setOrientation(LinearLayout.VERTICAL);
             card.setPadding(18, 10, 18, 10);
             card.setBackgroundColor(Color.rgb(244,247,250));
-            card.addView(title((i + 1) + ". " + r.symbol + " • " + r.s.signal + " • skor " + r.s.score, 18));
+            int radarColor = (r.s.signal.contains("AL") || r.s.signal.contains("ERKEN")) ? GREEN : (r.s.signal.contains("SAT") || r.s.signal.contains("RİSK") || r.s.signal.contains("KOVALAMA")) ? RED : NAVY;
+            card.addView(coloredText((i + 1) + ". " + r.symbol + " • " + r.s.signal + " • skor " + r.s.score, 18, radarColor));
             card.addView(title("Fiyat " + money(r.s.close) + " • " + r.s.reason, 14));
             card.addView(title("1Y backtest: " + r.bt.summary, 13));
             Button bt = btn("Detaylı backtest yenile");
