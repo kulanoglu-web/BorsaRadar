@@ -205,7 +205,7 @@ public class MainActivity extends Activity {
         q.setHint("Lot / adet");
         q.setInputType(InputType.TYPE_CLASS_NUMBER);
         EditText c = new EditText(this);
-        c.setHint("Ortalama alış fiyatı");
+        c.setHint("Ortalama alış fiyatı (örn. 287,87)");
         c.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         if (edit != null) {
             int idx = Arrays.asList(BIST).indexOf(edit.symbol);
@@ -221,7 +221,11 @@ public class MainActivity extends Activity {
                     try {
                         String sym = (String) s.getSelectedItem();
                         int qty = Integer.parseInt(q.getText().toString());
-                        double cost = Double.parseDouble(c.getText().toString().replace(',', '.'));
+                        String rawCost = c.getText().toString().trim();
+                        double cost = Double.parseDouble(rawCost.replace(',', '.'));
+                        // Bazı Android sayısal klavyeleri virgül tuşunu metne eklemeden
+                        // kuruşları bitişik yazabiliyor: 28787 -> 287,87.
+                        if (!rawCost.contains(",") && !rawCost.contains(".") && cost >= 10000) cost /= 100.0;
                         if (qty <= 0 || cost <= 0) throw new IllegalArgumentException();
                         if (edit == null) holdings.add(new Holding(sym, qty, cost));
                         else { edit.symbol = sym; edit.qty = qty; edit.cost = cost; }
@@ -361,7 +365,10 @@ public class MainActivity extends Activity {
             JSONArray a = new JSONArray(x);
             for (int i = 0; i < a.length(); i++) {
                 JSONObject o = a.getJSONObject(i);
-                holdings.add(new Holding(o.getString("s"), o.getInt("q"), o.getDouble("c")));
+                double savedCost = o.getDouble("c");
+                // v0.9.0'da virgülsüz kaydedilmiş olası fiyatları bir kez düzelt.
+                if (savedCost >= 10000) savedCost /= 100.0;
+                holdings.add(new Holding(o.getString("s"), o.getInt("q"), savedCost));
             }
         } catch (Exception ignored) { }
     }
