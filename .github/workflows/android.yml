@@ -26,5 +26,5 @@ jobs:
         run: gradle assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v0.9.6-Poco-Huawei-APK
+          name: BorsaRadar-v0.9.8-Poco-Huawei-APK
           path: app/build/outputs/apk/debug/app-debug.apk
