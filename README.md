@@ -1,4 +1,4 @@
-# BorsaRadar v0.9.11
+# BorsaRadar v0.9.12
 
 Android package: `com.kulanoglu.borsaradar`
 
@@ -35,6 +35,8 @@ Bu sürümde:
 - CCI20, Stokastik14 ve ADX14 göstergeleri
 - BorsaRadar'a özel Trend Verimliliği (BRTV), ATR Momentum (BRM) ve Hacim Yön Baskısı (BRH)
 - Yeni göstergelerin hem güncel karara hem de her backtest gününe dahil edilmesi; skor ölçeği -14…+15
+- Tüm BIST taramasında istek hızı sınırlama, query1/query2 sunucu yedeği ve kademeli yeniden deneme
+- Tarama sırasında başarılı ve başarısız veri sayılarını ayrı gösterme
 
 ## Veri notu
 Yahoo Finance verisi ücretsiz ve anahtarsız kullanılır; gecikmeli olabilir, bazı sembollerde geçici erişim/rate-limit sorunu olabilir. Uygulama veri yokken sahte fiyat/sinyal üretmez.
