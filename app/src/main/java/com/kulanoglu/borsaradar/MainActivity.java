@@ -104,7 +104,7 @@ public class MainActivity extends Activity {
     }
 
     private String decision(IndicatorEngine.Snapshot s) {
-        if (s.score >= 8 && s.trendUp && s.cmf20 > 0.05 && !s.trap) return "ÇOK GÜÇLÜ FIRSAT • AL";
+        if (s.score >= 13 && s.trendUp && s.cmf20 > 0.05 && s.trendEfficiency20 > 0.28 && !s.trap) return "ÇOK GÜÇLÜ FIRSAT • AL";
         if ("AL".equals(s.signal)) return "AL";
         if ("ERKEN".equals(s.signal)) return "KADEMELİ AL";
         if ("SAT/RİSK".equals(s.signal)) return "SAT / RİSKİ AZALT";
@@ -131,6 +131,12 @@ public class MainActivity extends Activity {
         if (s.breakout20) why.add("20 günlük kırılım");
         else if (s.preBreakout) why.add("kırılıma yakın");
         if (s.trap) why.add("yukarı yönlü tuzak riski");
+        why.add("CCI " + IndicatorEngine.fmt(s.cci20));
+        why.add("Stokastik " + IndicatorEngine.fmt(s.stochastic14));
+        why.add("ADX " + IndicatorEngine.fmt(s.adx14));
+        why.add("BorsaRadar trend verimi " + IndicatorEngine.fmt(s.trendEfficiency20));
+        why.add("ATR momentum " + IndicatorEngine.fmt(s.momentumAtr20));
+        why.add("hacim yön baskısı " + IndicatorEngine.fmt(s.volumePressure20));
         return "Neye göre: " + android.text.TextUtils.join(" • ", why) + ".";
     }
 
@@ -142,6 +148,12 @@ public class MainActivity extends Activity {
         if (s.cmf20 > 0.05) buy++; else if (s.cmf20 < -0.08) sell++; else neutral++;
         if (s.breakout20 || s.preBreakout) buy++; else neutral++;
         if (s.trap) sell++; else neutral++;
+        if (s.cci20 >= 50 && s.cci20 <= 180) buy++; else if (s.cci20 < -100) sell++; else neutral++;
+        if (s.stochastic14 >= 55 && s.stochastic14 <= 88) buy++; else if (s.stochastic14 > 94 || s.stochastic14 < 18) sell++; else neutral++;
+        if (s.adx14 >= 20 && s.trendUp) buy++; else if (s.adx14 >= 20 && s.close < s.ema50) sell++; else neutral++;
+        if (s.trendEfficiency20 > 0.28) buy++; else if (s.trendEfficiency20 < -0.22) sell++; else neutral++;
+        if (s.momentumAtr20 > 0.80) buy++; else if (s.momentumAtr20 < -0.80) sell++; else neutral++;
+        if (s.volumePressure20 > 0.08) buy++; else if (s.volumePressure20 < -0.08) sell++; else neutral++;
         return "İndikatör uzlaşması: " + buy + " AL • " + neutral + " NÖTR • " + sell + " SAT";
     }
 
@@ -388,7 +400,7 @@ public class MainActivity extends Activity {
             card.setPadding(18, 10, 18, 10);
             card.setBackgroundColor(Color.rgb(244,247,250));
             int radarColor = (r.s.signal.contains("AL") || r.s.signal.contains("ERKEN")) ? GREEN : (r.s.signal.contains("SAT") || r.s.signal.contains("RİSK") || r.s.signal.contains("KOVALAMA")) ? RED : NAVY;
-            card.addView(coloredText((i + 1) + ". " + r.symbol + " • " + decision(r.s) + " • skor " + r.s.score + "/9", 18, radarColor));
+            card.addView(coloredText((i + 1) + ". " + r.symbol + " • " + decision(r.s) + " • skor " + r.s.score + "/15", 18, radarColor));
             card.addView(title("Fiyat " + money(r.s.close) + " • " + r.s.reason, 14));
             card.addView(title("1Y backtest: " + r.bt.summary, 13));
             Button bt = btn("Detaylı backtest yenile");
@@ -435,7 +447,7 @@ public class MainActivity extends Activity {
                     content.addView(decisionBanner(s));
                     content.addView(coloredText(indicatorConsensus(s), 16, decisionColor(s)));
                     content.addView(coloredText(decisionWhy(s), 15, decisionColor(s)));
-                    content.addView(title("Teknik sinyal: " + s.signal + " • Teknik skor: " + s.score + " • Ölçek: -8…+9", 16));
+                    content.addView(title("Teknik sinyal: " + s.signal + " • Teknik skor: " + s.score + " • Ölçek: -14…+15", 16));
                     content.addView(title(r.summary, 17));
                     content.addView(title("Mantık: güçlü AL/ERKEN sinyaliyle giriş; ATR + EMA50 tabanlı ilk stop; ATR trailing ve trend/MACD bozulmasında çıkış.", 14));
                     content.addView(title("Not: komisyon, kayma, vergi ve gün içi gerçekleşme farkları dahil değildir. Sonuç yatırım garantisi değildir.", 13));
@@ -537,7 +549,7 @@ public class MainActivity extends Activity {
             Button pick = btn((i + 1) + ". " + r.symbol + " • " + decision(r.s));
             pick.setOnClickListener(v -> runSingleBacktest(r.symbol));
             content.addView(pick);
-            content.addView(title("Fiyat " + money(r.s.close) + " • yaklaşık " + lots + " lot / " + perStock + " TL • skor " + r.s.score + " (-8…+9)", 14));
+            content.addView(title("Fiyat " + money(r.s.close) + " • yaklaşık " + lots + " lot / " + perStock + " TL • skor " + r.s.score + " (-14…+15)", 14));
             content.addView(title(indicatorConsensus(r.s), 13));
         }
     }
