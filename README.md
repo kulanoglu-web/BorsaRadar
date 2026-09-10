@@ -1,4 +1,4 @@
-# BorsaRadar v0.9.2
+# BorsaRadar v0.9.3
 
 Android package: `com.kulanoglu.borsaradar`
 
@@ -15,6 +15,9 @@ Bu sürümde:
 - Türkçe virgüllü fiyat girişi ve eski hatalı bitişik-kuruş kayıtlarını otomatik düzeltme
 - Lacivert/kırmızı yatırım uygulaması teması, renkli sinyal ve kâr/zarar gösterimi
 - Programcı bilgisi: Erdoğan Kulanoğlu
+- Büyük AL / KADEMELİ AL / TUT-BEKLE / SAT-RİSK AZALT / YENİ ALIM YAPMA karar kutuları
+- Kararın trend, RSI, MACD, hacim, para akışı ve kırılım/tuzak gerekçeleri
+- Backtest ekranında uygulama içi ve Android geri tuşu desteği
 
 ## Veri notu
 Yahoo Finance verisi ücretsiz ve anahtarsız kullanılır; gecikmeli olabilir, bazı sembollerde geçici erişim/rate-limit sorunu olabilir. Uygulama veri yokken sahte fiyat/sinyal üretmez.
