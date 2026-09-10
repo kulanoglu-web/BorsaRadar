@@ -54,6 +54,7 @@ public class MainActivity extends Activity {
 
     private final List<Holding> holdings = new ArrayList<>();
     private final Map<String, IndicatorEngine.Snapshot> latest = new HashMap<>();
+    private final List<Ranked> lastRadarResults = new ArrayList<>();
     private LinearLayout content;
     private final ExecutorService io = Executors.newFixedThreadPool(4);
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -354,6 +355,8 @@ public class MainActivity extends Activity {
             if (s != 0) return s;
             return Double.compare(b.bt.netPct, a.bt.netPct);
         });
+        lastRadarResults.clear();
+        lastRadarResults.addAll(copy);
         content.addView(title("En güçlü teknik skorlar • backtest sonucu geçmiş performanstır, garanti değildir.", 14));
         if (copy.isEmpty()) { content.addView(title("Veri alınamadı. İnternet bağlantısı veya veri kaynağı geçici olarak engellemiş olabilir.", 16)); return; }
 
@@ -379,7 +382,12 @@ public class MainActivity extends Activity {
 
     private void runSingleBacktest(String symbol) {
         final String returnSection = currentSection;
-        detailBackAction = () -> { if ("radar".equals(returnSection)) showRadar(); else showPortfolio(); };
+        detailBackAction = () -> {
+            if ("radar".equals(returnSection) && !lastRadarResults.isEmpty())
+                renderRadarResults(new ArrayList<>(lastRadarResults));
+            else if ("radar".equals(returnSection)) showRadar();
+            else showPortfolio();
+        };
         detailOpen = true;
         shell(symbol + " Backtest");
         ProgressBar p = new ProgressBar(this);
