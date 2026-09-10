@@ -1,4 +1,4 @@
-# BorsaRadar v0.9.10
+# BorsaRadar v0.9.11
 
 Android package: `com.kulanoglu.borsaradar`
 
@@ -32,6 +32,9 @@ Bu sürümde:
 - Yalnızca skor 8+, yükselen trend, pozitif para akışı ve tuzak bulunmaması halinde `ÇOK GÜÇLÜ FIRSAT • AL`
 - Portföyü panoya kopyalama ve panodan geri yükleme
 - Portföye hisse kaydedilince fiyat, indikatör, teknik skor ve AL/TUT/SAT yönlendirmesini otomatik getirme
+- CCI20, Stokastik14 ve ADX14 göstergeleri
+- BorsaRadar'a özel Trend Verimliliği (BRTV), ATR Momentum (BRM) ve Hacim Yön Baskısı (BRH)
+- Yeni göstergelerin hem güncel karara hem de her backtest gününe dahil edilmesi; skor ölçeği -14…+15
 
 ## Veri notu
 Yahoo Finance verisi ücretsiz ve anahtarsız kullanılır; gecikmeli olabilir, bazı sembollerde geçici erişim/rate-limit sorunu olabilir. Uygulama veri yokken sahte fiyat/sinyal üretmez.
