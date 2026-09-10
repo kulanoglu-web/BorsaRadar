@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.content.Context;
+import android.content.ClipboardManager;
+import android.content.ClipData;
 import android.graphics.Color;
 import android.text.InputType;
 import android.view.View;
@@ -102,6 +104,7 @@ public class MainActivity extends Activity {
     }
 
     private String decision(IndicatorEngine.Snapshot s) {
+        if (s.score >= 8 && s.trendUp && s.cmf20 > 0.05 && !s.trap) return "ÇOK GÜÇLÜ FIRSAT • AL";
         if ("AL".equals(s.signal)) return "AL";
         if ("ERKEN".equals(s.signal)) return "KADEMELİ AL";
         if ("SAT/RİSK".equals(s.signal)) return "SAT / RİSKİ AZALT";
@@ -112,6 +115,7 @@ public class MainActivity extends Activity {
 
     private int decisionColor(IndicatorEngine.Snapshot s) {
         String d = decision(s);
+        if (d.startsWith("ÇOK GÜÇLÜ FIRSAT")) return GREEN;
         if (d.equals("AL") || d.equals("KADEMELİ AL")) return GREEN;
         if (d.contains("SAT") || d.contains("YAPMA")) return RED;
         return Color.rgb(225, 145, 0);
@@ -199,6 +203,15 @@ public class MainActivity extends Activity {
         content.addView(actions);
         add.setOnClickListener(v -> portfolioDialog(null));
         refresh.setOnClickListener(v -> refreshPortfolio());
+
+        LinearLayout backup = new LinearLayout(this);
+        Button copy = btn("Portföyü Kopyala");
+        Button restore = btn("Panodan Geri Yükle");
+        backup.addView(copy, new LinearLayout.LayoutParams(0, -2, 1));
+        backup.addView(restore, new LinearLayout.LayoutParams(0, -2, 1));
+        content.addView(backup);
+        copy.setOnClickListener(v -> copyPortfolio());
+        restore.setOnClickListener(v -> restorePortfolio());
 
         if (holdings.isEmpty()) content.addView(title("Henüz portföy girişi yok.", 16));
         for (Holding h : new ArrayList<>(holdings)) renderHolding(h);
@@ -362,7 +375,8 @@ public class MainActivity extends Activity {
         });
         lastRadarResults.clear();
         lastRadarResults.addAll(copy);
-        content.addView(title("En güçlü teknik skorlar • backtest sonucu geçmiş performanstır, garanti değildir.", 14));
+        content.addView(title(RADAR_SYMBOLS.length + " hisse tarandı; veri alınabilen " + copy.size() + " hisse arasından yalnızca en güçlü 30 teknik aday gösteriliyor.", 14));
+        content.addView(title("Diğer hisseler düşük skor, zayıf trend, yetersiz hacim veya tuzak riski nedeniyle tavsiye listesine alınmadı.", 13));
         if (copy.isEmpty()) { content.addView(title("Veri alınamadı. İnternet bağlantısı veya veri kaynağı geçici olarak engellemiş olabilir.", 16)); return; }
 
         int limit = Math.min(30, copy.size());
@@ -373,7 +387,7 @@ public class MainActivity extends Activity {
             card.setPadding(18, 10, 18, 10);
             card.setBackgroundColor(Color.rgb(244,247,250));
             int radarColor = (r.s.signal.contains("AL") || r.s.signal.contains("ERKEN")) ? GREEN : (r.s.signal.contains("SAT") || r.s.signal.contains("RİSK") || r.s.signal.contains("KOVALAMA")) ? RED : NAVY;
-            card.addView(coloredText((i + 1) + ". " + r.symbol + " • " + r.s.signal + " • skor " + r.s.score, 18, radarColor));
+            card.addView(coloredText((i + 1) + ". " + r.symbol + " • " + decision(r.s) + " • skor " + r.s.score + "/9", 18, radarColor));
             card.addView(title("Fiyat " + money(r.s.close) + " • " + r.s.reason, 14));
             card.addView(title("1Y backtest: " + r.bt.summary, 13));
             Button bt = btn("Detaylı backtest yenile");
@@ -410,6 +424,7 @@ public class MainActivity extends Activity {
                     Button back = btn("← Geri");
                     back.setOnClickListener(v -> detailBackAction.run());
                     content.addView(back);
+                    addStockNavigation(symbol);
                     TextView currentPrice = coloredText("GÜNCEL FİYAT: " + money(s.close), 24, NAVY);
                     currentPrice.setGravity(android.view.Gravity.CENTER);
                     currentPrice.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -431,6 +446,48 @@ public class MainActivity extends Activity {
                 });
             }
         });
+    }
+
+    private void addStockNavigation(String symbol) {
+        if (lastRadarResults.size() < 2) return;
+        int index = -1;
+        for (int i = 0; i < lastRadarResults.size(); i++) if (lastRadarResults.get(i).symbol.equals(symbol)) { index = i; break; }
+        if (index < 0) return;
+        final String previous = lastRadarResults.get((index - 1 + lastRadarResults.size()) % lastRadarResults.size()).symbol;
+        final String next = lastRadarResults.get((index + 1) % lastRadarResults.size()).symbol;
+        LinearLayout nav = new LinearLayout(this);
+        Button prev = btn("← " + previous);
+        Button nxt = btn(next + " →");
+        nav.addView(prev, new LinearLayout.LayoutParams(0, -2, 1));
+        nav.addView(nxt, new LinearLayout.LayoutParams(0, -2, 1));
+        prev.setOnClickListener(v -> runSingleBacktest(previous));
+        nxt.setOnClickListener(v -> runSingleBacktest(next));
+        content.addView(nav);
+    }
+
+    private void copyPortfolio() {
+        String data = getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("items", "[]");
+        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        cm.setPrimaryClip(ClipData.newPlainText("BorsaRadar Portföy", data));
+        Toast.makeText(this, "Portföy panoya kopyalandı", Toast.LENGTH_LONG).show();
+    }
+
+    private void restorePortfolio() {
+        try {
+            ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            if (!cm.hasPrimaryClip()) throw new IllegalArgumentException();
+            String data = cm.getPrimaryClip().getItemAt(0).coerceToText(this).toString();
+            JSONArray a = new JSONArray(data);
+            List<Holding> restored = new ArrayList<>();
+            for (int i = 0; i < a.length(); i++) {
+                JSONObject o = a.getJSONObject(i);
+                restored.add(new Holding(o.getString("s"), o.getInt("q"), o.getDouble("c")));
+            }
+            holdings.clear(); holdings.addAll(restored); save(); showPortfolio();
+            Toast.makeText(this, "Portföy geri yüklendi", Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "Panoda geçerli BorsaRadar portföyü yok", Toast.LENGTH_LONG).show();
+        }
     }
 
     private void showStrategies() {
