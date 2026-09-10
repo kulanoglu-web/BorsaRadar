@@ -7,6 +7,8 @@ public final class IndicatorEngine {
 
     public static final class Snapshot {
         public double close, ema20, ema50, rsi14, macd, macdSignal, atr14, cmf20, relVolume, bbWidth;
+        public double cci20, stochastic14, adx14;
+        public double trendEfficiency20, momentumAtr20, volumePressure20;
         public boolean breakout20, preBreakout, trendUp, volumeOk, trap;
         public int score;
         public String signal;
@@ -28,6 +30,12 @@ public final class IndicatorEngine {
         s.cmf20 = cmf(x, 20, n - 1);
         s.relVolume = relativeVolume(x, 20, n - 1);
         s.bbWidth = bollingerWidth(x, 20, n - 1);
+        s.cci20 = cci(x, 20, n - 1);
+        s.stochastic14 = stochastic(x, 14, n - 1);
+        s.adx14 = adx(x, 14, n - 1);
+        s.trendEfficiency20 = trendEfficiency(x, 20, n - 1);
+        s.momentumAtr20 = momentumAtr(x, 20, n - 1, s.atr14);
+        s.volumePressure20 = volumePressure(x, 20, n - 1);
 
         double high20Prev = highestHigh(x, 20, n - 2);
         s.breakout20 = s.close > high20Prev;
@@ -51,19 +59,32 @@ public final class IndicatorEngine {
         if (s.breakout20) score += 2;
         if (s.preBreakout) score += 1;
         if (s.trap) score -= 3;
+        if (s.cci20 >= 50 && s.cci20 <= 180) score += 1; else if (s.cci20 < -100) score -= 1;
+        if (s.stochastic14 >= 55 && s.stochastic14 <= 88) score += 1;
+        else if (s.stochastic14 > 94 || s.stochastic14 < 18) score -= 1;
+        if (s.adx14 >= 20 && s.trendUp) score += 1; else if (s.adx14 >= 20 && s.close < s.ema50) score -= 1;
+        if (s.trendEfficiency20 > 0.28) score += 1; else if (s.trendEfficiency20 < -0.22) score -= 1;
+        if (s.momentumAtr20 > 0.80) score += 1; else if (s.momentumAtr20 < -0.80) score -= 1;
+        if (s.volumePressure20 > 0.08) score += 1; else if (s.volumePressure20 < -0.08) score -= 1;
         s.score = score;
 
-        if (s.trap && score < 4) s.signal = "KOVALAMA";
-        else if (score >= 7) s.signal = "AL";
-        else if (score >= 5 && s.preBreakout) s.signal = "ERKEN";
-        else if (score >= 3) s.signal = "İZLE";
-        else if (score <= -2) s.signal = "SAT/RİSK";
+        if (s.trap && score < 7) s.signal = "KOVALAMA";
+        else if (score >= 11) s.signal = "AL";
+        else if (score >= 8 && s.preBreakout) s.signal = "ERKEN";
+        else if (score >= 5) s.signal = "İZLE";
+        else if (score <= -3) s.signal = "SAT/RİSK";
         else s.signal = "NÖTR";
 
         s.reason = "Skor " + score
                 + " • RSI " + fmt(s.rsi14)
                 + " • RVOL " + fmt(s.relVolume)
                 + " • CMF " + fmt(s.cmf20)
+                + " • CCI " + fmt(s.cci20)
+                + " • Stoch " + fmt(s.stochastic14)
+                + " • ADX " + fmt(s.adx14)
+                + " • BRTV " + fmt(s.trendEfficiency20)
+                + " • BRM " + fmt(s.momentumAtr20)
+                + " • BRH " + fmt(s.volumePressure20)
                 + " • ATR " + fmt(s.atr14);
         return s;
     }
@@ -134,6 +155,68 @@ public final class IndicatorEngine {
         double sd = Math.sqrt(var / count);
         return mean == 0 ? 0 : (4.0 * sd) / mean;
     }
+
+    public static double cci(List<MarketDataService.Candle> x, int period, int end) {
+        int start = Math.max(0, end - period + 1), count = end - start + 1;
+        double mean = 0;
+        for (int i = start; i <= end; i++) mean += typical(x.get(i));
+        mean /= Math.max(1, count);
+        double dev = 0;
+        for (int i = start; i <= end; i++) dev += Math.abs(typical(x.get(i)) - mean);
+        dev /= Math.max(1, count);
+        return dev == 0 ? 0 : (typical(x.get(end)) - mean) / (0.015 * dev);
+    }
+
+    public static double stochastic(List<MarketDataService.Candle> x, int period, int end) {
+        int start = Math.max(0, end - period + 1);
+        double high = -Double.MAX_VALUE, low = Double.MAX_VALUE;
+        for (int i = start; i <= end; i++) { high = Math.max(high, x.get(i).high); low = Math.min(low, x.get(i).low); }
+        return high == low ? 50 : 100.0 * (x.get(end).close - low) / (high - low);
+    }
+
+    public static double adx(List<MarketDataService.Candle> x, int period, int end) {
+        if (end < 2) return 0;
+        int start = Math.max(1, end - period + 1);
+        double tr = 0, plus = 0, minus = 0;
+        for (int i = start; i <= end; i++) {
+            MarketDataService.Candle c = x.get(i), p = x.get(i - 1);
+            tr += Math.max(c.high - c.low, Math.max(Math.abs(c.high - p.close), Math.abs(c.low - p.close)));
+            double up = c.high - p.high, down = p.low - c.low;
+            if (up > down && up > 0) plus += up;
+            if (down > up && down > 0) minus += down;
+        }
+        if (tr == 0) return 0;
+        double pdi = 100 * plus / tr, mdi = 100 * minus / tr;
+        return pdi + mdi == 0 ? 0 : 100 * Math.abs(pdi - mdi) / (pdi + mdi);
+    }
+
+    // BRTV: fiyatın 20 günde ne kadar düzgün ve yönlü ilerlediğini -1..+1 aralığında ölçer.
+    public static double trendEfficiency(List<MarketDataService.Candle> x, int period, int end) {
+        int start = Math.max(0, end - period);
+        double path = 0;
+        for (int i = start + 1; i <= end; i++) path += Math.abs(x.get(i).close - x.get(i - 1).close);
+        return path == 0 ? 0 : (x.get(end).close - x.get(start).close) / path;
+    }
+
+    // BRM: 20 günlük hareketi ATR ile normalize ederek farklı fiyatlı hisseleri karşılaştırır.
+    public static double momentumAtr(List<MarketDataService.Candle> x, int period, int end, double atr) {
+        int start = Math.max(0, end - period);
+        return atr <= 0 ? 0 : (x.get(end).close - x.get(start).close) / (atr * Math.sqrt(period));
+    }
+
+    // BRH: yükseliş ve düşüş günlerindeki hacmin net yön baskısını -1..+1 aralığında ölçer.
+    public static double volumePressure(List<MarketDataService.Candle> x, int period, int end) {
+        int start = Math.max(1, end - period + 1);
+        double signed = 0, total = 0;
+        for (int i = start; i <= end; i++) {
+            double v = x.get(i).volume;
+            signed += Math.signum(x.get(i).close - x.get(i - 1).close) * v;
+            total += v;
+        }
+        return total == 0 ? 0 : signed / total;
+    }
+
+    private static double typical(MarketDataService.Candle c) { return (c.high + c.low + c.close) / 3.0; }
 
     private static double highestHigh(List<MarketDataService.Candle> x, int period, int end) {
         int start = Math.max(0, end - period + 1);
