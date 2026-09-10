@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
     private final Map<String, IndicatorEngine.Snapshot> latest = new HashMap<>();
     private final List<Ranked> lastRadarResults = new ArrayList<>();
     private LinearLayout content;
-    private final ExecutorService io = Executors.newFixedThreadPool(4);
+    private final ExecutorService io = Executors.newFixedThreadPool(3);
     private final Handler main = new Handler(Looper.getMainLooper());
     private String currentSection = "portfolio";
     private Runnable detailBackAction;
@@ -343,7 +343,7 @@ public class MainActivity extends Activity {
         currentSection = "radar"; detailOpen = false;
         shell("BIST Radar");
         content.addView(title("Radar portföyden bağımsız çalışır. Günlük Yahoo Finance verisini anahtarsız çeker; veri gecikmeli olabilir.", 15));
-        content.addView(title("Skor: EMA20/50 + RSI14 + MACD + RVOL + CMF + Bollinger + breakout + trap + ATR", 14));
+        content.addView(title("Skor: EMA20/50 + RSI14 + MACD + RVOL + CMF + Bollinger + CCI + Stokastik + ADX + BRTV + BRM + BRH + breakout/trap + ATR", 14));
         Button scan = btn("Tüm BIST Hisselerini Tara");
         content.addView(scan);
         scan.setOnClickListener(v -> scanRadar());
@@ -359,6 +359,7 @@ public class MainActivity extends Activity {
 
         final List<Ranked> results = Collections.synchronizedList(new ArrayList<>());
         final int[] done = {0};
+        final int[] failed = {0};
         for (String sym : RADAR_SYMBOLS) {
             io.execute(() -> {
                 try {
@@ -366,11 +367,11 @@ public class MainActivity extends Activity {
                     IndicatorEngine.Snapshot s = IndicatorEngine.analyze(data);
                     BacktestEngine.Result bt = BacktestEngine.run(data);
                     results.add(new Ranked(sym, s, bt));
-                } catch (Exception ignored) { }
+                } catch (Exception ignored) { synchronized (failed) { failed[0]++; } }
                 main.post(() -> {
                     done[0]++;
                     bar.setProgress(done[0]);
-                    status.setText(done[0] + "/" + RADAR_SYMBOLS.length + " • başarılı " + results.size());
+                    status.setText(done[0] + "/" + RADAR_SYMBOLS.length + " • başarılı " + results.size() + " • başarısız " + failed[0]);
                     if (done[0] >= RADAR_SYMBOLS.length) renderRadarResults(results);
                 });
             });
