@@ -10,13 +10,13 @@ import android.graphics.Color;
 import android.text.InputType;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.Space;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,18 +39,8 @@ public class MainActivity extends Activity {
     private static final int NAVY = Color.rgb(11, 31, 58);
     private static final int RED = Color.rgb(200, 16, 46);
     private static final int GREEN = Color.rgb(0, 128, 96);
-    private static final String[] BIST = {
-            "ADEL","AEFES","AGHOL","AKBNK","AKCNS","AKSA","AKSEN","ALARK","ALBRK","ALFAS",
-            "ARCLK","ASELS","ASTOR","BERA","BIMAS","BRSAN","BRYAT","BTCIM","CANTE","CCOLA",
-            "CIMSA","DOAS","DOHOL","ECILC","EGEEN","EKGYO","ENJSA","ENKAI","EREGL","EUPWR",
-            "FROTO","GARAN","GESAN","GUBRF","GWIND","HALKB","HEKTS","ISCTR","ISMEN","KARSN",
-            "KCHOL","KONTR","KONYA","KOZAA","KOZAL","KRDMD","KLRHO","MAVI","MGROS","MIATK",
-            "ODAS","OTKAR","OYAKC","PETKM","PGSUS","QUAGR","SAHOL","SASA","SISE","SKBNK",
-            "SMRTG","SOKM","TAVHL","TCELL","THYAO","TKFEN","TOASO","TSKB","TTKOM","TTRAK",
-            "ULKER","VAKBN","VESTL","YEOTK","YKBNK","ZOREN","AAGYO","ANSGR","BRSAN",
-            "CWENE","DEVA","DOCO","ECZYT","GENIL","IPEKE","KCAER","KMPUR","MPARK","NTHOL",
-            "PASEU","REEDR","TABGD","TATGD","TMSN","TURSG","VESBE","AKFGY","AKFYE","ALARK"
-    };
+    private static final String[] PORTFOLIO_SYMBOLS = BistUniverse.symbols(true);
+    private static final String[] RADAR_SYMBOLS = BistUniverse.symbols(false);
 
     private final List<Holding> holdings = new ArrayList<>();
     private final Map<String, IndicatorEngine.Snapshot> latest = new HashMap<>();
@@ -269,8 +259,11 @@ public class MainActivity extends Activity {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
         box.setPadding(24, 10, 24, 0);
-        Spinner s = new Spinner(this);
-        s.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, BIST));
+        AutoCompleteTextView s = new AutoCompleteTextView(this);
+        s.setHint("Hisse kodu veya şirket adı yaz (örn. BIMAS)");
+        s.setThreshold(1);
+        s.setSingleLine(true);
+        s.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, BistUniverse.ENTRIES));
         EditText q = new EditText(this);
         q.setHint("Lot / adet");
         q.setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -278,8 +271,7 @@ public class MainActivity extends Activity {
         c.setHint("Ortalama alış fiyatı (örn. 287,87)");
         c.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         if (edit != null) {
-            int idx = Arrays.asList(BIST).indexOf(edit.symbol);
-            if (idx >= 0) s.setSelection(idx);
+            s.setText(edit.symbol, false);
             q.setText(String.valueOf(edit.qty));
             c.setText(String.valueOf(edit.cost));
         }
@@ -289,7 +281,8 @@ public class MainActivity extends Activity {
                 .setView(box)
                 .setPositiveButton("Kaydet", (d, w) -> {
                     try {
-                        String sym = (String) s.getSelectedItem();
+                        String sym = BistUniverse.symbolFromEntry(s.getText().toString());
+                        if (!Arrays.asList(PORTFOLIO_SYMBOLS).contains(sym)) throw new IllegalArgumentException();
                         int qty = Integer.parseInt(q.getText().toString());
                         String rawCost = c.getText().toString().trim();
                         double cost = Double.parseDouble(rawCost.replace(',', '.'));
@@ -313,22 +306,22 @@ public class MainActivity extends Activity {
         shell("BIST Radar");
         content.addView(title("Radar portföyden bağımsız çalışır. Günlük Yahoo Finance verisini anahtarsız çeker; veri gecikmeli olabilir.", 15));
         content.addView(title("Skor: EMA20/50 + RSI14 + MACD + RVOL + CMF + Bollinger + breakout + trap + ATR", 14));
-        Button scan = btn("BIST100 Radarını Tara");
+        Button scan = btn("Tüm BIST Hisselerini Tara");
         content.addView(scan);
         scan.setOnClickListener(v -> scanRadar());
     }
 
     private void scanRadar() {
-        shell("BIST100 Taranıyor");
+        shell("Tüm BIST Taranıyor");
         ProgressBar bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        bar.setMax(BIST.length);
+        bar.setMax(RADAR_SYMBOLS.length);
         content.addView(bar);
-        TextView status = title("0/" + BIST.length + " • veri alınıyor", 16);
+        TextView status = title("0/" + RADAR_SYMBOLS.length + " • veri alınıyor", 16);
         content.addView(status);
 
         final List<Ranked> results = Collections.synchronizedList(new ArrayList<>());
         final int[] done = {0};
-        for (String sym : BIST) {
+        for (String sym : RADAR_SYMBOLS) {
             io.execute(() -> {
                 try {
                     List<MarketDataService.Candle> data = MarketDataService.fetchDaily(sym, "1y");
@@ -339,8 +332,8 @@ public class MainActivity extends Activity {
                 main.post(() -> {
                     done[0]++;
                     bar.setProgress(done[0]);
-                    status.setText(done[0] + "/" + BIST.length + " • başarılı " + results.size());
-                    if (done[0] >= BIST.length) renderRadarResults(results);
+                    status.setText(done[0] + "/" + RADAR_SYMBOLS.length + " • başarılı " + results.size());
+                    if (done[0] >= RADAR_SYMBOLS.length) renderRadarResults(results);
                 });
             });
         }
