@@ -1,4 +1,4 @@
-# BorsaRadar v0.9
+# BorsaRadar v0.9.1
 
 Android package: `com.kulanoglu.borsaradar`
 
@@ -12,6 +12,7 @@ Bu sürümde:
 - AL / ERKEN / İZLE / NÖTR / SAT-RİSK / KOVALAMA sınıflandırması
 - 1 yıllık geriye dönük strateji testi: ATR stop + trailing + trend/MACD çıkışı
 - 100.000 TL / 3 strateji ekranı
+- Türkçe virgüllü fiyat girişi ve eski hatalı bitişik-kuruş kayıtlarını otomatik düzeltme
 
 ## Veri notu
 Yahoo Finance verisi ücretsiz ve anahtarsız kullanılır; gecikmeli olabilir, bazı sembollerde geçici erişim/rate-limit sorunu olabilir. Uygulama veri yokken sahte fiyat/sinyal üretmez.
