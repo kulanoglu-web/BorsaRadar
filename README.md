@@ -1,4 +1,4 @@
-# BorsaRadar v0.9.4
+# BorsaRadar v0.9.5
 
 Android package: `com.kulanoglu.borsaradar`
 
@@ -19,6 +19,7 @@ Bu sürümde:
 - Kararın trend, RSI, MACD, hacim, para akışı ve kırılım/tuzak gerekçeleri
 - Backtest ekranında uygulama içi ve Android geri tuşu desteği
 - Backtestten geri dönünce radar tarama sonuçlarını kaybetmeden aynı listeyi gösterme
+- Huawei/HarmonyOS paket yükleyicisi için tüm sonraki APK'larda sabit uygulama imzası
 
 ## Veri notu
 Yahoo Finance verisi ücretsiz ve anahtarsız kullanılır; gecikmeli olabilir, bazı sembollerde geçici erişim/rate-limit sorunu olabilir. Uygulama veri yokken sahte fiyat/sinyal üretmez.
