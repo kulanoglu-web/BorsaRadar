@@ -1,4 +1,4 @@
-# BorsaRadar v0.9.9
+# BorsaRadar v0.9.10
 
 Android package: `com.kulanoglu.borsaradar`
 
@@ -31,6 +31,7 @@ Bu sürümde:
 - Neden yalnızca en güçlü 30 adayın listelendiğini açıklayan kısa bilgi
 - Yalnızca skor 8+, yükselen trend, pozitif para akışı ve tuzak bulunmaması halinde `ÇOK GÜÇLÜ FIRSAT • AL`
 - Portföyü panoya kopyalama ve panodan geri yükleme
+- Portföye hisse kaydedilince fiyat, indikatör, teknik skor ve AL/TUT/SAT yönlendirmesini otomatik getirme
 
 ## Veri notu
 Yahoo Finance verisi ücretsiz ve anahtarsız kullanılır; gecikmeli olabilir, bazı sembollerde geçici erişim/rate-limit sorunu olabilir. Uygulama veri yokken sahte fiyat/sinyal üretmez.
