@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class MarketDataService {
+    private static final Object RATE_LOCK = new Object();
+    private static long lastRequestAt = 0L;
     private MarketDataService() {}
 
     public static final class Candle {
@@ -33,9 +35,29 @@ public final class MarketDataService {
 
     public static List<Candle> fetchDaily(String bistSymbol, String range) throws Exception {
         String symbol = bistSymbol.endsWith(".IS") ? bistSymbol : bistSymbol + ".IS";
-        String url = "https://query1.finance.yahoo.com/v8/finance/chart/" + symbol
-                + "?range=" + range + "&interval=1d&includePrePost=false&events=div%2Csplits";
-        return fetch(url);
+        Exception last = null;
+        String[] hosts = {"query1.finance.yahoo.com", "query2.finance.yahoo.com"};
+        for (int attempt = 0; attempt < 4; attempt++) {
+            String url = "https://" + hosts[attempt % hosts.length] + "/v8/finance/chart/" + symbol
+                    + "?range=" + range + "&interval=1d&includePrePost=false&events=div%2Csplits";
+            try {
+                throttle();
+                return fetch(url);
+            } catch (Exception e) {
+                last = e;
+                try { Thread.sleep(700L * (attempt + 1)); }
+                catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw interrupted; }
+            }
+        }
+        throw last == null ? new Exception("Veri alınamadı") : last;
+    }
+
+    private static void throttle() throws InterruptedException {
+        synchronized (RATE_LOCK) {
+            long wait = 260L - (System.currentTimeMillis() - lastRequestAt);
+            if (wait > 0) Thread.sleep(wait);
+            lastRequestAt = System.currentTimeMillis();
+        }
     }
 
     private static List<Candle> fetch(String address) throws Exception {
@@ -83,7 +105,7 @@ public final class MarketDataService {
                 if (Double.isNaN(close) || Double.isNaN(high) || Double.isNaN(low) || Double.isNaN(open)) continue;
                 out.add(new Candle(ts.getLong(i), open, high, low, close, volume));
             }
-            if (out.size() < 30) throw new Exception("Yetersiz veri");
+            if (out.size() < 30) throw new Exception("Yetersiz veri: " + out.size() + " gün");
             return out;
         } finally {
             if (conn != null) conn.disconnect();
