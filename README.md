@@ -1,4 +1,4 @@
-# BorsaRadar v0.9.8
+# BorsaRadar v0.9.9
 
 Android package: `com.kulanoglu.borsaradar`
 
@@ -27,6 +27,10 @@ Bu sürümde:
 - Son radar sonuçlarından aktif kısa vade, temettü ön eleme ve uzun vade adayları
 - Backtest/karar ekranında büyük güncel fiyat ve açık teknik skor ölçeği (-8…+9)
 - Huawei/HarmonyOS paket yükleyicisi için tüm sonraki APK'larda sabit uygulama imzası
+- Radar detayında taranan tüm sonuçlar arasında önceki/sonraki hisseye geçiş
+- Neden yalnızca en güçlü 30 adayın listelendiğini açıklayan kısa bilgi
+- Yalnızca skor 8+, yükselen trend, pozitif para akışı ve tuzak bulunmaması halinde `ÇOK GÜÇLÜ FIRSAT • AL`
+- Portföyü panoya kopyalama ve panodan geri yükleme
 
 ## Veri notu
 Yahoo Finance verisi ücretsiz ve anahtarsız kullanılır; gecikmeli olabilir, bazı sembollerde geçici erişim/rate-limit sorunu olabilir. Uygulama veri yokken sahte fiyat/sinyal üretmez.
