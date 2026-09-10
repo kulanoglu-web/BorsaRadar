@@ -57,6 +57,9 @@ public class MainActivity extends Activity {
     private LinearLayout content;
     private final ExecutorService io = Executors.newFixedThreadPool(4);
     private final Handler main = new Handler(Looper.getMainLooper());
+    private String currentSection = "portfolio";
+    private Runnable detailBackAction;
+    private boolean detailOpen = false;
 
     static class Holding {
         String symbol;
@@ -107,6 +110,44 @@ public class MainActivity extends Activity {
         return v;
     }
 
+    private String decision(IndicatorEngine.Snapshot s) {
+        if ("AL".equals(s.signal)) return "AL";
+        if ("ERKEN".equals(s.signal)) return "KADEMELİ AL";
+        if ("SAT/RİSK".equals(s.signal)) return "SAT / RİSKİ AZALT";
+        if ("KOVALAMA".equals(s.signal)) return "YENİ ALIM YAPMA";
+        if ("İZLE".equals(s.signal)) return "TUT / YENİ ALIM İÇİN BEKLE";
+        return "BEKLE / TUT";
+    }
+
+    private int decisionColor(IndicatorEngine.Snapshot s) {
+        String d = decision(s);
+        if (d.equals("AL") || d.equals("KADEMELİ AL")) return GREEN;
+        if (d.contains("SAT") || d.contains("YAPMA")) return RED;
+        return Color.rgb(225, 145, 0);
+    }
+
+    private String decisionWhy(IndicatorEngine.Snapshot s) {
+        List<String> why = new ArrayList<>();
+        why.add(s.trendUp ? "yükseliş trendi güçlü" : (s.close < s.ema50 ? "fiyat EMA50 altında" : "trend henüz net değil"));
+        why.add("RSI " + IndicatorEngine.fmt(s.rsi14));
+        why.add(s.macd > s.macdSignal ? "MACD olumlu" : "MACD zayıf");
+        why.add(s.relVolume >= 1.15 ? "hacim destekli" : "hacim desteği düşük");
+        why.add(s.cmf20 > 0.05 ? "para girişi var" : (s.cmf20 < -0.08 ? "para çıkışı var" : "para akışı nötr"));
+        if (s.breakout20) why.add("20 günlük kırılım");
+        else if (s.preBreakout) why.add("kırılıma yakın");
+        if (s.trap) why.add("yukarı yönlü tuzak riski");
+        return "Neye göre: " + android.text.TextUtils.join(" • ", why) + ".";
+    }
+
+    private TextView decisionBanner(IndicatorEngine.Snapshot s) {
+        TextView v = coloredText(decision(s), 22, Color.WHITE);
+        v.setGravity(android.view.Gravity.CENTER);
+        v.setTypeface(null, android.graphics.Typeface.BOLD);
+        v.setBackgroundColor(decisionColor(s));
+        v.setPadding(20, 22, 20, 22);
+        return v;
+    }
+
     private void shell(String page) {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -145,6 +186,7 @@ public class MainActivity extends Activity {
     }
 
     private void showPortfolio() {
+        currentSection = "portfolio"; detailOpen = false;
         shell("Portföyüm");
         content.addView(title("Elindeki hisseleri burada ayrı tut. TUPRS portföyde değerlendirilir, bağımsız radar taramasına alınmaz.", 15));
         LinearLayout actions = new LinearLayout(this);
@@ -174,8 +216,9 @@ public class MainActivity extends Activity {
             double pnl = (s.close - h.cost) * h.qty;
             double pnlPct = h.cost == 0 ? 0 : (s.close / h.cost - 1.0) * 100.0;
             row.addView(coloredText("Son: " + money(s.close) + " • P/L: " + money(pnl) + " (%" + IndicatorEngine.fmt(pnlPct) + ")", 15, pnl >= 0 ? GREEN : RED));
-            int signalColor = (s.signal.contains("AL") || s.signal.contains("ERKEN")) ? GREEN : (s.signal.contains("SAT") || s.signal.contains("RİSK") || s.signal.contains("KOVALAMA")) ? RED : NAVY;
-            row.addView(coloredText("Sinyal: " + s.signal + " • " + s.reason, 14, signalColor));
+            row.addView(decisionBanner(s));
+            row.addView(coloredText(decisionWhy(s), 14, decisionColor(s)));
+            row.addView(title("Teknik ayrıntı: " + s.signal + " • " + s.reason, 13));
             row.addView(title("ATR stop referansı: " + money(Math.max(s.close - 2.2 * s.atr14, s.ema50 * 0.985)), 13));
         }
 
@@ -265,6 +308,7 @@ public class MainActivity extends Activity {
     }
 
     private void showRadar() {
+        currentSection = "radar"; detailOpen = false;
         shell("BIST Radar");
         content.addView(title("Radar portföyden bağımsız çalışır. Günlük Yahoo Finance verisini anahtarsız çeker; veri gecikmeli olabilir.", 15));
         content.addView(title("Skor: EMA20/50 + RSI14 + MACD + RVOL + CMF + Bollinger + breakout + trap + ATR", 14));
@@ -302,6 +346,7 @@ public class MainActivity extends Activity {
     }
 
     private void renderRadarResults(List<Ranked> results) {
+        currentSection = "radar"; detailOpen = false;
         shell("Radar Sonuçları");
         List<Ranked> copy = new ArrayList<>(results);
         copy.sort((a, b) -> {
@@ -333,6 +378,9 @@ public class MainActivity extends Activity {
     }
 
     private void runSingleBacktest(String symbol) {
+        final String returnSection = currentSection;
+        detailBackAction = () -> { if ("radar".equals(returnSection)) showRadar(); else showPortfolio(); };
+        detailOpen = true;
         shell(symbol + " Backtest");
         ProgressBar p = new ProgressBar(this);
         content.addView(p);
@@ -345,7 +393,12 @@ public class MainActivity extends Activity {
                 BacktestEngine.Result r = BacktestEngine.run(data);
                 main.post(() -> {
                     shell(symbol + " Backtest Sonucu");
-                    content.addView(title("Güncel teknik sinyal: " + s.signal + " • skor " + s.score, 18));
+                    Button back = btn("← Geri");
+                    back.setOnClickListener(v -> detailBackAction.run());
+                    content.addView(back);
+                    content.addView(decisionBanner(s));
+                    content.addView(coloredText(decisionWhy(s), 15, decisionColor(s)));
+                    content.addView(title("Teknik sinyal: " + s.signal + " • skor " + s.score, 16));
                     content.addView(title(r.summary, 17));
                     content.addView(title("Mantık: güçlü AL/ERKEN sinyaliyle giriş; ATR + EMA50 tabanlı ilk stop; ATR trailing ve trend/MACD bozulmasında çıkış.", 14));
                     content.addView(title("Not: komisyon, kayma, vergi ve gün içi gerçekleşme farkları dahil değildir. Sonuç yatırım garantisi değildir.", 13));
@@ -360,6 +413,7 @@ public class MainActivity extends Activity {
     }
 
     private void showStrategies() {
+        currentSection = "strategies"; detailOpen = false;
         shell("100.000 TL • 3 Strateji");
         content.addView(title("Kısa vade / al-sat: 33.333 TL", 18));
         content.addView(title("• Radar skoru ≥ 7 öncelik • ATR stop • tek pozisyonda sermayenin tamamı kullanılmaz.", 14));
@@ -368,6 +422,11 @@ public class MainActivity extends Activity {
         content.addView(title("Uzun vade: 33.334 TL", 18));
         content.addView(title("• EMA50 üstü trend, para akışı ve geri çekilme disiplini öncelikli.", 14));
         content.addView(title("Radar sinyalleri karar desteğidir; otomatik alım-satım emri göndermez.", 13));
+    }
+
+    @Override public void onBackPressed() {
+        if (detailOpen && detailBackAction != null) detailBackAction.run();
+        else super.onBackPressed();
     }
 
     private String money(double x) {
