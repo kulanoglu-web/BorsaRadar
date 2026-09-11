@@ -17,15 +17,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Run practical BR-Regime selection
-        run: PYTHONPATH=research python3 research/select_regime_candidate.py
+      - name: Run BR-Entry v3
+        run: PYTHONPATH=research python3 research/backtest_entry_v3.py
       - name: Show result
-        run: cat research/result_regime_candidate.md
+        run: cat research/result_entry_v3.md
       - uses: actions/upload-artifact@v4
         with:
-          name: borsaradar-regime-candidate
+          name: borsaradar-entry-v3
           path: |
-            research/result_regime_candidate.md
-            research/result_regime_candidate.json
+            research/result_entry_v3.md
+            research/result_entry_v3.json
           if-no-files-found: error
           retention-days: 30
