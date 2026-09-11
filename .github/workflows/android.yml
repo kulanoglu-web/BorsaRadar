@@ -1,4 +1,4 @@
-name: Build BorsaRadar APK
+name: Build BorsaRadar 1.9 Clean APK
 
 on:
   workflow_dispatch:
@@ -25,19 +25,29 @@ jobs:
         run: |
           cat .buildsrc/part00 .buildsrc/part01 .buildsrc/part02 .buildsrc/part03 > BorsaRadar_v1.8_APK_buildready.zip
           unzip -t BorsaRadar_v1.8_APK_buildready.zip
-      - name: Extract v1.8 source
+      - name: Extract source
         run: |
-          rm -rf build-v18
-          mkdir build-v18
-          unzip -q BorsaRadar_v1.8_APK_buildready.zip -d build-v18
+          rm -rf build-v19
+          mkdir build-v19
+          unzip -q BorsaRadar_v1.8_APK_buildready.zip -d build-v19
+      - name: Patch for clean install
+        working-directory: build-v19/BorsaRadar
+        run: |
+          sed -i "s/applicationId 'com.kulanoglu.borsaradar'/applicationId 'com.kulanoglu.borsaradar.clean'/" app/build.gradle
+          sed -i 's/minSdk 26/minSdk 23/' app/build.gradle
+          sed -i 's/versionCode 18/versionCode 19/' app/build.gradle
+          sed -i "s/versionName '[^']*'/versionName '1.9.0'/" app/build.gradle
+          sed -i 's/android:label="BorsaRadar"/android:label="BorsaRadar 1.9"/' app/src/main/AndroidManifest.xml
+          echo '--- app/build.gradle ---'
+          cat app/build.gradle
       - name: Build APK
-        working-directory: build-v18/BorsaRadar
+        working-directory: build-v19/BorsaRadar
         run: gradle --no-daemon clean assembleDebug
       - name: Prepare APK
-        run: cp build-v18/BorsaRadar/app/build/outputs/apk/debug/app-debug.apk BorsaRadar-v1.8.apk
+        run: cp build-v19/BorsaRadar/app/build/outputs/apk/debug/app-debug.apk BorsaRadar-v1.9-clean.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v1.8-APK
-          path: BorsaRadar-v1.8.apk
+          name: BorsaRadar-v1.9-clean-APK
+          path: BorsaRadar-v1.9-clean.apk
           if-no-files-found: error
           retention-days: 30
