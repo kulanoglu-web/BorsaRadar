@@ -1,13 +1,17 @@
-name: Build Android APK
+name: Build BorsaRadar APK
+
 on:
   workflow_dispatch:
   push:
     branches: [ main ]
+
 permissions:
   contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -17,17 +21,19 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
-      - name: Install stable Huawei-compatible debug signature
-        shell: bash
+      - name: Extract v1.8 source
         run: |
-          mkdir -p "$HOME/.android"
-          echo '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' | base64 --decode > "$HOME/.android/debug.keystore"
-          mv "$HOME/.android/debug.keystore" "$GITHUB_WORKSPACE/borsaradar-debug.keystore"
-      - name: Build explicitly with permanent signing key
-        env:
-          BORSA_RADAR_KEYSTORE: ${{ github.workspace }}/borsaradar-debug.keystore
-        run: gradle assembleDebug --stacktrace
+          rm -rf build-v18
+          mkdir build-v18
+          unzip -q BorsaRadar_v1.8_APK_buildready.zip -d build-v18
+      - name: Build APK
+        working-directory: build-v18/BorsaRadar
+        run: gradle --no-daemon clean assembleDebug
+      - name: Prepare APK
+        run: cp build-v18/BorsaRadar/app/build/outputs/apk/debug/app-debug.apk BorsaRadar-v1.8.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v0.9.12-Permanent-Signature-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: BorsaRadar-v1.8-APK
+          path: BorsaRadar-v1.8.apk
+          if-no-files-found: error
+          retention-days: 30
