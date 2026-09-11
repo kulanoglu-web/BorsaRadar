@@ -17,15 +17,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Run BR-Impulse optimization
-        run: PYTHONPATH=research python3 research/backtest_impulse.py
-      - name: Show impulse result
-        run: cat research/result_impulse.md
+      - name: Run BR-Confirm optimization
+        run: PYTHONPATH=research python3 research/backtest_confirm.py
+      - name: Show result
+        run: cat research/result_confirm.md
       - uses: actions/upload-artifact@v4
         with:
-          name: borsaradar-impulse-backtest
+          name: borsaradar-confirm-backtest
           path: |
-            research/result_impulse.md
-            research/result_impulse.json
+            research/result_confirm.md
+            research/result_confirm.json
           if-no-files-found: error
           retention-days: 30
