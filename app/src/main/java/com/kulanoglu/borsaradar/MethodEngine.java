@@ -29,14 +29,14 @@ public final class MethodEngine {
     }
 
     public static Result analyze(IndicatorEngine.Snapshot s) {
-        // BR-Pulse: three indicators developed in BorsaRadar.
+        // BR-Pulse: trend efficiency + ATR-normalized momentum + directional volume pressure.
         double pulse = 50.0;
         pulse += clamp(s.trendEfficiency20, -1, 1) * 22.0;
         pulse += clamp(s.momentumAtr20 / 2.5, -1, 1) * 17.0;
         pulse += clamp(s.volumePressure20, -1, 1) * 11.0;
         pulse = clamp(pulse, 0, 100);
 
-        // FlowBreak: participation + money flow + breakout quality.
+        // FlowBreak: money flow + participation + breakout quality.
         double flow = 50.0;
         flow += clamp(s.cmf20 / 0.25, -1, 1) * 16.0;
         flow += clamp((s.relVolume - 1.0) / 1.3, -1, 1) * 12.0;
@@ -45,7 +45,7 @@ public final class MethodEngine {
         if (s.trap) flow -= 26.0;
         flow = clamp(flow, 0, 100);
 
-        // TrendGuard: prevents a single hot indicator from creating a false AL.
+        // TrendGuard: avoids a single hot indicator becoming a false AL.
         double guard = 50.0;
         if (s.trendUp) guard += 15.0;
         else if (s.close < s.ema50) guard -= 15.0;
@@ -69,7 +69,7 @@ public final class MethodEngine {
         else label = "SAT / RİSK";
 
         String summary = String.format(Locale.US,
-                "Analiz gücü %%.0f • BR-Pulse %%.0f • FlowBreak %%.0f • TrendGuard %%.0f",
+                "Analiz gücü %.0f%% • BR-Pulse %.0f%% • FlowBreak %.0f%% • TrendGuard %.0f%%",
                 pct, pulse, flow, guard);
         return new Result(pct, pulse, flow, guard, label, summary);
     }
