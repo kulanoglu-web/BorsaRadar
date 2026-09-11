@@ -19,7 +19,7 @@ def fetch(sym):
     last=None
     for host in ('query1.finance.yahoo.com','query2.finance.yahoo.com'):
         try:
-            url=f'https://{host}/v8/finance/chart/{sym}.IS?range=6mo&interval=1d&events=div%2Csplits&includeAdjustedClose=true'
+            url=f'https://{host}/v8/finance/chart/{sym}.IS?range=1y&interval=1d&events=div%2Csplits&includeAdjustedClose=true'
             req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 BorsaRadarResearch/1.0','Accept':'application/json'})
             with urllib.request.urlopen(req,timeout=15) as r: j=json.load(r)
             rr=j['chart']['result'][0]; ts=rr['timestamp']; q=rr['indicators']['quote'][0]; out=[]
