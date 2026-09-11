@@ -6,11 +6,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.content.Context;
-import android.content.ClipboardManager;
-import android.content.ClipData;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.text.InputType;
-import android.view.View;
+import android.view.Gravity;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -28,7 +27,6 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -37,40 +35,48 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
-    private static final String PREFS = "portfolio";
-    private static final int NAVY = Color.rgb(11, 31, 58);
-    private static final int RED = Color.rgb(200, 16, 46);
-    private static final int GREEN = Color.rgb(0, 128, 96);
-    private static final String[] PORTFOLIO_SYMBOLS = BistUniverse.symbols(true);
-    private static final String[] RADAR_SYMBOLS = BistUniverse.symbols(false);
+    private static final String PREFS = "borsaradar_final";
+    private static final int NAVY = Color.rgb(9, 30, 54);
+    private static final int NAVY2 = Color.rgb(17, 50, 82);
+    private static final int GREEN = Color.rgb(0, 135, 92);
+    private static final int RED = Color.rgb(205, 42, 55);
+    private static final int AMBER = Color.rgb(225, 145, 0);
+    private static final int PURPLE = Color.rgb(104, 76, 190);
+    private static final int BG = Color.rgb(244, 247, 251);
+    private static final String[] ALL_SYMBOLS = BistUniverse.symbols(true);
+    private static final String[] DIVIDEND_POOL = {
+            "AKBNK","ANHYT","AYGAZ","BIMAS","CCOLA","DOAS","ENJSA","ENKAI","EREGL",
+            "FROTO","GARAN","ISCTR","ISDMR","KCHOL","MGROS","SAHOL","SISE","TCELL",
+            "THYAO","TOASO","TTKOM","TTRAK","TUPRS","ULKER","YKBNK"
+    };
 
-    private final List<Holding> holdings = new ArrayList<>();
-    private final Map<String, IndicatorEngine.Snapshot> latest = new HashMap<>();
-    private final List<Ranked> lastRadarResults = new ArrayList<>();
+    static final class Holding {
+        String symbol; int qty; double cost;
+        Holding(String s, int q, double c) { symbol=s; qty=q; cost=c; }
+    }
+
+    static final class RadarItem {
+        String symbol, recommendation, why, horizon;
+        double price, score, confidence;
+        RadarItem(String s, ShortPulseEngine.Result r) {
+            symbol=s; recommendation=r.recommendation; why=r.explanation; horizon=r.horizonText;
+            price=r.price; score=r.score; confidence=r.confidence;
+        }
+    }
+
     private LinearLayout content;
-    private final ExecutorService io = Executors.newFixedThreadPool(3);
     private final Handler main = new Handler(Looper.getMainLooper());
-    private String currentSection = "portfolio";
-    private Runnable detailBackAction;
-    private boolean detailOpen = false;
-
-    static class Holding {
-        String symbol;
-        int qty;
-        double cost;
-        Holding(String s, int q, double c) { symbol = s; qty = q; cost = c; }
-    }
-
-    static class Ranked {
-        String symbol;
-        IndicatorEngine.Snapshot s;
-        BacktestEngine.Result bt;
-        Ranked(String symbol, IndicatorEngine.Snapshot s, BacktestEngine.Result bt) { this.symbol=symbol; this.s=s; this.bt=bt; }
-    }
+    private final ExecutorService io = Executors.newFixedThreadPool(5);
+    private final List<Holding> holdings = new ArrayList<>();
+    private final Map<String, ShortPulseEngine.Result> holdingSignals = new HashMap<>();
+    private final List<RadarItem> radarResults = Collections.synchronizedList(new ArrayList<>());
+    private volatile boolean scanRunning=false;
+    private volatile int scanDone=0, scanFailed=0;
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
-        load();
+        loadPortfolio();
+        loadRadarCache();
         showPortfolio();
     }
 
@@ -79,514 +85,277 @@ public class MainActivity extends Activity {
         super.onDestroy();
     }
 
-    private TextView title(String t, int sp) {
-        TextView v = new TextView(this);
-        v.setText(t);
-        v.setTextSize(sp);
-        v.setTextColor(Color.rgb(20, 28, 38));
-        v.setPadding(24, 14, 24, 10);
+    private int dp(int x) { return Math.round(x * getResources().getDisplayMetrics().density); }
+
+    private TextView txt(String text, int sp, int color) {
+        TextView v=new TextView(this);
+        v.setText(text); v.setTextSize(sp); v.setTextColor(color);
+        v.setPadding(dp(14),dp(8),dp(14),dp(8));
         return v;
     }
 
-    private Button btn(String t) {
-        Button b = new Button(this);
-        b.setText(t);
-        b.setTextColor(Color.WHITE);
-        b.setBackgroundColor(NAVY);
-        b.setAllCaps(false);
+    private TextView bold(String text, int sp, int color) {
+        TextView v=txt(text,sp,color); v.setTypeface(null, Typeface.BOLD); return v;
+    }
+
+    private Button button(String text, int color) {
+        Button b=new Button(this);
+        b.setText(text); b.setAllCaps(false); b.setTextColor(Color.WHITE); b.setTextSize(14);
+        b.setBackgroundColor(color); b.setPadding(dp(8),dp(7),dp(8),dp(7));
         return b;
     }
 
-    private TextView coloredText(String t, int sp, int color) {
-        TextView v = title(t, sp);
-        v.setTextColor(color);
-        return v;
-    }
+    private void spacer(int h) { Space s=new Space(this); content.addView(s,new LinearLayout.LayoutParams(1,dp(h))); }
 
-    private String decision(IndicatorEngine.Snapshot s) {
-        if (s.score >= 13 && s.trendUp && s.cmf20 > 0.05 && s.trendEfficiency20 > 0.28 && !s.trap) return "ÇOK GÜÇLÜ FIRSAT • AL";
-        if ("AL".equals(s.signal)) return "AL";
-        if ("ERKEN".equals(s.signal)) return "KADEMELİ AL";
-        if ("SAT/RİSK".equals(s.signal)) return "SAT / RİSKİ AZALT";
-        if ("KOVALAMA".equals(s.signal)) return "YENİ ALIM YAPMA";
-        if ("İZLE".equals(s.signal)) return "TUT / YENİ ALIM İÇİN BEKLE";
-        return "BEKLE / TUT";
-    }
-
-    private int decisionColor(IndicatorEngine.Snapshot s) {
-        String d = decision(s);
-        if (d.startsWith("ÇOK GÜÇLÜ FIRSAT")) return GREEN;
-        if (d.equals("AL") || d.equals("KADEMELİ AL")) return GREEN;
-        if (d.contains("SAT") || d.contains("YAPMA")) return RED;
-        return Color.rgb(225, 145, 0);
-    }
-
-    private String decisionWhy(IndicatorEngine.Snapshot s) {
-        List<String> why = new ArrayList<>();
-        why.add(s.trendUp ? "yükseliş trendi güçlü" : (s.close < s.ema50 ? "fiyat EMA50 altında" : "trend henüz net değil"));
-        why.add("RSI " + IndicatorEngine.fmt(s.rsi14));
-        why.add(s.macd > s.macdSignal ? "MACD olumlu" : "MACD zayıf");
-        why.add(s.relVolume >= 1.15 ? "hacim destekli" : "hacim desteği düşük");
-        why.add(s.cmf20 > 0.05 ? "para girişi var" : (s.cmf20 < -0.08 ? "para çıkışı var" : "para akışı nötr"));
-        if (s.breakout20) why.add("20 günlük kırılım");
-        else if (s.preBreakout) why.add("kırılıma yakın");
-        if (s.trap) why.add("yukarı yönlü tuzak riski");
-        why.add("CCI " + IndicatorEngine.fmt(s.cci20));
-        why.add("Stokastik " + IndicatorEngine.fmt(s.stochastic14));
-        why.add("ADX " + IndicatorEngine.fmt(s.adx14));
-        why.add("BorsaRadar trend verimi " + IndicatorEngine.fmt(s.trendEfficiency20));
-        why.add("ATR momentum " + IndicatorEngine.fmt(s.momentumAtr20));
-        why.add("hacim yön baskısı " + IndicatorEngine.fmt(s.volumePressure20));
-        return "Neye göre: " + android.text.TextUtils.join(" • ", why) + ".";
-    }
-
-    private String indicatorConsensus(IndicatorEngine.Snapshot s) {
-        int buy = 0, sell = 0, neutral = 0;
-        if (s.trendUp) buy++; else if (s.close < s.ema50) sell++; else neutral++;
-        if (s.rsi14 >= 45 && s.rsi14 <= 68) buy++; else if (s.rsi14 > 72) sell++; else neutral++;
-        if (s.macd > s.macdSignal) buy++; else sell++;
-        if (s.cmf20 > 0.05) buy++; else if (s.cmf20 < -0.08) sell++; else neutral++;
-        if (s.breakout20 || s.preBreakout) buy++; else neutral++;
-        if (s.trap) sell++; else neutral++;
-        if (s.cci20 >= 50 && s.cci20 <= 180) buy++; else if (s.cci20 < -100) sell++; else neutral++;
-        if (s.stochastic14 >= 55 && s.stochastic14 <= 88) buy++; else if (s.stochastic14 > 94 || s.stochastic14 < 18) sell++; else neutral++;
-        if (s.adx14 >= 20 && s.trendUp) buy++; else if (s.adx14 >= 20 && s.close < s.ema50) sell++; else neutral++;
-        if (s.trendEfficiency20 > 0.28) buy++; else if (s.trendEfficiency20 < -0.22) sell++; else neutral++;
-        if (s.momentumAtr20 > 0.80) buy++; else if (s.momentumAtr20 < -0.80) sell++; else neutral++;
-        if (s.volumePressure20 > 0.08) buy++; else if (s.volumePressure20 < -0.08) sell++; else neutral++;
-        return "İndikatör uzlaşması: " + buy + " AL • " + neutral + " NÖTR • " + sell + " SAT";
-    }
-
-    private TextView decisionBanner(IndicatorEngine.Snapshot s) {
-        TextView v = coloredText(decision(s), 22, Color.WHITE);
-        v.setGravity(android.view.Gravity.CENTER);
-        v.setTypeface(null, android.graphics.Typeface.BOLD);
-        v.setBackgroundColor(decisionColor(s));
-        v.setPadding(20, 22, 20, 22);
-        return v;
+    private LinearLayout card() {
+        LinearLayout c=new LinearLayout(this);
+        c.setOrientation(LinearLayout.VERTICAL);
+        c.setPadding(dp(12),dp(10),dp(12),dp(10));
+        c.setBackgroundColor(Color.WHITE);
+        return c;
     }
 
     private void shell(String page) {
-        LinearLayout root = new LinearLayout(this);
+        LinearLayout root=new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(14, 14, 14, 14);
-        root.setBackgroundColor(Color.rgb(247, 249, 252));
+        root.setBackgroundColor(BG);
 
-        TextView brand = coloredText("BORSA RADAR", 27, Color.WHITE);
-        brand.setBackgroundColor(NAVY);
-        brand.setPadding(24, 22, 24, 22);
-        root.addView(brand);
+        LinearLayout head=new LinearLayout(this);
+        head.setOrientation(LinearLayout.VERTICAL); head.setPadding(dp(16),dp(12),dp(16),dp(10)); head.setBackgroundColor(NAVY);
+        TextView brand=bold("BORSA RADAR",23,Color.WHITE);
+        brand.setPadding(0,0,0,0); head.addView(brand);
+        TextView sub=txt(page,13,Color.rgb(190,207,224)); sub.setPadding(0,2,0,0); head.addView(sub);
+        root.addView(head);
 
-        LinearLayout nav = new LinearLayout(this);
-        nav.setOrientation(LinearLayout.HORIZONTAL);
-        Button p = btn("Portföyüm"), r = btn("BIST Radar"), a = btn("3 Strateji");
-        p.setBackgroundColor(RED);
-        r.setBackgroundColor(RED);
-        a.setBackgroundColor(RED);
-        nav.addView(p, new LinearLayout.LayoutParams(0, -2, 1));
-        nav.addView(r, new LinearLayout.LayoutParams(0, -2, 1));
-        nav.addView(a, new LinearLayout.LayoutParams(0, -2, 1));
-        p.setOnClickListener(v -> showPortfolio());
-        r.setOnClickListener(v -> showRadar());
-        a.setOnClickListener(v -> showStrategies());
+        LinearLayout nav=new LinearLayout(this); nav.setOrientation(LinearLayout.HORIZONTAL);
+        Button p=button("Portföy",NAVY2), r=button("Radar",GREEN), one=button("Tek Hisse",PURPLE), three=button("3 Sepet",AMBER);
+        nav.addView(p,new LinearLayout.LayoutParams(0,-2,1));
+        nav.addView(r,new LinearLayout.LayoutParams(0,-2,1));
+        nav.addView(one,new LinearLayout.LayoutParams(0,-2,1));
+        nav.addView(three,new LinearLayout.LayoutParams(0,-2,1));
+        p.setOnClickListener(v->showPortfolio()); r.setOnClickListener(v->showRadar());
+        one.setOnClickListener(v->singleStockDialog()); three.setOnClickListener(v->showBaskets());
         root.addView(nav);
-        root.addView(title("BorsaRadar • " + page, 24));
 
-        ScrollView s = new ScrollView(this);
-        content = new LinearLayout(this);
-        content.setOrientation(LinearLayout.VERTICAL);
-        s.addView(content);
-        root.addView(s, new LinearLayout.LayoutParams(-1, 0, 1));
-        TextView credit = coloredText("Programcı: Erdoğan Kulanoğlu", 12, Color.rgb(95, 105, 118));
-        credit.setGravity(android.view.Gravity.CENTER);
-        root.addView(credit);
+        ScrollView sv=new ScrollView(this);
+        content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(10),dp(8),dp(10),dp(14));
+        sv.addView(content); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
+
+        TextView foot=txt("BorsaRadar • 1–10 işlem günü odaklı teknik karar destek",11,Color.rgb(100,110,124));
+        foot.setGravity(Gravity.CENTER); root.addView(foot);
         setContentView(root);
     }
 
     private void showPortfolio() {
-        currentSection = "portfolio"; detailOpen = false;
         shell("Portföyüm");
-        content.addView(title("Elindeki hisseleri burada ayrı tut. TUPRS portföyde değerlendirilir, bağımsız radar taramasına alınmaz.", 15));
-        LinearLayout actions = new LinearLayout(this);
-        Button add = btn("+ Hisse Ekle");
-        Button refresh = btn("Fiyatları / Sinyalleri Yenile");
-        actions.addView(add, new LinearLayout.LayoutParams(0, -2, 1));
-        actions.addView(refresh, new LinearLayout.LayoutParams(0, -2, 1));
+        LinearLayout actions=new LinearLayout(this);
+        Button add=button("+ Hisse Ekle",GREEN), refresh=button("Tümünü Güncelle",NAVY2);
+        actions.addView(add,new LinearLayout.LayoutParams(0,-2,1)); actions.addView(refresh,new LinearLayout.LayoutParams(0,-2,1));
         content.addView(actions);
-        add.setOnClickListener(v -> portfolioDialog(null));
-        refresh.setOnClickListener(v -> refreshPortfolio());
-
-        LinearLayout backup = new LinearLayout(this);
-        Button copy = btn("Portföyü Kopyala");
-        Button restore = btn("Panodan Geri Yükle");
-        backup.addView(copy, new LinearLayout.LayoutParams(0, -2, 1));
-        backup.addView(restore, new LinearLayout.LayoutParams(0, -2, 1));
-        content.addView(backup);
-        copy.setOnClickListener(v -> copyPortfolio());
-        restore.setOnClickListener(v -> restorePortfolio());
-
-        if (holdings.isEmpty()) content.addView(title("Henüz portföy girişi yok.", 16));
-        for (Holding h : new ArrayList<>(holdings)) renderHolding(h);
+        add.setOnClickListener(v->portfolioDialog(null,null)); refresh.setOnClickListener(v->refreshPortfolio());
+        spacer(8);
+        if(holdings.isEmpty()) {
+            LinearLayout c=card(); c.addView(bold("Portföy boş",19,NAVY)); c.addView(txt("Hisse ekleyince maliyet, güncel fiyat, kâr/zarar ve AL–TUT–SAT değerlendirmesi burada görünür.",14,Color.DKGRAY)); content.addView(c); return;
+        }
+        for(Holding h:new ArrayList<>(holdings)) renderHolding(h);
     }
 
     private void renderHolding(Holding h) {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.VERTICAL);
-        row.setPadding(18, 12, 18, 12);
-        row.setBackgroundColor(Color.rgb(244, 247, 250));
-        row.addView(title(h.symbol + " • " + h.qty + " lot • Ort. " + money(h.cost), 18));
-
-        IndicatorEngine.Snapshot s = latest.get(h.symbol);
-        if (s == null) {
-            row.addView(title("Canlı/gecikmeli veri henüz alınmadı.", 14));
-        } else {
-            double pnl = (s.close - h.cost) * h.qty;
-            double pnlPct = h.cost == 0 ? 0 : (s.close / h.cost - 1.0) * 100.0;
-            row.addView(coloredText("Son: " + money(s.close) + " • P/L: " + money(pnl) + " (%" + IndicatorEngine.fmt(pnlPct) + ")", 15, pnl >= 0 ? GREEN : RED));
-            row.addView(decisionBanner(s));
-            row.addView(coloredText(indicatorConsensus(s), 15, decisionColor(s)));
-            row.addView(coloredText(decisionWhy(s), 14, decisionColor(s)));
-            row.addView(title("Teknik ayrıntı: " + s.signal + " • " + s.reason, 13));
-            row.addView(title("ATR stop referansı: " + money(Math.max(s.close - 2.2 * s.atr14, s.ema50 * 0.985)), 13));
+        LinearLayout c=card();
+        c.addView(bold(h.symbol+"  •  "+h.qty+" lot",20,NAVY));
+        c.addView(txt("Ortalama maliyet  "+money(h.cost),14,Color.DKGRAY));
+        ShortPulseEngine.Result s=holdingSignals.get(h.symbol);
+        if(s==null) c.addView(txt("Güncel değerlendirme için 'Tümünü Güncelle'ye bas.",13,Color.GRAY));
+        else {
+            double pnl=(s.price-h.cost)*h.qty, pct=h.cost>0?(s.price/h.cost-1)*100:0;
+            c.addView(bold("Son  "+money(s.price)+"   P/L  "+money(pnl)+"  (%"+fmt(pct)+")",16,pnl>=0?GREEN:RED));
+            c.addView(signalBanner(s));
+            c.addView(txt(s.explanation,13,Color.DKGRAY));
+            c.addView(txt("Hedef süre: "+s.horizonText+"  •  Güven %"+(int)s.confidence+"  •  Stop ref. "+money(s.stopReference),13,NAVY2));
         }
+        LinearLayout row=new LinearLayout(this);
+        Button detail=button("Grafik / Tavsiye",NAVY2), edit=button("Düzenle",AMBER), del=button("Sil",RED);
+        row.addView(detail,new LinearLayout.LayoutParams(0,-2,1.2f)); row.addView(edit,new LinearLayout.LayoutParams(0,-2,1)); row.addView(del,new LinearLayout.LayoutParams(0,-2,.7f));
+        c.addView(row);
+        detail.setOnClickListener(v->analyzeStock(h.symbol)); edit.setOnClickListener(v->portfolioDialog(h,h.symbol));
+        del.setOnClickListener(v->{holdings.remove(h); savePortfolio(); showPortfolio();});
+        content.addView(c); spacer(8);
+    }
 
-        LinearLayout buttons = new LinearLayout(this);
-        Button edit = btn("Düzenle"), bt = btn("1Y Backtest"), del = btn("Sil");
-        del.setBackgroundColor(RED);
-        buttons.addView(edit, new LinearLayout.LayoutParams(0, -2, 1));
-        buttons.addView(bt, new LinearLayout.LayoutParams(0, -2, 1));
-        buttons.addView(del, new LinearLayout.LayoutParams(0, -2, 1));
-        row.addView(buttons);
-        edit.setOnClickListener(v -> portfolioDialog(h));
-        bt.setOnClickListener(v -> runSingleBacktest(h.symbol));
-        del.setOnClickListener(v -> { holdings.remove(h); save(); showPortfolio(); });
-        content.addView(row);
-        Space sp = new Space(this);
-        content.addView(sp, new LinearLayout.LayoutParams(1, 10));
+    private TextView signalBanner(ShortPulseEngine.Result s) {
+        int color=s.recommendation.contains("SAT")||s.recommendation.contains("RİSK")||s.recommendation.contains("KOVALAMA")?RED:
+                s.recommendation.contains("AL")?GREEN:AMBER;
+        TextView v=bold(s.recommendation+"  •  Pulse "+fmt(s.score),20,Color.WHITE);
+        v.setGravity(Gravity.CENTER); v.setBackgroundColor(color); v.setPadding(dp(12),dp(12),dp(12),dp(12)); return v;
     }
 
     private void refreshPortfolio() {
-        if (holdings.isEmpty()) { Toast.makeText(this, "Önce portföye hisse ekle", Toast.LENGTH_SHORT).show(); return; }
-        shell("Portföy Güncelleniyor");
-        ProgressBar bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        bar.setMax(holdings.size());
-        content.addView(bar);
-        TextView status = title("Veri alınıyor...", 16);
-        content.addView(status);
-
-        final int[] done = {0};
-        for (Holding h : new ArrayList<>(holdings)) {
-            io.execute(() -> {
-                try {
-                    List<MarketDataService.Candle> data = MarketDataService.fetchDaily(h.symbol, "6mo");
-                    IndicatorEngine.Snapshot s = IndicatorEngine.analyze(data);
-                    synchronized (latest) { latest.put(h.symbol, s); }
-                } catch (Exception ignored) { }
-                main.post(() -> {
-                    done[0]++;
-                    bar.setProgress(done[0]);
-                    status.setText(done[0] + "/" + holdings.size() + " tamamlandı");
-                    if (done[0] >= holdings.size()) showPortfolio();
-                });
-            });
-        }
+        if(holdings.isEmpty()){Toast.makeText(this,"Önce hisse ekle",Toast.LENGTH_SHORT).show();return;}
+        shell("Portföy güncelleniyor");
+        ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal); bar.setMax(holdings.size()); content.addView(bar);
+        TextView st=txt("0/"+holdings.size(),15,NAVY); content.addView(st);
+        final int[] done={0};
+        for(Holding h:new ArrayList<>(holdings)) io.execute(()->{
+            try { List<MarketDataService.Candle> d=MarketDataService.fetchDaily(h.symbol,"1mo"); holdingSignals.put(h.symbol,ShortPulseEngine.analyze(d)); } catch(Exception ignored){}
+            main.post(()->{ done[0]++; bar.setProgress(done[0]); st.setText(done[0]+"/"+holdings.size()); if(done[0]>=holdings.size()) showPortfolio(); });
+        });
     }
 
-    private void portfolioDialog(Holding edit) {
-        LinearLayout box = new LinearLayout(this);
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(24, 10, 24, 0);
-        AutoCompleteTextView s = new AutoCompleteTextView(this);
-        s.setHint("Hisse kodu veya şirket adı yaz (örn. BIMAS)");
-        s.setThreshold(1);
-        s.setSingleLine(true);
-        s.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, BistUniverse.ENTRIES));
-        EditText q = new EditText(this);
-        q.setHint("Lot / adet");
-        q.setInputType(InputType.TYPE_CLASS_NUMBER);
-        EditText c = new EditText(this);
-        c.setHint("Ortalama alış fiyatı (örn. 287,87)");
-        c.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        if (edit != null) {
-            s.setText(edit.symbol, false);
-            q.setText(String.valueOf(edit.qty));
-            c.setText(String.valueOf(edit.cost));
-        }
-        box.addView(s); box.addView(q); box.addView(c);
-        new AlertDialog.Builder(this)
-                .setTitle(edit == null ? "Portföye ekle" : "Pozisyonu düzenle")
-                .setView(box)
-                .setPositiveButton("Kaydet", (d, w) -> {
-                    try {
-                        String sym = BistUniverse.symbolFromEntry(s.getText().toString());
-                        if (!Arrays.asList(PORTFOLIO_SYMBOLS).contains(sym)) throw new IllegalArgumentException();
-                        int qty = Integer.parseInt(q.getText().toString());
-                        String rawCost = c.getText().toString().trim();
-                        double cost = Double.parseDouble(rawCost.replace(',', '.'));
-                        // Bazı Android sayısal klavyeleri virgül tuşunu metne eklemeden
-                        // kuruşları bitişik yazabiliyor: 28787 -> 287,87.
-                        if (!rawCost.contains(",") && !rawCost.contains(".") && cost >= 10000) cost /= 100.0;
-                        if (qty <= 0 || cost <= 0) throw new IllegalArgumentException();
-                        if (edit == null) holdings.add(new Holding(sym, qty, cost));
-                        else { edit.symbol = sym; edit.qty = qty; edit.cost = cost; }
-                        save();
-                        refreshPortfolio();
-                    } catch (Exception ex) {
-                        Toast.makeText(this, "Lot ve fiyatı kontrol et", Toast.LENGTH_LONG).show();
-                    }
-                })
-                .setNegativeButton("İptal", null)
-                .show();
+    private void portfolioDialog(Holding edit,String preset) {
+        LinearLayout box=new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setPadding(dp(18),dp(6),dp(18),0);
+        AutoCompleteTextView sym=new AutoCompleteTextView(this); sym.setHint("Hisse kodu / şirket adı"); sym.setThreshold(1); sym.setSingleLine(true);
+        sym.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_dropdown_item_1line,BistUniverse.ENTRIES));
+        EditText qty=new EditText(this); qty.setHint("Lot"); qty.setInputType(InputType.TYPE_CLASS_NUMBER);
+        EditText cost=new EditText(this); cost.setHint("Alış fiyatı"); cost.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        if(edit!=null){sym.setText(edit.symbol,false);qty.setText(String.valueOf(edit.qty));cost.setText(String.valueOf(edit.cost));}
+        else if(preset!=null) sym.setText(preset,false);
+        box.addView(sym);box.addView(qty);box.addView(cost);
+        new AlertDialog.Builder(this).setTitle(edit==null?"Portföye ekle":"Pozisyonu düzenle").setView(box)
+                .setPositiveButton("Kaydet",(d,w)->{
+                    try{
+                        String s=BistUniverse.symbolFromEntry(sym.getText().toString().trim().toUpperCase(Locale.ROOT));
+                        if(s.length()<2) throw new Exception();
+                        int q=Integer.parseInt(qty.getText().toString()); double c=Double.parseDouble(cost.getText().toString().replace(',','.'));
+                        if(q<=0||c<=0)throw new Exception();
+                        if(edit==null)holdings.add(new Holding(s,q,c));else{edit.symbol=s;edit.qty=q;edit.cost=c;}
+                        savePortfolio();showPortfolio();
+                    }catch(Exception ex){Toast.makeText(this,"Hisse / lot / fiyatı kontrol et",Toast.LENGTH_LONG).show();}
+                }).setNegativeButton("İptal",null).show();
     }
 
     private void showRadar() {
-        currentSection = "radar"; detailOpen = false;
-        shell("BIST Radar");
-        content.addView(title("Radar portföyden bağımsız çalışır. Günlük Yahoo Finance verisini anahtarsız çeker; veri gecikmeli olabilir.", 15));
-        content.addView(title("Skor: EMA20/50 + RSI14 + MACD + RVOL + CMF + Bollinger + CCI + Stokastik + ADX + BRTV + BRM + BRH + breakout/trap + ATR", 14));
-        Button scan = btn("Tüm BIST Hisselerini Tara");
-        content.addView(scan);
-        scan.setOnClickListener(v -> scanRadar());
+        shell("Tüm Borsa İstanbul Radarı");
+        LinearLayout top=card();
+        top.addView(bold("Tüm hisseler • hafif tarama",19,NAVY));
+        top.addView(txt("Telefon her hisse için yalnızca yaklaşık 1 aylık günlük veri çeker; karar motoru son 10–12 işlem gününe ağırlık verir.",13,Color.DKGRAY));
+        Button scan=button(scanRunning?"Tarama devam ediyor…":"Tüm BIST'i Tara",GREEN); top.addView(scan); scan.setEnabled(!scanRunning); scan.setOnClickListener(v->scanRadar());
+        content.addView(top); spacer(8);
+        if(scanRunning){
+            ProgressBar pb=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal); pb.setMax(ALL_SYMBOLS.length);pb.setProgress(scanDone);content.addView(pb);
+            content.addView(txt(scanDone+"/"+ALL_SYMBOLS.length+" • başarısız "+scanFailed,14,NAVY));
+        }
+        if(!radarResults.isEmpty()) renderRadarList(new ArrayList<>(radarResults),30);
+        else content.addView(txt("Henüz radar sonucu yok.",14,Color.GRAY));
     }
 
     private void scanRadar() {
-        shell("Tüm BIST Taranıyor");
-        ProgressBar bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        bar.setMax(RADAR_SYMBOLS.length);
-        content.addView(bar);
-        TextView status = title("0/" + RADAR_SYMBOLS.length + " • veri alınıyor", 16);
-        content.addView(status);
-
-        final List<Ranked> results = Collections.synchronizedList(new ArrayList<>());
-        final int[] done = {0};
-        final int[] failed = {0};
-        for (String sym : RADAR_SYMBOLS) {
-            io.execute(() -> {
-                try {
-                    List<MarketDataService.Candle> data = MarketDataService.fetchDaily(sym, "1y");
-                    IndicatorEngine.Snapshot s = IndicatorEngine.analyze(data);
-                    BacktestEngine.Result bt = BacktestEngine.run(data);
-                    results.add(new Ranked(sym, s, bt));
-                } catch (Exception ignored) { synchronized (failed) { failed[0]++; } }
-                main.post(() -> {
-                    done[0]++;
-                    bar.setProgress(done[0]);
-                    status.setText(done[0] + "/" + RADAR_SYMBOLS.length + " • başarılı " + results.size() + " • başarısız " + failed[0]);
-                    if (done[0] >= RADAR_SYMBOLS.length) renderRadarResults(results);
-                });
-            });
-        }
-    }
-
-    private void renderRadarResults(List<Ranked> results) {
-        currentSection = "radar"; detailOpen = false;
-        shell("Radar Sonuçları");
-        List<Ranked> copy = new ArrayList<>(results);
-        copy.sort((a, b) -> {
-            int s = Integer.compare(b.s.score, a.s.score);
-            if (s != 0) return s;
-            return Double.compare(b.bt.netPct, a.bt.netPct);
-        });
-        lastRadarResults.clear();
-        lastRadarResults.addAll(copy);
-        content.addView(title(RADAR_SYMBOLS.length + " hisse tarandı; veri alınabilen " + copy.size() + " hisse arasından yalnızca en güçlü 30 teknik aday gösteriliyor.", 14));
-        content.addView(title("Diğer hisseler düşük skor, zayıf trend, yetersiz hacim veya tuzak riski nedeniyle tavsiye listesine alınmadı.", 13));
-        if (copy.isEmpty()) { content.addView(title("Veri alınamadı. İnternet bağlantısı veya veri kaynağı geçici olarak engellemiş olabilir.", 16)); return; }
-
-        int limit = Math.min(30, copy.size());
-        for (int i = 0; i < limit; i++) {
-            Ranked r = copy.get(i);
-            LinearLayout card = new LinearLayout(this);
-            card.setOrientation(LinearLayout.VERTICAL);
-            card.setPadding(18, 10, 18, 10);
-            card.setBackgroundColor(Color.rgb(244,247,250));
-            int radarColor = (r.s.signal.contains("AL") || r.s.signal.contains("ERKEN")) ? GREEN : (r.s.signal.contains("SAT") || r.s.signal.contains("RİSK") || r.s.signal.contains("KOVALAMA")) ? RED : NAVY;
-            card.addView(coloredText((i + 1) + ". " + r.symbol + " • " + decision(r.s) + " • skor " + r.s.score + "/15", 18, radarColor));
-            card.addView(title("Fiyat " + money(r.s.close) + " • " + r.s.reason, 14));
-            card.addView(title("1Y backtest: " + r.bt.summary, 13));
-            Button bt = btn("Detaylı backtest yenile");
-            card.addView(bt);
-            bt.setOnClickListener(v -> runSingleBacktest(r.symbol));
-            content.addView(card);
-            Space sp = new Space(this);
-            content.addView(sp, new LinearLayout.LayoutParams(1, 8));
-        }
-    }
-
-    private void runSingleBacktest(String symbol) {
-        final String returnSection = currentSection;
-        detailBackAction = () -> {
-            if ("radar".equals(returnSection) && !lastRadarResults.isEmpty())
-                renderRadarResults(new ArrayList<>(lastRadarResults));
-            else if ("radar".equals(returnSection)) showRadar();
-            else if ("strategies".equals(returnSection)) showStrategies();
-            else showPortfolio();
-        };
-        detailOpen = true;
-        shell(symbol + " Backtest");
-        ProgressBar p = new ProgressBar(this);
-        content.addView(p);
-        TextView t = title("1 yıllık günlük veri indiriliyor ve strateji geriye dönük çalıştırılıyor...", 16);
-        content.addView(t);
-        io.execute(() -> {
-            try {
-                List<MarketDataService.Candle> data = MarketDataService.fetchDaily(symbol, "1y");
-                IndicatorEngine.Snapshot s = IndicatorEngine.analyze(data);
-                BacktestEngine.Result r = BacktestEngine.run(data);
-                main.post(() -> {
-                    shell(symbol + " Backtest Sonucu");
-                    Button back = btn("← Geri");
-                    back.setOnClickListener(v -> detailBackAction.run());
-                    content.addView(back);
-                    addStockNavigation(symbol);
-                    TextView currentPrice = coloredText("GÜNCEL FİYAT: " + money(s.close), 24, NAVY);
-                    currentPrice.setGravity(android.view.Gravity.CENTER);
-                    currentPrice.setTypeface(null, android.graphics.Typeface.BOLD);
-                    currentPrice.setPadding(20, 24, 20, 24);
-                    content.addView(currentPrice);
-                    content.addView(new PriceChartView(this, data), new LinearLayout.LayoutParams(-1, 760));
-                    content.addView(decisionBanner(s));
-                    content.addView(coloredText(indicatorConsensus(s), 16, decisionColor(s)));
-                    content.addView(coloredText(decisionWhy(s), 15, decisionColor(s)));
-                    content.addView(title("Teknik sinyal: " + s.signal + " • Teknik skor: " + s.score + " • Ölçek: -14…+15", 16));
-                    content.addView(title(r.summary, 17));
-                    content.addView(title("Mantık: güçlü AL/ERKEN sinyaliyle giriş; ATR + EMA50 tabanlı ilk stop; ATR trailing ve trend/MACD bozulmasında çıkış.", 14));
-                    content.addView(title("Not: komisyon, kayma, vergi ve gün içi gerçekleşme farkları dahil değildir. Sonuç yatırım garantisi değildir.", 13));
-                });
-            } catch (Exception e) {
-                main.post(() -> {
-                    shell(symbol + " Backtest");
-                    content.addView(title("Veri alınamadı: " + e.getMessage(), 16));
-                });
-            }
+        if(scanRunning)return;
+        scanRunning=true;scanDone=0;scanFailed=0;radarResults.clear();showRadar();
+        for(String sym:ALL_SYMBOLS) io.execute(()->{
+            try{
+                List<MarketDataService.Candle>d=MarketDataService.fetchDaily(sym,"1mo");
+                ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);
+                radarResults.add(new RadarItem(sym,r));
+            }catch(Exception e){scanFailed++;}
+            scanDone++;
+            if(scanDone>=ALL_SYMBOLS.length){
+                scanRunning=false;
+                List<RadarItem> sorted=new ArrayList<>(radarResults); sorted.sort((a,b)->Double.compare(b.score,a.score));
+                radarResults.clear(); radarResults.addAll(sorted); saveRadarCache();
+                main.post(this::showRadar);
+            } else if(scanDone%25==0) main.post(this::showRadar);
         });
     }
 
-    private void addStockNavigation(String symbol) {
-        if (lastRadarResults.size() < 2) return;
-        int index = -1;
-        for (int i = 0; i < lastRadarResults.size(); i++) if (lastRadarResults.get(i).symbol.equals(symbol)) { index = i; break; }
-        if (index < 0) return;
-        final String previous = lastRadarResults.get((index - 1 + lastRadarResults.size()) % lastRadarResults.size()).symbol;
-        final String next = lastRadarResults.get((index + 1) % lastRadarResults.size()).symbol;
-        LinearLayout nav = new LinearLayout(this);
-        Button prev = btn("← " + previous);
-        Button nxt = btn(next + " →");
-        nav.addView(prev, new LinearLayout.LayoutParams(0, -2, 1));
-        nav.addView(nxt, new LinearLayout.LayoutParams(0, -2, 1));
-        prev.setOnClickListener(v -> runSingleBacktest(previous));
-        nxt.setOnClickListener(v -> runSingleBacktest(next));
-        content.addView(nav);
-    }
-
-    private void copyPortfolio() {
-        String data = getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("items", "[]");
-        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        cm.setPrimaryClip(ClipData.newPlainText("BorsaRadar Portföy", data));
-        Toast.makeText(this, "Portföy panoya kopyalandı", Toast.LENGTH_LONG).show();
-    }
-
-    private void restorePortfolio() {
-        try {
-            ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-            if (!cm.hasPrimaryClip()) throw new IllegalArgumentException();
-            String data = cm.getPrimaryClip().getItemAt(0).coerceToText(this).toString();
-            JSONArray a = new JSONArray(data);
-            List<Holding> restored = new ArrayList<>();
-            for (int i = 0; i < a.length(); i++) {
-                JSONObject o = a.getJSONObject(i);
-                restored.add(new Holding(o.getString("s"), o.getInt("q"), o.getDouble("c")));
-            }
-            holdings.clear(); holdings.addAll(restored); save(); showPortfolio();
-            Toast.makeText(this, "Portföy geri yüklendi", Toast.LENGTH_LONG).show();
-        } catch (Exception e) {
-            Toast.makeText(this, "Panoda geçerli BorsaRadar portföyü yok", Toast.LENGTH_LONG).show();
+    private void renderRadarList(List<RadarItem> items,int max) {
+        items.sort((a,b)->Double.compare(b.score,a.score));
+        TextView h=bold("En güçlü adaylar",18,NAVY);content.addView(h);
+        int n=Math.min(max,items.size());
+        for(int i=0;i<n;i++){
+            RadarItem r=items.get(i); LinearLayout c=card();
+            int col=r.recommendation.contains("SAT")||r.recommendation.contains("RİSK")?RED:r.recommendation.contains("AL")?GREEN:AMBER;
+            c.addView(bold((i+1)+". "+r.symbol+"   "+r.recommendation,18,col));
+            c.addView(txt("Fiyat "+money(r.price)+"  •  Pulse "+fmt(r.score)+"  •  Güven %"+(int)r.confidence+"  •  "+r.horizon,13,Color.DKGRAY));
+            c.addView(txt(r.why,12,Color.GRAY));
+            Button d=button("Grafik / Detay",NAVY2); c.addView(d); d.setOnClickListener(v->analyzeStock(r.symbol));
+            content.addView(c);spacer(6);
         }
     }
 
-    private void showStrategies() {
-        currentSection = "strategies"; detailOpen = false;
-        shell("100.000 TL • 3 Strateji");
-        if (lastRadarResults.isEmpty()) {
-            content.addView(title("Aktif tavsiye üretmek için önce tüm BIST radarını tara.", 17));
-            Button go = btn("BIST Radarına Git");
-            go.setOnClickListener(v -> showRadar());
-            content.addView(go);
-            return;
+    private void singleStockDialog() {
+        AutoCompleteTextView s=new AutoCompleteTextView(this); s.setHint("Örn. KTLEV, THYAO, TUPRS"); s.setThreshold(1);
+        s.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_dropdown_item_1line,BistUniverse.ENTRIES));
+        new AlertDialog.Builder(this).setTitle("Tek hisse analiz / tavsiye").setView(s)
+                .setPositiveButton("Analiz et",(d,w)->{String sym=BistUniverse.symbolFromEntry(s.getText().toString().trim().toUpperCase(Locale.ROOT)); if(sym.length()>=2)analyzeStock(sym);})
+                .setNegativeButton("İptal",null).show();
+    }
+
+    private void analyzeStock(String symbol) {
+        shell(symbol+" • analiz");
+        ProgressBar p=new ProgressBar(this);content.addView(p);content.addView(txt("Son veriler alınıyor…",15,NAVY));
+        io.execute(()->{
+            try{
+                List<MarketDataService.Candle>d=MarketDataService.fetchDaily(symbol,"1mo");
+                ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);
+                List<MarketDataService.Candle> chart=d.subList(Math.max(0,d.size()-10),d.size());
+                main.post(()->renderStockDetail(symbol,r,chart));
+            }catch(Exception e){main.post(()->{shell(symbol+" • analiz");content.addView(txt("Veri alınamadı: "+e.getMessage(),15,RED));});}
+        });
+    }
+
+    private void renderStockDetail(String symbol,ShortPulseEngine.Result r,List<MarketDataService.Candle> chart) {
+        shell(symbol+" • Son 10 işlem günü");
+        LinearLayout q=card();q.addView(bold(symbol,22,NAVY));q.addView(bold(money(r.price),25,r.changePct>=0?GREEN:RED));
+        q.addView(txt("Son gün %"+fmt(r.changePct)+"  •  ATR% "+fmt(r.atrPct)+"  •  RelVol x"+fmt(r.relativeVolume),14,Color.DKGRAY));content.addView(q);spacer(7);
+        content.addView(signalBanner(r));spacer(7);
+        content.addView(new PriceChartView(this,chart,"SON 10 İŞLEM GÜNÜ"),new LinearLayout.LayoutParams(-1,dp(300)));spacer(7);
+        LinearLayout info=card();info.addView(bold("Neye göre?",17,NAVY));info.addView(txt(r.explanation,14,Color.DKGRAY));
+        info.addView(txt("Momentum: "+r.momentumText+"  •  Para/hacim: "+r.flowText+"  •  Trend: "+r.trendText,13,Color.DKGRAY));
+        info.addView(txt("Hedef: "+r.horizonText+"  •  Güven %"+(int)r.confidence+"  •  Stop ref. "+money(r.stopReference),13,NAVY2));content.addView(info);
+        Button add=button("Portföye Ekle",GREEN);content.addView(add);add.setOnClickListener(v->portfolioDialog(null,symbol));
+    }
+
+    private void showBaskets() {
+        shell("100.000 TL • 3 Sepet");
+        if(radarResults.isEmpty()){
+            LinearLayout c=card();c.addView(bold("Önce radar taraması gerekiyor",18,NAVY));c.addView(txt("Tarama bir kez tamamlanınca sonuç kaydedilir; ekrandan çıksan da kaybolmaz.",13,Color.DKGRAY));
+            Button go=button("Radarı Aç",GREEN);c.addView(go);go.setOnClickListener(v->showRadar());content.addView(c);return;
         }
-
-        List<Ranked> shortTerm = new ArrayList<>();
-        List<Ranked> longTerm = new ArrayList<>();
-        List<Ranked> dividend = new ArrayList<>();
-        List<String> dividendWatch = Arrays.asList("AKBNK","AYGAZ","BIMAS","ENKAI","EREGL","FROTO","ISDMR","SISE","TCELL","TOASO","TTKOM","TTRAK");
-        for (Ranked r : lastRadarResults) {
-            if (r.s.score >= 5 && !r.s.trap) shortTerm.add(r);
-            if (r.s.trendUp && r.s.cmf20 > 0 && !r.s.trap) longTerm.add(r);
-            if (dividendWatch.contains(r.symbol) && r.s.score >= 2 && !r.s.trap) dividend.add(r);
+        List<RadarItem> all=new ArrayList<>(radarResults);all.sort((a,b)->Double.compare(b.score,a.score));
+        List<RadarItem> fast=new ArrayList<>(), twoWeek=new ArrayList<>(), div=new ArrayList<>();
+        List<String> dp=Arrays.asList(DIVIDEND_POOL);
+        for(RadarItem r:all){
+            if(r.score>=5.2 && r.confidence>=60)fast.add(r);
+            if(r.score>=3.7 && !r.recommendation.contains("SAT") && !r.recommendation.contains("RİSK"))twoWeek.add(r);
+            if(dp.contains(r.symbol) && r.score>=1.5 && !r.recommendation.contains("SAT"))div.add(r);
         }
-        longTerm.sort((a, b) -> Double.compare(b.bt.netPct, a.bt.netPct));
-        dividend.sort((a, b) -> Integer.compare(b.s.score, a.s.score));
-        addStrategyGroup("KISA VADE / AL-SAT", 33333, shortTerm, "Teknik skor, hacim, kırılım ve backtest öncelikli.");
-        addStrategyGroup("TEMETTÜ TEKNİK ÖN ELEME", 33333, dividend, "Temettü verimi ve bilanço doğrulanmadan kesin alım önerisi değildir.");
-        addStrategyGroup("UZUN VADE TEKNİK ADAY", 33334, longTerm, "Trend, para akışı ve geçmiş strateji dayanıklılığı öncelikli.");
-        content.addView(title("Dağılım örnektir; canlı derinlik ve aracı kurum dağılımı mevcut veri kaynağında yoktur.", 13));
+        basket("1 • HIZLI 1–3 GÜN",33333,fast,GREEN,"Güçlü momentum + hacim + kısa trend.");
+        basket("2 • 4–10 İŞLEM GÜNÜ",33333,twoWeek,NAVY2,"Daha dengeli Pulse skoru; en fazla yaklaşık iki hafta.");
+        basket("3 • TEMETTÜ + TEKNİK",33334,div,PURPLE,"Temettü geçmişi güçlü şirket havuzu içinden mevcut teknik görünümü zayıf olmayanlar.");
     }
 
-    private void addStrategyGroup(String heading, int budget, List<Ranked> candidates, String note) {
-        TextView h = coloredText(heading + " • " + budget + " TL", 19, Color.WHITE);
-        h.setBackgroundColor(NAVY);
-        h.setTypeface(null, android.graphics.Typeface.BOLD);
-        content.addView(h);
-        content.addView(title(note, 13));
-        int count = Math.min(3, candidates.size());
-        if (count == 0) {
-            content.addView(coloredText("Şu an ölçütleri karşılayan aday yok; nakitte bekle.", 15, RED));
-            return;
+    private void basket(String title,int budget,List<RadarItem> xs,int color,String note) {
+        TextView h=bold(title+"  •  "+budget+" TL",18,Color.WHITE);h.setBackgroundColor(color);h.setPadding(dp(12),dp(12),dp(12),dp(12));content.addView(h);
+        content.addView(txt(note,13,Color.DKGRAY));
+        int n=Math.min(4,xs.size());
+        if(n==0){content.addView(txt("Şu an filtreden geçen aday yok; nakitte bekleme sonucu üretildi.",14,RED));spacer(8);return;}
+        int per=budget/n;
+        for(int i=0;i<n;i++){
+            RadarItem r=xs.get(i);int lots=Math.max(0,(int)Math.floor(per/r.price));
+            LinearLayout c=card();c.addView(bold(r.symbol+"  •  "+r.recommendation,17,color));
+            c.addView(txt(money(r.price)+"  •  yaklaşık "+lots+" lot  •  Pulse "+fmt(r.score)+"  •  Güven %"+(int)r.confidence,13,Color.DKGRAY));
+            Button d=button("Grafik / Tavsiye",color);c.addView(d);d.setOnClickListener(v->analyzeStock(r.symbol));content.addView(c);spacer(5);
         }
-        int perStock = budget / count;
-        for (int i = 0; i < count; i++) {
-            Ranked r = candidates.get(i);
-            int lots = Math.max(0, (int) Math.floor(perStock / r.s.close));
-            Button pick = btn((i + 1) + ". " + r.symbol + " • " + decision(r.s));
-            pick.setOnClickListener(v -> runSingleBacktest(r.symbol));
-            content.addView(pick);
-            content.addView(title("Fiyat " + money(r.s.close) + " • yaklaşık " + lots + " lot / " + perStock + " TL • skor " + r.s.score + " (-14…+15)", 14));
-            content.addView(title(indicatorConsensus(r.s), 13));
-        }
+        spacer(6);
     }
 
-    @Override public void onBackPressed() {
-        if (detailOpen && detailBackAction != null) detailBackAction.run();
-        else super.onBackPressed();
+    private void savePortfolio() {
+        JSONArray a=new JSONArray();try{for(Holding h:holdings){JSONObject o=new JSONObject();o.put("s",h.symbol);o.put("q",h.qty);o.put("c",h.cost);a.put(o);}}catch(Exception ignored){}
+        getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putString("portfolio",a.toString()).apply();
     }
 
-    private String money(double x) {
-        return String.format(Locale.US, "%.2f ₺", x);
+    private void loadPortfolio() {
+        holdings.clear();try{JSONArray a=new JSONArray(getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString("portfolio","[]"));for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);holdings.add(new Holding(o.getString("s"),o.getInt("q"),o.getDouble("c")));}}catch(Exception ignored){}
     }
 
-    private void save() {
-        JSONArray a = new JSONArray();
-        try {
-            for (Holding h : holdings) {
-                JSONObject o = new JSONObject();
-                o.put("s", h.symbol); o.put("q", h.qty); o.put("c", h.cost); a.put(o);
-            }
-        } catch (Exception ignored) { }
-        getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString("items", a.toString()).apply();
+    private void saveRadarCache() {
+        JSONArray a=new JSONArray();try{int n=Math.min(80,radarResults.size());for(int i=0;i<n;i++){RadarItem r=radarResults.get(i);JSONObject o=new JSONObject();o.put("s",r.symbol);o.put("r",r.recommendation);o.put("w",r.why);o.put("h",r.horizon);o.put("p",r.price);o.put("sc",r.score);o.put("cf",r.confidence);a.put(o);}}catch(Exception ignored){}
+        getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putString("radar",a.toString()).apply();
     }
 
-    private void load() {
-        holdings.clear();
-        String x = getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("items", "[]");
-        try {
-            JSONArray a = new JSONArray(x);
-            for (int i = 0; i < a.length(); i++) {
-                JSONObject o = a.getJSONObject(i);
-                double savedCost = o.getDouble("c");
-                // v0.9.0'da virgülsüz kaydedilmiş olası fiyatları bir kez düzelt.
-                if (savedCost >= 10000) savedCost /= 100.0;
-                holdings.add(new Holding(o.getString("s"), o.getInt("q"), savedCost));
-            }
-        } catch (Exception ignored) { }
+    private void loadRadarCache() {
+        radarResults.clear();try{JSONArray a=new JSONArray(getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString("radar","[]"));for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);ShortPulseEngine.Result pr=new ShortPulseEngine.Result();pr.recommendation=o.getString("r");pr.explanation=o.getString("w");pr.horizonText=o.getString("h");pr.price=o.getDouble("p");pr.score=o.getDouble("sc");pr.confidence=o.getDouble("cf");radarResults.add(new RadarItem(o.getString("s"),pr));}}catch(Exception ignored){}
     }
+
+    private String money(double x){return String.format(Locale.US,"%.2f ₺",x);} private String fmt(double x){return String.format(Locale.US,"%.2f",x);}
 }
