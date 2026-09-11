@@ -17,15 +17,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Run BR-Confirm optimization
-        run: PYTHONPATH=research python3 research/backtest_confirm.py
+      - name: Run BR-Confirm robustness grid
+        run: PYTHONPATH=research python3 research/backtest_robust.py
       - name: Show result
-        run: cat research/result_confirm.md
+        run: cat research/result_robust.md
       - uses: actions/upload-artifact@v4
         with:
-          name: borsaradar-confirm-backtest
+          name: borsaradar-robust-backtest
           path: |
-            research/result_confirm.md
-            research/result_confirm.json
+            research/result_robust.md
+            research/result_robust.json
           if-no-files-found: error
           retention-days: 30
