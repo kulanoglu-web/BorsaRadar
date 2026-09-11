@@ -17,15 +17,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Run broad BIST one-month backtest
-        run: python3 research/backtest_month.py
-      - name: Show result
-        run: cat research/result_month.md
+      - name: Run BR-QualityGate optimization
+        working-directory: research
+        run: python3 backtest_quality.py
+      - name: Show quality result
+        run: cat research/result_quality.md
       - uses: actions/upload-artifact@v4
         with:
-          name: borsaradar-month-backtest
+          name: borsaradar-quality-backtest
           path: |
-            research/result_month.md
-            research/result_month.json
+            research/result_quality.md
+            research/result_quality.json
           if-no-files-found: error
           retention-days: 30
