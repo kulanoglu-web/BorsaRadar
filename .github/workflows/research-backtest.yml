@@ -17,15 +17,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Run BR-Entry v3
-        run: PYTHONPATH=research python3 research/backtest_entry_v3.py
+      - name: Run BR walk-forward
+        run: PYTHONPATH=research python3 research/backtest_walkforward.py
       - name: Show result
-        run: cat research/result_entry_v3.md
+        run: cat research/result_walkforward.md
       - uses: actions/upload-artifact@v4
         with:
-          name: borsaradar-entry-v3
+          name: borsaradar-walkforward
           path: |
-            research/result_entry_v3.md
-            research/result_entry_v3.json
+            research/result_walkforward.md
+            research/result_walkforward.json
           if-no-files-found: error
           retention-days: 30
