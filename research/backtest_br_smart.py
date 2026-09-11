@@ -1,51 +1,25 @@
-# BR-SMART v6: v3-style core + soft relative strength + soft RR sizing
+# BR-SMART v7: freeze v3 entry; optimize adaptive stop/profit capture
 import json
 from pathlib import Path
 import backtest_indicators as bi
 
-_rank_cache={}
-def market_rank(day):
-    if day in _rank_cache:return _rank_cache[day]
-    vals=[]
-    for s,a in bi.data.items():
-        i=bi.bysym[s].get(day)
-        if i is None or i<25:continue
-        c=[r['c'] for r in a[:i]]
-        r2=c[-1]/c[-3]-1; r5=c[-1]/c[-6]-1; r15=c[-1]/c[-16]-1
-        vals.append((s,.50*r2+.35*r5+.15*r15))
-    vals.sort(key=lambda x:x[1]); n=max(1,len(vals)-1)
-    out={s:k/n for k,(s,_) in enumerate(vals)}; _rank_cache[day]=out
-    return out
-
-def setup(s,i,day,breadth,rvmin=1.0,rsweight=10):
+def smart_score(s,i,breadth,rvmin=1.05):
     a=bi.data[s]
     if i<60:return None
-    f=bi.feat(s,i); prev=bi.feat(s,i-1); c=[r['c'] for r in a[:i]]; close=c[-1];m=f['m'];pm=prev['m']
-    e20,e50=f['e20'],f['e50'];e20old=bi.b.ema(c[-55:-5],20)
-    # No fixed N-day positive rule. Core quality gates only.
-    if breadth<.42 or m['trap']:return None
-    if not(close>e20 and e20>=e20old and (e20>e50 or f['slope']>0)):return None
-    if f['rv']<rvmin or f['cmf']<0 or f['adx']<16:return None
-    if not(45<=f['rsi']<=74):return None
-    atr=max(m['atr'],close*.010);dist=(close/e20-1)/max(atr/close,.006)
-    if dist>2.6:return None
-    rs=market_rank(day).get(s,.5)
-    hist=m['mac']-m['ms'];phist=pm['mac']-pm['ms']
-    impulse=max(-1,min(1,(hist-phist)/(close*.005)))
-    momturn=max(-1,min(1,(f['mom3']-prev['mom3'])/1.5))
-    highs=[r['h'] for r in a[max(0,i-20):i]];lows=[r['l'] for r in a[max(0,i-20):i]]
-    h20=max(highs);l20=min(lows);risk=max(1.1*atr,close*.012)
-    target=h20 if close<h20*.995 else close+max(2.0*atr,.40*(h20-l20))
-    rr=max(.25,(target-close)/risk)
-    trend=34*(.45*(close>e20)+.35*(e20>e50)+.20*min(1,max(0,f['slope']/.018)))
-    flow=20*(.55*min(1,max(0,(f['rv']-.85)/.8))+.45*min(1,max(0,f['cmf']/.18)))
-    momentum=20*(.50*(m['mac']>m['ms'])+.30*max(0,impulse)+.20*max(0,momturn))
-    quality=16*(.60*min(1,f['adx']/30)+.40*min(1,max(0,(74-f['rsi'])/20)))
-    relbonus=rsweight*max(-.35,min(.65,rs-.50))
-    score=trend+flow+momentum+quality+relbonus
-    return score,f,{'rs':rs,'rr':rr,'imp':impulse,'momturn':momturn}
+    f=bi.feat(s,i);c=[r['c'] for r in a[:i]];close=c[-1];m=f['m'];e20,e50=f['e20'],f['e50'];e20old=bi.b.ema(c[-55:-5],20)
+    r3=close/c[-4]-1;r10=close/c[-11]-1
+    if breadth<.42 or not(close>e20>e50 and e20>e20old):return None
+    if r10<=0 or r3<-.005 or f['rv']<rvmin or f['cmf']<.02:return None
+    if f['adx']<17 or m['trap'] or not(48<=f['rsi']<=73):return None
+    trend=30*(.55+.20*min(1,max(0,(close/e20-1)/.035))+.25*min(1,max(0,f['slope']/.02)))
+    strength=25*(.45*min(1,max(0,r3/.035))+.55*min(1,max(0,r10/.07)))
+    momentum=20*(.60*(m['mac']>m['ms'])+.40*min(1,max(0,(f['rsi']-48)/20)))
+    flow=15*(.55*min(1,max(0,(f['rv']-1)/.7))+.45*min(1,max(0,f['cmf']/.18)))
+    quality=10*(.60*min(1,f['adx']/30)+.40*min(1,max(0,f['slope']/.02)))
+    return trend+strength+momentum+flow+quality-(6 if breadth<.50 else 0),f
 
-def simulate(threshold=76,maxpos=2,base_risk=.0025,rvmin=1.0,rsweight=10,trailatr=2.6):
+def simulate(stopatr=1.0,be_at=.025,trail_start=.045,trailatr=2.8,lock1=.018,lock2=.055):
+    threshold=80;maxpos=2;risk=.0025;rvmin=1.05
     cash=100000.;pos={};trades=[];peak=cash;maxdd=0;cool={}
     for day in bi.dates:
         breadth=bi.breadth_cache.get(day,0)
@@ -54,18 +28,22 @@ def simulate(threshold=76,maxpos=2,base_risk=.0025,rvmin=1.0,rsweight=10,trailat
             if i is None:continue
             bar=a[i];p=pos[s];f=bi.feat(s,i);m=f['m'];p['high']=max(p['high'],bar['h']);p['age']+=1
             gain=p['high']/p['entry']-1;stop=p['hard']
-            if gain>=.035:stop=max(stop,p['entry']*1.002,p['high']-trailatr*p['atr'])
-            if gain>=.07:stop=max(stop,p['entry']*1.025,p['high']-(trailatr-.35)*p['atr'])
-            if gain>=.12:stop=max(stop,p['entry']*1.065,p['high']-(trailatr-.65)*p['atr'])
+            # Adaptive payoff: don't choke early; once proven, progressively protect profit.
+            if gain>=be_at:stop=max(stop,p['entry']*1.001)
+            if gain>=trail_start:stop=max(stop,p['high']-trailatr*p['atr'])
+            if gain>=.075:stop=max(stop,p['entry']*(1+lock1),p['high']-(trailatr-.25)*p['atr'])
+            if gain>=.12:stop=max(stop,p['entry']*(1+lock2),p['high']-(trailatr-.55)*p['atr'])
             ex=reason=None
             if bar['l']<=stop:ex=bar['o'] if bar['o']<stop else stop;reason='STOP'
             else:
                 cp=a[i-1]['c'];unreal=cp/p['entry']-1
-                if p['age']>=5 and unreal<.006 and gain<.025:ex=bar['o'];reason='TIME'
-                elif gain>=.035 and cp<f['e20'] and (f['cmf']<0 or m['mac']<m['ms']):ex=bar['o'];reason='TREND'
-                elif p['age']>=3 and unreal<-.008:ex=bar['o'];reason='FAIL'
+                # thesis failure only; no arbitrary time exit
+                if p['age']>=3 and unreal<-.010 and gain<.02:ex=bar['o'];reason='FAIL'
+                elif gain>=trail_start and cp<f['e20'] and f['cmf']<0 and m['mac']<m['ms']:ex=bar['o'];reason='TREND'
             if ex:
-                cash+=p['qty']*ex*(1-bi.FEE);trades.append(((ex/p['entry']-1-2*bi.FEE)*100,reason,p['rr']));del pos[s];cool[s]=day
+                proceeds=p['qty']*ex*(1-bi.FEE);cash+=proceeds
+                pnl=proceeds-p['cost'];ret=pnl/p['cost']*100
+                trades.append((ret,reason,pnl,p['age']));del pos[s];cool[s]=day
         slots=maxpos-len(pos)
         if slots>0 and breadth>=.42:
             cand=[]
@@ -73,42 +51,38 @@ def simulate(threshold=76,maxpos=2,base_risk=.0025,rvmin=1.0,rsweight=10,trailat
                 if s in pos:continue
                 i=bi.bysym[s].get(day)
                 if i is None or i<60:continue
-                if s in cool and day-cool[s]<7*86400:continue
+                if s in cool and day-cool[s]<10*86400:continue
                 turn,vol,j=bi.quality(s,i)
                 if turn<150_000_000 or vol<150_000 or j>=2:continue
                 gap=a[i]['o']/a[i-1]['c']-1
-                if a[i]['o']<5 or not(-.035<=gap<=.020):continue
-                z=setup(s,i,day,breadth,rvmin,rsweight)
+                if a[i]['o']<5 or not(-.035<=gap<=.018):continue
+                z=smart_score(s,i,breadth,rvmin)
                 if not z:continue
-                sc,f,x=z
-                # RS and RR rank candidates, but neither is a hard gate.
-                rank=sc+5*(x['rs']-.5)+min(3,max(-1,x['rr']-1.2))+1.5*max(0,x['imp'])
-                if sc>=threshold:cand.append((rank,s,i,f,x))
+                sc,f=z;dist=(a[i-1]['c']/f['e20']-1)/max(f['m']['atr']/a[i-1]['c'],.005)
+                if dist>2.4 or sc<threshold:continue
+                cand.append((sc+min(4,(f['rv']-1)*4)+min(3,f['cmf']*15),s,i,f))
             cand.sort(reverse=True)
-            for rank,s,i,f,x in cand[:slots]:
-                px=bi.data[s][i]['o'];atr=max(f['m']['atr'],px*.010);hard=px-max(1.1*atr,px*.012)
-                # RR controls size softly: weak structure gets smaller size, never blocks trade.
-                size_mult=max(.65,min(1.15,.65+.22*x['rr']))
-                riskcash=100000*base_risk*size_mult
-                qty=int(min(cash/(max(1,slots)*px*(1+bi.FEE)),riskcash/max(.01,px-hard)))
+            for sc,s,i,f in cand[:slots]:
+                px=bi.data[s][i]['o'];atr=max(f['m']['atr'],px*.010);hard=px-max(stopatr*atr,px*.010)
+                rc=100000*risk;qty=int(min(cash/(max(1,slots)*px*(1+bi.FEE)),rc/max(.01,px-hard)))
                 if qty<=0:continue
-                cash-=qty*px*(1+bi.FEE);pos[s]={'qty':qty,'entry':px,'high':px,'atr':atr,'hard':hard,'age':0,'rr':x['rr']};slots-=1
+                cost=qty*px*(1+bi.FEE);cash-=cost;pos[s]={'qty':qty,'entry':px,'high':px,'atr':atr,'hard':hard,'age':0,'cost':cost};slots-=1
         eq=cash
         for s,p in pos.items():
             i=bi.bysym[s].get(day);eq+=p['qty']*(bi.data[s][i]['c'] if i is not None else p['entry'])
         peak=max(peak,eq);maxdd=max(maxdd,(peak-eq)/peak)
     for s,p in list(pos.items()):
-        px=bi.data[s][-1]['c'];cash+=p['qty']*px*(1-bi.FEE);trades.append(((px/p['entry']-1-2*bi.FEE)*100,'SON',p['rr']))
-    vals=[x[0] for x in trades];gp=sum(x for x in vals if x>0);gl=-sum(x for x in vals if x<0);wins=[x for x in vals if x>0];loss=[-x for x in vals if x<0]
-    return {'threshold':threshold,'maxpos':maxpos,'rvmin':rvmin,'rsweight':rsweight,'ret':(cash/100000-1)*100,'end':cash,'dd':maxdd*100,'n':len(vals),'win':100*len(wins)/len(vals) if vals else 0,'pf':gp/gl if gl else (99 if gp else 0),'avgwin':sum(wins)/max(1,len(wins)),'avgloss':sum(loss)/max(1,len(loss)),'reasons':{k:sum(1 for x in trades if x[1]==k) for k in ('STOP','TIME','TREND','FAIL','SON')}}
+        px=bi.data[s][-1]['c'];proceeds=p['qty']*px*(1-bi.FEE);cash+=proceeds;pnl=proceeds-p['cost'];trades.append((pnl/p['cost']*100,'SON',pnl,p['age']))
+    rets=[x[0] for x in trades];pnls=[x[2] for x in trades];wins=[x for x in rets if x>0];loss=[-x for x in rets if x<0]
+    gp=sum(x for x in pnls if x>0);gl=-sum(x for x in pnls if x<0);pf=gp/gl if gl else (99 if gp else 0)
+    return {'stopatr':stopatr,'be':be_at,'trailstart':trail_start,'trailatr':trailatr,'lock1':lock1,'lock2':lock2,'ret':(cash/100000-1)*100,'end':cash,'dd':maxdd*100,'n':len(rets),'win':100*len(wins)/len(rets) if rets else 0,'pf':pf,'avgwin':sum(wins)/max(1,len(wins)),'avgloss':sum(loss)/max(1,len(loss)),'hold':sum(x[3] for x in trades)/max(1,len(trades)),'reasons':{k:sum(1 for x in trades if x[1]==k) for k in ('STOP','FAIL','TREND','SON')}}
 
 results=[]
-for t in (72,76,80):
- for p in (2,3):
-  for rv in (.95,1.05):
-   for rw in (6,10,14):results.append(simulate(t,p,.0025,rv,rw,2.6))
-# penalize inactivity so a one-trade model cannot win
-results.sort(key=lambda x:(x['n']>=25,x['pf']>=1.0,x['ret']-.60*x['dd']+.40*min(2,x['pf'])-.18*abs(x['n']-55)/55),reverse=True);best=results[0]
-lines=['# BR-SMART v6 Soft RS + Soft RR','10 gün pozitif şartı YOK. Relatif güç artık kapı değil sıralama/puan katkısı; RR işlem engellemez, pozisyon büyüklüğünü ayarlar. v3 tarzı kar-koru çıkış motoru korunur. TUPRS/savunma hariç; lookahead yok; maliyet dahil.','',f'EN IYI: skor {best["threshold"]}, pos {best["maxpos"]}, RVOL {best["rvmin"]:.2f}, RS ağırlık {best["rsweight"]}: **{best["ret"]:.2f}%**, 100k -> **{best["end"]:.0f} TL**, MaxDD **{best["dd"]:.2f}%**, {best["n"]} işlem, win **{best["win"]:.1f}%**, PF **{best["pf"]:.2f}**, ort kazanç **{best["avgwin"]:.2f}%**, ort kayıp **{best["avgloss"]:.2f}%**.','',f'Çıkışlar: {best["reasons"]}','','|Skor|Pos|RVOL|RSw|Getiri|DD|N|Win|PF|AvgW|AvgL|','|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|']
-for x in results[:18]:lines.append(f'|{x["threshold"]}|{x["maxpos"]}|{x["rvmin"]:.2f}|{x["rsweight"]}|{x["ret"]:.2f}%|{x["dd"]:.2f}%|{x["n"]}|{x["win"]:.1f}%|{x["pf"]:.2f}|{x["avgwin"]:.2f}%|{x["avgloss"]:.2f}%|')
+for st in (.85,1.0,1.15):
+ for be in (.02,.03):
+  for ts in (.04,.05):
+   for tr in (2.6,3.0,3.4):results.append(simulate(st,be,ts,tr,.018,.055))
+results.sort(key=lambda x:(x['n']>=35,x['pf']>=1,x['ret']-.55*x['dd']+.5*min(2,x['pf'])),reverse=True);best=results[0]
+lines=['# BR-SMART v7 Adaptive Payoff','v3 girişleri sabit. Yalnızca stop/kâr taşıma test edildi. PF gerçek TL işlem kâr/zararıyla hesaplandı. TUPRS/savunma hariç; lookahead yok; maliyet dahil.','',f'EN IYI: stop {best["stopatr"]:.2f} ATR, BE {best["be"]:.1%}, trail başlangıç {best["trailstart"]:.1%}, trail {best["trailatr"]:.1f} ATR: **{best["ret"]:.2f}%**, 100k -> **{best["end"]:.0f} TL**, MaxDD **{best["dd"]:.2f}%**, {best["n"]} işlem, win **{best["win"]:.1f}%**, TL-PF **{best["pf"]:.2f}**, AvgW **{best["avgwin"]:.2f}%**, AvgL **{best["avgloss"]:.2f}%**, ort tutuş **{best["hold"]:.1f} gün**.','',f'Çıkışlar: {best["reasons"]}','','|Stop|BE|TrailStart|TrailATR|Getiri|DD|N|Win|TL-PF|AvgW|AvgL|Hold|','|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|']
+for x in results[:18]:lines.append(f'|{x["stopatr"]:.2f}|{x["be"]:.1%}|{x["trailstart"]:.1%}|{x["trailatr"]:.1f}|{x["ret"]:.2f}%|{x["dd"]:.2f}%|{x["n"]}|{x["win"]:.1f}%|{x["pf"]:.2f}|{x["avgwin"]:.2f}%|{x["avgloss"]:.2f}%|{x["hold"]:.1f}|')
 Path('research/result_br_smart.md').write_text('\n'.join(lines),encoding='utf-8');Path('research/result_br_smart.json').write_text(json.dumps({'best':best,'all':results},indent=2),encoding='utf-8');print('\n'.join(lines))
