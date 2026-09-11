@@ -18,8 +18,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Run BR-QualityGate optimization
-        working-directory: research
-        run: python3 backtest_quality.py
+        run: PYTHONPATH=research python3 research/backtest_quality.py
       - name: Show quality result
         run: cat research/result_quality.md
       - uses: actions/upload-artifact@v4
