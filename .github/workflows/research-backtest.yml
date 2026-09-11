@@ -17,15 +17,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Run indicator ablation and regime test
-        run: PYTHONPATH=research python3 research/backtest_indicators.py
+      - name: Run BR-Regime v2 optimization
+        run: PYTHONPATH=research python3 research/backtest_regime_v2.py
       - name: Show result
-        run: cat research/result_indicators.md
+        run: cat research/result_regime_v2.md
       - uses: actions/upload-artifact@v4
         with:
-          name: borsaradar-indicator-test
+          name: borsaradar-regime-v2
           path: |
-            research/result_indicators.md
-            research/result_indicators.json
+            research/result_regime_v2.md
+            research/result_regime_v2.json
           if-no-files-found: error
           retention-days: 30
