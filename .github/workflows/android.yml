@@ -34,7 +34,9 @@ jobs:
         run: |
           cp app/src/main/java/com/kulanoglu/borsaradar/BistUniverse.java build-v23/BorsaRadar/app/src/main/java/com/kulanoglu/borsaradar/BistUniverse.java
       - name: Apply v2.3 lightweight trader patch
-        run: python3 .ci/patch_v23.py
+        run: |
+          python3 .ci/patch_v23.py
+          python3 .ci/fix_v23.py
       - name: Build APK
         working-directory: build-v23/BorsaRadar
         run: gradle --no-daemon clean assembleDebug
