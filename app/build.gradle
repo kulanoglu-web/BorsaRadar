@@ -3,24 +3,20 @@ plugins { id 'com.android.application' }
 android {
     namespace 'com.kulanoglu.borsaradar'
     compileSdk 35
-
     defaultConfig {
-        applicationId 'com.kulanoglu.borsaradar'
-        minSdk 26
+        applicationId 'com.kulanoglu.borsaradar.finalapp'
+        minSdk 23
         targetSdk 35
-        versionCode 21
-        versionName '0.9.12'
+        versionCode 30
+        versionName '3.0.0'
     }
-
     signingConfigs {
-        stableDebug {
-            storeFile file(System.getenv('BORSA_RADAR_KEYSTORE'))
-            storePassword 'android'
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
+        stable {
+            storeFile file('../.ci/borsaradar-final.keystore')
+            storePassword 'BorsaRadar2026'
+            keyAlias 'borsaradar'
+            keyPassword 'BorsaRadar2026'
         }
     }
-    buildTypes {
-        debug { signingConfig signingConfigs.stableDebug }
-    }
+    buildTypes { debug { signingConfig signingConfigs.stable } }
 }
