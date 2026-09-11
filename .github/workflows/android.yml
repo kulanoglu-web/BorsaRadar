@@ -37,6 +37,7 @@ jobs:
         run: |
           python3 .ci/patch_v23.py
           python3 .ci/fix_v23.py
+          python3 .ci/fix_v23b.py
       - name: Build APK
         working-directory: build-v23/BorsaRadar
         run: gradle --no-daemon clean assembleDebug
