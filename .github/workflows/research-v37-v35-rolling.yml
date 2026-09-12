@@ -1,0 +1,21 @@
+name: BorsaRadar v37 V35 Rolling Stability
+on:
+  push:
+    paths: ['research/v37_v35_rolling_stability.py','.github/workflows/research-v37-v35-rolling.yml']
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: PYTHONPATH=research python3 research/v37_v35_rolling_stability.py
+      - run: cat research/result_v37_v35_rolling_stability.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v37-v35-rolling
+          path: |
+            research/result_v37_v35_rolling_stability.md
+            research/result_v37_v35_rolling_stability.json
+          retention-days: 30
