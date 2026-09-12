@@ -1,0 +1,26 @@
+name: BorsaRadar v25 Concentration
+on:
+  push:
+    paths:
+      - 'research/v25_concentration_benchmark.py'
+      - '.github/workflows/research-v25-concentration.yml'
+  workflow_dispatch:
+jobs:
+  v25:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run v25 concentration benchmark diagnostics
+        run: PYTHONPATH=research python3 research/v25_concentration_benchmark.py
+      - name: Show result
+        run: cat research/result_v25_concentration_benchmark.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v25-concentration
+          path: |
+            research/result_v25_concentration_benchmark.md
+            research/result_v25_concentration_benchmark.json
+          retention-days: 30
