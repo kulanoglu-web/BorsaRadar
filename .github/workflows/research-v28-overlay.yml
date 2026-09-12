@@ -1,0 +1,21 @@
+name: BorsaRadar v28 Passive Overlay
+on:
+  push:
+    paths: ['research/v28_passive_overlay.py','.github/workflows/research-v28-overlay.yml']
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: PYTHONPATH=research python3 research/v28_passive_overlay.py
+      - run: cat research/result_v28_overlay.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v28-overlay
+          path: |
+            research/result_v28_overlay.md
+            research/result_v28_overlay.json
+          retention-days: 30
