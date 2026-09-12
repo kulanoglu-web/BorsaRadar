@@ -1,0 +1,26 @@
+name: BorsaRadar v21 Long WF
+on:
+  push:
+    paths:
+      - 'research/v21_long_wf_diagnostics.py'
+      - '.github/workflows/research-v21-long-wf.yml'
+  workflow_dispatch:
+jobs:
+  v21:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run v21 long walk-forward diagnostics
+        run: PYTHONPATH=research python3 research/v21_long_wf_diagnostics.py
+      - name: Show result
+        run: cat research/result_v21_long_wf.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v21-long-wf
+          path: |
+            research/result_v21_long_wf.md
+            research/result_v21_long_wf.json
+          retention-days: 30
