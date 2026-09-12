@@ -1,0 +1,21 @@
+name: BorsaRadar v29 Hysteresis Split
+on:
+  push:
+    paths: ['research/v29_hysteresis_split.py','.github/workflows/research-v29-split.yml']
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: PYTHONPATH=research python3 research/v29_hysteresis_split.py
+      - run: cat research/result_v29_split.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v29-split
+          path: |
+            research/result_v29_split.md
+            research/result_v29_split.json
+          retention-days: 30
