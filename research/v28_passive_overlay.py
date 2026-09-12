@@ -4,7 +4,7 @@
 import json
 from pathlib import Path
 import backtest_br_smart as b
-import v23_hybrid_stop as h
+import v24_microplateau_slippage as h
 import v25_concentration_benchmark as v
 
 D=b.DATES
@@ -37,13 +37,10 @@ def proxy_path(days):
  return vals
 
 def active(days):
- r=h.sim_hybrid(days,1.6,b.FEE)
- return r
+ return h.run(days,1.6,b.FEE,0.0)
 
 def overlay(days,w,brmin):
  ds=[d for d in days if d in b.bi.breadth_cache]; a=active(ds); pp=proxy_path(ds)
- # Approximation: fixed active sleeve return plus daily regime-gated proxy sleeve.
- # Costs charged 10bp one-way on each overlay regime transition.
  ov=1.;on=False;turns=0;peak=1.;dd=0
  for k in range(1,len(ds)):
   br,bd,strong,recovery,weak=b.state(ds[k])
@@ -52,8 +49,6 @@ def overlay(days,w,brmin):
   r=pp[k]/pp[k-1]-1
   if on: ov*=1+w*r
   peak=max(peak,ov);dd=max(dd,(peak-ov)/peak)
- # active result and overlay are separate capital sleeves: active engine remains on full capital;
- # overlay is reported as incremental diagnostic, not executable combined leverage.
  inc=(ov-1)*100
  return {'active':a['ret'],'inc':inc,'combined_diag':a['ret']+inc,'overlay_dd':dd*100,'turns':turns,'n':a['n'],'pf':a['pf']}
 
@@ -64,7 +59,7 @@ for w in WEIGHTS:
   rr=[overlay(x,w,br) for x in dev];avg=sum(x['combined_diag'] for x in rr)/6;worst=min(x['combined_diag'] for x in rr);odd=sum(x['overlay_dd'] for x in rr)/6;pos=sum(x['combined_diag']>0 for x in rr);turn=sum(x['turns'] for x in rr);score=avg+.6*worst-.35*odd+.05*pos-.005*turn
   rows.append({'w':w,'br':br,'avg':avg,'worst':worst,'odd':odd,'pos':pos,'turns':turn,'score':score})
 best=max(rows,key=lambda x:x['score']);hr=[overlay(x,best['w'],best['br']) for x in hold];full=overlay(D,best['w'],best['br']);bench=v.proxy_benchmark(D)
-lines=['# BR-SMART v28 Regime-aware Passive Overlay','v24 D1.6 aktif motor sabit. Pasif katman yalnız piyasa breadth rejiminde açılıyor. Parametre seçimi ilk 6 geliştirme foldunda. **combined_diag kaldıraçsız gerçek portföy getirisi değildir; overlay fikrinin artı değer teşhisidir.**','','|W|Breadth|DevAvg diag|Worst|OverlayDD|Pos|Turns|Score|','|---:|---:|---:|---:|---:|---:|---:|---:|']
+lines=['# BR-SMART v28 Regime-aware Passive Overlay','v24 D1.6 aktif motor sabit. Pasif katman yalnız piyasa breadth rejiminde açılıyor. Parametre seçimi ilk 6 geliştirme foldunda. **combined_diag gerçek sermaye bölüşümlü portföy getirisi değildir; overlay fikrinin artı değer teşhisidir.**','','|W|Breadth|DevAvg diag|Worst|OverlayDD|Pos|Turns|Score|','|---:|---:|---:|---:|---:|---:|---:|---:|']
 for x in sorted(rows,key=lambda z:z['score'],reverse=True):lines.append(f'|{x["w"]:.0%}|{x["br"]:.2f}|{x["avg"]:.2f}%|{x["worst"]:.2f}%|{x["odd"]:.2f}%|{x["pos"]}/6|{x["turns"]}|{x["score"]:.3f}|')
 lines+=['',f'Seçilen overlay: **{best["w"]:.0%} / breadth>={best["br"]:.2f}**.',f'Full aktif **{full["active"]:.2f}%**, overlay incremental **{full["inc"]:.2f}%**, diagnostic toplam **{full["combined_diag"]:.2f}%**, overlay DD **{full["overlay_dd"]:.2f}%**, geçiş **{full["turns"]}**, proxy **{bench:.2f}%**.',f'Holdout diagnostic avg **{sum(x["combined_diag"] for x in hr)/len(hr):.2f}%**, worst **{min(x["combined_diag"] for x in hr):.2f}%**, positive **{sum(x["combined_diag"]>0 for x in hr)}/{len(hr)}**.','','|Hold|Active|Overlay inc|Combined diag|OverlayDD|Turns|','|---:|---:|---:|---:|---:|---:|']
 for i,x in enumerate(hr,1):lines.append(f'|{i}|{x["active"]:.2f}%|{x["inc"]:.2f}%|{x["combined_diag"]:.2f}%|{x["overlay_dd"]:.2f}%|{x["turns"]}|')
