@@ -1,0 +1,31 @@
+name: BorsaRadar Recovery Optimization
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'research/recovery_opt.py'
+      - '.github/workflows/research-recovery-opt.yml'
+permissions:
+  contents: read
+jobs:
+  recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run recovery gate study
+        run: PYTHONPATH=research python3 research/recovery_opt.py
+      - name: Show result
+        run: cat research/result_recovery_opt.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-recovery-opt
+          path: |
+            research/result_recovery_opt.md
+            research/result_recovery_opt.json
+          if-no-files-found: error
+          retention-days: 30
