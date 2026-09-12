@@ -1,0 +1,31 @@
+name: BorsaRadar Stability Validation
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/research-stability.yml'
+      - 'research/window_sensitivity.py'
+permissions:
+  contents: read
+jobs:
+  stability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run corrected window sensitivity
+        run: PYTHONPATH=research python3 research/window_sensitivity.py
+      - name: Show result
+        run: cat research/result_window_sensitivity.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-stability
+          path: |
+            research/result_window_sensitivity.md
+            research/result_window_sensitivity.json
+          if-no-files-found: error
+          retention-days: 30
