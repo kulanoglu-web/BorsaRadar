@@ -4,10 +4,11 @@ from pathlib import Path
 import backtest_br_smart as b
 
 base_sig=b.sig
+CFG=b.BASE
 
 def gate_sig(name):
-    def wrapped(s,i,day,mode):
-        z=base_sig(s,i,day,mode)
+    def wrapped(s,i,day):
+        z=base_sig(s,i,day)
         if not z:return None
         sc,f=z;a=b.bi.data[s];bar=a[i-1];m=f['m'];pm=b.bi.feat(s,i-1)['m'];dh=(m['mac']-m['ms'])-(pm['mac']-pm['ms']);atr=max(m['atr'],bar['c']*.01)
         adx=f['adx'];dist=(bar['c']/f['e20']-1)/max(atr/bar['c'],.006);har=dh/max(atr,.01)
@@ -30,9 +31,8 @@ chunks=[b.DATES[i:i+22] for i in range(0,len(b.DATES)-21,22)];dev=chunks[:6];hol
 rows=[]
 for name in models:
     b.sig=base_sig if name=='BASE' else gate_sig(name)
-    dr=[b.sim('DYNAMIC',ch) for ch in dev];hr=[b.sim('DYNAMIC',ch) for ch in hold];ha=[x for x in hr if x['n']];da=[x for x in dr if x['n']]
+    dr=[b.sim(ch,CFG) for ch in dev];hr=[b.sim(ch,CFG) for ch in hold];ha=[x for x in hr if x['n']];da=[x for x in dr if x['n']]
     row={'model':name,'dev_avg':sum(x['ret'] for x in dr)/len(dr),'dev_worst':min(x['ret'] for x in dr),'dev_dd':sum(x['dd'] for x in dr)/len(dr),'dev_n':sum(x['n'] for x in dr),'dev_pf':sum(min(5,x['pf']) for x in da)/len(da) if da else 0,'dev_pos':sum(x['ret']>0 for x in dr),'hold_avg':sum(x['ret'] for x in hr)/len(hr),'hold_worst':min(x['ret'] for x in hr),'hold_dd':sum(x['dd'] for x in hr)/len(hr),'hold_n':sum(x['n'] for x in hr),'hold_pf':sum(min(5,x['pf']) for x in ha)/len(ha) if ha else 0,'hold_pos':sum(x['ret']>0 for x in hr)}
-    # selection score only development data; prefer repeatability and enough trades
     row['select']=row['dev_avg']+.25*row['dev_worst']-.20*row['dev_dd']+.03*min(2,row['dev_pf'])-(.10 if row['dev_n']<10 else 0)
     rows.append(row)
 b.sig=base_sig
