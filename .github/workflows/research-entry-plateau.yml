@@ -1,0 +1,31 @@
+name: BorsaRadar Entry Plateau
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'research/entry_plateau.py'
+      - 'research/backtest_br_smart.py'
+      - 'research/backtest_indicators.py'
+      - '.github/workflows/research-entry-plateau.yml'
+  workflow_dispatch:
+
+jobs:
+  plateau:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run v20 plateau validation
+        run: PYTHONPATH=research python3 research/entry_plateau.py
+      - name: Show result
+        run: cat research/result_entry_plateau.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-entry-plateau
+          path: |
+            research/result_entry_plateau.md
+            research/result_entry_plateau.json
+          retention-days: 30
