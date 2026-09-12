@@ -60,7 +60,6 @@ def market_regime(day):
     if br<=.35:return 'BEAR'
     return 'SIDE'
 
-# Indicator families. Each family must earn its place via ablation.
 FAMILIES={
  'TREND':lambda f: f['e5']>f['e10']>f['e20'] and f['slope']>0 and f['e20']>f['e50'],
  'MOMENTUM':lambda f: f['imp']>=2 and f['acc']>-.004 and 48<=f['rsi']<=72,
@@ -71,7 +70,6 @@ FAMILIES={
 
 def passes(f, enabled, regime):
     if not FAMILIES['BASE'](f):return False
-    # Regime-aware: bear requires stricter trend/flow, bull can be a bit more permissive.
     if regime=='BEAR':
         if f['m']['pct']<78 or f['rv']<1.05 or f['cmf']<.03:return False
     elif regime=='SIDE':
@@ -129,16 +127,19 @@ def simulate(enabled,w):
     win=sum(x[3]>0 for x in tr);gw=sum(max(0,x[3]) for x in tr);gl=-sum(min(0,x[3]) for x in tr)
     return {'ret':(cash/START-1)*100,'end':cash,'dd':dd*100,'n':len(tr),'win':100*win/len(tr) if tr else 0,'pf':gw/gl if gl else (99 if gw else 0),'details':tr}
 
-sets=[('BASE',[]),('TREND',['TREND']),('MOMENTUM',['MOMENTUM']),('FLOW',['FLOW']),('STRENGTH',['STRENGTH']),('TREND+FLOW',['TREND','FLOW']),('TREND+MOM',['TREND','MOMENTUM']),('MOM+FLOW',['MOMENTUM','FLOW']),('ALL',['TREND','MOMENTUM','FLOW','STRENGTH'])]
-rows=[]
-for name,en in sets:
-    rs=[simulate(en,w) for w in WINDOWS];rets=[r['ret'] for r in rs];dds=[r['dd'] for r in rs];ns=[r['n'] for r in rs];pfs=[r['pf'] for r in rs];active=[r for r in rs if r['n']>0]
-    avg=sum(rets)/4;worst=min(rets);avgdd=sum(dds)/4;n=sum(ns);pos=sum(x>0 for x in rets);pf=sum(min(3,r['pf']) for r in active)/len(active) if active else 0
-    score=avg+.5*worst-.5*avgdd+.4*(pf-1)+.15*pos+min(.5,n/60)
-    rows.append({'name':name,'enabled':en,'rs':rs,'avg':avg,'worst':worst,'avgdd':avgdd,'n':n,'pos':pos,'pf':pf,'score':score})
-rows.sort(key=lambda x:x['score'],reverse=True);best=rows[0]
-lines=['# BorsaRadar İndikatör Ablation + Rejim Testi',f'Evren {len(syms)}, veri {len(data)}, 4 x 31 gün. TUPRS ve savunma hisseleri hariç. Lookahead yok, tek yön maliyet %0.10.','', '## Sonuç','|Model|Ort Getiri|En Kötü|Ort DD|İşlem|Pozitif Dönem|PF|','|---|---:|---:|---:|---:|---:|---:|']
-for r in rows:lines.append(f'|{r["name"]}|{r["avg"]:.2f}%|{r["worst"]:.2f}%|{r["avgdd"]:.2f}%|{r["n"]}|{r["pos"]}/4|{r["pf"]:.2f}|')
-lines+=['',f'**En iyi model: {best["name"]}**','', '## En iyi model dönemleri','|Dönem|Getiri|DD|N|Win|PF|','|---|---:|---:|---:|---:|---:|']
-for i,r in enumerate(best['rs'],1):lines.append(f'|{i}|{r["ret"]:.2f}%|{r["dd"]:.2f}%|{r["n"]}|{r["win"]:.1f}%|{r["pf"]:.2f}|')
-Path('research/result_indicators.md').write_text('\n'.join(lines),encoding='utf-8');Path('research/result_indicators.json').write_text(json.dumps({'best':best,'rows':rows},ensure_ascii=False,indent=2),encoding='utf-8');print('\n'.join(lines),flush=True)
+def run_ablation():
+    sets=[('BASE',[]),('TREND',['TREND']),('MOMENTUM',['MOMENTUM']),('FLOW',['FLOW']),('STRENGTH',['STRENGTH']),('TREND+FLOW',['TREND','FLOW']),('TREND+MOM',['TREND','MOMENTUM']),('MOM+FLOW',['MOMENTUM','FLOW']),('ALL',['TREND','MOMENTUM','FLOW','STRENGTH'])]
+    rows=[]
+    for name,en in sets:
+        rs=[simulate(en,w) for w in WINDOWS];rets=[r['ret'] for r in rs];dds=[r['dd'] for r in rs];ns=[r['n'] for r in rs];active=[r for r in rs if r['n']>0]
+        avg=sum(rets)/4;worst=min(rets);avgdd=sum(dds)/4;n=sum(ns);pos=sum(x>0 for x in rets);pf=sum(min(3,r['pf']) for r in active)/len(active) if active else 0
+        score=avg+.5*worst-.5*avgdd+.4*(pf-1)+.15*pos+min(.5,n/60);rows.append({'name':name,'enabled':en,'rs':rs,'avg':avg,'worst':worst,'avgdd':avgdd,'n':n,'pos':pos,'pf':pf,'score':score})
+    rows.sort(key=lambda x:x['score'],reverse=True);best=rows[0]
+    lines=['# BorsaRadar İndikatör Ablation + Rejim Testi',f'Evren {len(syms)}, veri {len(data)}, 4 x 31 gün. TUPRS ve savunma hisseleri hariç. Lookahead yok, tek yön maliyet %0.10.','', '## Sonuç','|Model|Ort Getiri|En Kötü|Ort DD|İşlem|Pozitif Dönem|PF|','|---|---:|---:|---:|---:|---:|---:|']
+    for r in rows:lines.append(f'|{r["name"]}|{r["avg"]:.2f}%|{r["worst"]:.2f}%|{r["avgdd"]:.2f}%|{r["n"]}|{r["pos"]}/4|{r["pf"]:.2f}|')
+    lines+=['',f'**En iyi model: {best["name"]}**','', '## En iyi model dönemleri','|Dönem|Getiri|DD|N|Win|PF|','|---|---:|---:|---:|---:|---:|']
+    for i,r in enumerate(best['rs'],1):lines.append(f'|{i}|{r["ret"]:.2f}%|{r["dd"]:.2f}%|{r["n"]}|{r["win"]:.1f}%|{r["pf"]:.2f}|')
+    Path('research/result_indicators.md').write_text('\n'.join(lines),encoding='utf-8');Path('research/result_indicators.json').write_text(json.dumps({'best':best,'rows':rows},ensure_ascii=False,indent=2),encoding='utf-8');print('\n'.join(lines),flush=True)
+
+if __name__=='__main__':
+    run_ablation()
