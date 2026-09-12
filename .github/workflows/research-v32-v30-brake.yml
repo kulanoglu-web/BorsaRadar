@@ -1,0 +1,21 @@
+name: BorsaRadar v32 V30 Drawdown Brake
+on:
+  push:
+    paths: ['research/v32_v30_drawdown_brake.py','.github/workflows/research-v32-v30-brake.yml']
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: PYTHONPATH=research python3 research/v32_v30_drawdown_brake.py
+      - run: cat research/result_v32_v30_brake.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v32-v30-brake
+          path: |
+            research/result_v32_v30_brake.md
+            research/result_v32_v30_brake.json
+          retention-days: 30
