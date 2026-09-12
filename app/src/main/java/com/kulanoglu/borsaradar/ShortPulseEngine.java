@@ -4,69 +4,109 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * BorsaPulse-2W: canlı karar motoru. En fazla son 12 işlem gününe ağırlık verir.
- * Uzun tarih telefon tarafında tekrar tekrar indirilmez.
+ * BorsaPulse-2W: kısa vadeli canlı karar motoru.
+ * Amaç yalnız gerçekleşmiş yükselişi kovalamak değil, kırılım hazırlığını da yakalamaktır.
  */
 public final class ShortPulseEngine {
     private ShortPulseEngine() {}
 
     public static final class Result {
         public double price, changePct, score, confidence, relativeVolume, atrPct, stopReference;
-        public String recommendation, explanation, horizonText, momentumText, flowText, trendText;
+        public double earlyBreakScore, stretchPct;
+        public boolean earlyBreakout, breakout, chaseRisk;
+        public String recommendation, explanation, horizonText, momentumText, flowText, trendText, phaseText;
     }
 
     public static Result analyze(List<MarketDataService.Candle> x) {
-        if(x==null || x.size()<10) throw new IllegalArgumentException("En az 10 işlem günü gerekli");
+        if(x==null || x.size()<15) throw new IllegalArgumentException("En az 15 işlem günü gerekli");
         int end=x.size()-1;
         Result r=new Result();
         r.price=x.get(end).close;
         r.changePct=x.get(end-1).close==0?0:(x.get(end).close/x.get(end-1).close-1)*100;
 
-        double e3=ema(x,3,end), e5=ema(x,5,end), e8=ema(x,8,end), e12=ema(x,12,end);
+        double e3=ema(x,3,end), e5=ema(x,5,end), e8=ema(x,8,end), e12=ema(x,12,end), e20=ema(x,20,end);
         double rsi7=rsi(x,7,end), roc3=roc(x,3,end), roc5=roc(x,5,end);
-        double rv=relVol(x,8,end), atr=atr(x,7,end), eff=efficiency(x,10,end), vp=volumePressure(x,10,end);
-        double cmf=cmf(x,10,end);
-        r.relativeVolume=rv; r.atrPct=r.price==0?0:atr/r.price*100;
+        double prevRoc3=end>=6?roc(x,3,end-3):0;
+        double accel=roc3-prevRoc3;
+        double rv=relVol(x,10,end), atr7=atr(x,7,end), atr14=atr(x,14,end);
+        double eff=efficiency(x,10,end), vp=volumePressure(x,10,end), cmf=cmf(x,12,end);
+        r.relativeVolume=rv; r.atrPct=r.price==0?0:atr7/r.price*100;
 
-        double hi=highestHigh(x,10,end-1);
-        boolean breakout=r.price>hi;
-        boolean nearBreak=hi>0 && !breakout && (hi-r.price)/hi<=0.018;
+        double hi10=highestHigh(x,10,end-1);
+        double hi20=highestHigh(x,20,end-1);
+        boolean breakout=r.price>hi20;
+        boolean nearBreak=hi20>0 && !breakout && (hi20-r.price)/hi20<=0.030;
+        boolean emaStack=e3>e5 && e5>e8 && e8>=e12*0.995;
+        boolean compression=atr14>0 && atr7/atr14<=0.92;
+        boolean constructiveFlow=cmf>0.02 || vp>0.06;
+        boolean acceleration=accel>0.35 && roc3>-0.5;
+        boolean tightToTrend=e20>0 && r.price>=e20*0.985 && r.price<=e20*1.085;
+        boolean miniBreak=hi10>0 && r.price>hi10 && !breakout;
+
         MarketDataService.Candle last=x.get(end);
         double range=Math.max(1e-9,last.high-last.low);
         double upperWick=last.high-Math.max(last.open,last.close);
-        boolean trap=(upperWick/range>0.58 && rv>1.35) || (rsi7>79 && breakout);
+        r.stretchPct=e20==0?0:(r.price/e20-1)*100;
+        boolean stretched=r.stretchPct>10.5 || rsi7>77;
+        boolean trap=(upperWick/range>0.58 && rv>1.35) || (rsi7>80 && breakout);
+
+        double early=0;
+        if(nearBreak) early+=1.25;
+        if(miniBreak) early+=0.75;
+        if(emaStack) early+=1.0;
+        if(compression) early+=0.9;
+        if(constructiveFlow) early+=0.9;
+        if(acceleration) early+=0.9;
+        if(rv>=1.05 && rv<=2.4) early+=0.65;
+        if(tightToTrend) early+=0.65;
+        if(stretched) early-=1.6;
+        if(trap) early-=2.0;
+        r.earlyBreakScore=early;
+        r.earlyBreakout=!breakout && early>=4.0;
+        r.breakout=breakout;
+        r.chaseRisk=stretched || trap;
 
         double s=0;
-        if(e3>e5)s+=1.0;else s-=0.8;
-        if(e5>e8)s+=1.2;else s-=1.0;
-        if(e8>e12)s+=1.0;else s-=0.8;
-        if(rsi7>=52&&rsi7<=72)s+=1.0; else if(rsi7>78)s-=1.2; else if(rsi7<34)s-=0.7;
-        if(roc3>1.2)s+=0.8; else if(roc3<-1.2)s-=0.8;
-        if(roc5>2.0)s+=1.0; else if(roc5<-2.0)s-=1.0;
-        if(rv>1.20)s+=1.0; else if(rv<0.65)s-=0.5;
-        if(cmf>0.08)s+=0.9; else if(cmf<-0.08)s-=0.9;
-        if(vp>0.10)s+=0.8; else if(vp<-0.10)s-=0.8;
-        if(eff>0.30)s+=0.8; else if(eff<-0.25)s-=0.8;
-        if(breakout)s+=1.1; else if(nearBreak)s+=0.5;
-        if(last.close>last.open)s+=0.35; else s-=0.20;
-        if(trap)s-=2.4;
+        if(e3>e5)s+=0.7;else s-=0.7;
+        if(e5>e8)s+=0.9;else s-=0.9;
+        if(e8>e12)s+=0.7;else s-=0.7;
+        if(rsi7>=48&&rsi7<=68)s+=0.8; else if(rsi7>76)s-=1.3; else if(rsi7<34)s-=0.6;
+        if(roc3>0.4)s+=0.55; else if(roc3<-1.5)s-=0.7;
+        if(roc5>0.8)s+=0.65; else if(roc5<-2.0)s-=0.9;
+        if(rv>1.05)s+=0.65; else if(rv<0.65)s-=0.4;
+        if(cmf>0.04)s+=0.75; else if(cmf<-0.08)s-=0.8;
+        if(vp>0.06)s+=0.65; else if(vp<-0.10)s-=0.7;
+        if(eff>0.22)s+=0.55; else if(eff<-0.25)s-=0.7;
+        // Gerçekleşmiş kırılıma daha az puan; hazırlık evresine bonus.
+        if(breakout && !stretched)s+=0.45;
+        if(r.earlyBreakout)s+=1.35;
+        else if(nearBreak)s+=0.55;
+        if(acceleration)s+=0.45;
+        if(stretched)s-=1.45;
+        if(trap)s-=2.2;
         r.score=s;
 
-        if(trap) r.recommendation="KOVALAMA / BEKLE";
-        else if(s>=5.2) r.recommendation="AL";
-        else if(s>=3.3) r.recommendation="KADEMELİ AL / İZLE";
-        else if(s<=-3.0) r.recommendation="SAT / RİSKİ AZALT";
-        else if(s<=-1.4) r.recommendation="ZAYIF / BEKLE";
+        if(trap || (breakout && stretched)) r.recommendation="KOVALAMA / BEKLE";
+        else if(r.earlyBreakout && s>=3.0) r.recommendation="ERKEN AL / KIRILIM ÖNCESİ";
+        else if(s>=4.8 && !stretched) r.recommendation="AL";
+        else if(s>=2.7) r.recommendation="KADEMELİ AL / İZLE";
+        else if(s<=-2.8) r.recommendation="SAT / RİSKİ AZALT";
+        else if(s<=-1.3) r.recommendation="ZAYIF / BEKLE";
         else r.recommendation="TUT / NÖTR";
 
-        r.confidence=Math.max(30,Math.min(92,48+Math.abs(s)*5.8+(rv>1.2?5:0)+(Math.abs(eff)>.30?4:0)-(trap?12:0)));
-        if(s>=5.2)r.horizonText="1–3 işlem günü"; else if(s>=3.3)r.horizonText="3–7 işlem günü"; else r.horizonText="en fazla 10 işlem günü";
-        r.stopReference=Math.max(0,r.price-1.8*atr);
-        r.momentumText=roc3>0&&roc5>0?"pozitif":roc3<0&&roc5<0?"negatif":"karışık";
-        r.flowText=cmf>0.08&&vp>0.08?"para/hacim girişi":cmf<-0.08&&vp<-0.08?"para/hacim çıkışı":"nötr";
-        r.trendText=e3>e5&&e5>e8?"yukarı":e3<e5&&e5<e8?"aşağı":"yatay";
-        r.explanation=String.format(Locale.US,"EMA3/5/8 %s • RSI7 %.1f • ROC3 %.1f%% • ROC5 %.1f%% • RelVol x%.2f • CMF10 %.2f • hacim baskısı %.2f • trend verimi %.2f%s",
-                r.trendText,rsi7,roc3,roc5,rv,cmf,vp,eff,trap?" • TUZAK RİSKİ":"");
+        r.confidence=Math.max(30,Math.min(92,46+Math.abs(s)*5.4+Math.max(0,early)*3.0+(rv>1.05?3:0)-(stretched?7:0)-(trap?12:0)));
+        if(r.earlyBreakout)r.horizonText="kırılım hazırlığı • 1–5 işlem günü";
+        else if(s>=4.8)r.horizonText="1–3 işlem günü";
+        else if(s>=2.7)r.horizonText="3–7 işlem günü";
+        else r.horizonText="en fazla 10 işlem günü";
+        r.stopReference=Math.max(0,r.price-1.8*atr7);
+        r.momentumText=acceleration?"ivmeleniyor":roc3>0&&roc5>0?"pozitif":roc3<0&&roc5<0?"negatif":"karışık";
+        r.flowText=cmf>0.04&&vp>0.05?"para/hacim girişi":cmf<-0.08&&vp<-0.08?"para/hacim çıkışı":"nötr";
+        r.trendText=emaStack?"yukarı":e3<e5&&e5<e8?"aşağı":"yatay";
+        r.phaseText=r.earlyBreakout?"KIRILIM HAZIRLIĞI":breakout?(stretched?"GEÇ / UZAMIŞ":"KIRILIM"):(nearBreak?"SIKIŞMA / EŞİĞE YAKIN":"NORMAL");
+        r.explanation=String.format(Locale.US,
+                "%s • erken %.1f/6 • EMA20 uzaklık %.1f%% • RSI7 %.1f • ROC3 %.1f%% (ivme %.1f) • RelVol x%.2f • CMF %.2f • ATR sıkışma %.2f%s",
+                r.phaseText,early,r.stretchPct,rsi7,roc3,accel,rv,cmf,atr14==0?1:atr7/atr14,trap?" • TUZAK RİSKİ":"");
         return r;
     }
 
