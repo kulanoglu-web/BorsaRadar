@@ -1,0 +1,31 @@
+name: BorsaRadar Entry Gate Optimization
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'research/entry_gate_opt.py'
+      - 'research/backtest_br_smart.py'
+      - 'research/backtest_indicators.py'
+      - '.github/workflows/research-entry-gate.yml'
+  workflow_dispatch:
+
+jobs:
+  entrygate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run entry gate OOS study
+        run: PYTHONPATH=research python3 research/entry_gate_opt.py
+      - name: Show result
+        run: cat research/result_entry_gate_opt.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-entry-gate
+          path: |
+            research/result_entry_gate_opt.md
+            research/result_entry_gate_opt.json
+          retention-days: 30
