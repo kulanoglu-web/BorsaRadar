@@ -1,0 +1,21 @@
+name: BorsaRadar v36 V35 Stress Test
+on:
+  push:
+    paths: ['research/v36_v35_stress.py','.github/workflows/research-v36-v35-stress.yml']
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: PYTHONPATH=research python3 research/v36_v35_stress.py
+      - run: cat research/result_v36_v35_stress.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v36-v35-stress
+          path: |
+            research/result_v36_v35_stress.md
+            research/result_v36_v35_stress.json
+          retention-days: 30
