@@ -1,0 +1,32 @@
+name: BorsaRadar Risk Optimization
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'research/risk_opt.py'
+      - 'research/backtest_br_smart.py'
+      - '.github/workflows/research-risk-opt.yml'
+permissions:
+  contents: read
+jobs:
+  riskopt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run risk allocation optimization
+        run: PYTHONPATH=research python3 research/risk_opt.py
+      - name: Show result
+        run: cat research/result_risk_opt.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-risk-opt
+          path: |
+            research/result_risk_opt.md
+            research/result_risk_opt.json
+          if-no-files-found: error
+          retention-days: 30
