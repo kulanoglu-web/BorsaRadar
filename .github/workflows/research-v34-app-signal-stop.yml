@@ -1,0 +1,22 @@
+name: BorsaRadar v34 Stop-Aware App Signal Backtest
+on:
+  push:
+    paths: ['research/v34_app_signal_stop_backtest.py','.github/workflows/research-v34-app-signal-stop.yml']
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: PYTHONPATH=research python3 research/v34_app_signal_stop_backtest.py
+      - run: cat research/result_v34_app_signal_stop.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v34-app-signal-stop
+          path: |
+            research/result_v34_app_signal_stop.md
+            research/result_v34_app_signal_stop.json
+          retention-days: 30
