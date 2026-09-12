@@ -1,0 +1,26 @@
+name: BorsaRadar v26 Bull Participation
+on:
+  push:
+    paths:
+      - 'research/v26_bull_participation.py'
+      - '.github/workflows/research-v26-bull.yml'
+  workflow_dispatch:
+jobs:
+  v26:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run v26 bull participation
+        run: PYTHONPATH=research python3 research/v26_bull_participation.py
+      - name: Show result
+        run: cat research/result_v26_bull.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v26-bull
+          path: |
+            research/result_v26_bull.md
+            research/result_v26_bull.json
+          retention-days: 30
