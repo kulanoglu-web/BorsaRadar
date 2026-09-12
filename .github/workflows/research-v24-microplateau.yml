@@ -1,0 +1,26 @@
+name: BorsaRadar v24 Micro Plateau
+on:
+  push:
+    paths:
+      - 'research/v24_microplateau_slippage.py'
+      - '.github/workflows/research-v24-microplateau.yml'
+  workflow_dispatch:
+jobs:
+  v24:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run v24 micro plateau and slippage stress
+        run: PYTHONPATH=research python3 research/v24_microplateau_slippage.py
+      - name: Show result
+        run: cat research/result_v24_microplateau_slippage.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v24-microplateau
+          path: |
+            research/result_v24_microplateau_slippage.md
+            research/result_v24_microplateau_slippage.json
+          retention-days: 30
