@@ -1,0 +1,21 @@
+name: BorsaRadar v31 Risk RS
+on:
+  push:
+    paths: ['research/v31_risk_controlled_rs.py','.github/workflows/research-v31-risk-rs.yml']
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: PYTHONPATH=research python3 research/v31_risk_controlled_rs.py
+      - run: cat research/result_v31_risk_controlled_rs.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v31-risk-rs
+          path: |
+            research/result_v31_risk_controlled_rs.md
+            research/result_v31_risk_controlled_rs.json
+          retention-days: 30
