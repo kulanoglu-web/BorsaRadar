@@ -1,0 +1,27 @@
+name: BorsaRadar v22 Close Confirm
+on:
+  push:
+    paths:
+      - 'research/v22_close_confirm_robust.py'
+      - 'research/v21_long_wf_diagnostics.py'
+      - '.github/workflows/research-v22-close-confirm.yml'
+  workflow_dispatch:
+jobs:
+  v22:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run v22 close-confirm robustness
+        run: PYTHONPATH=research python3 research/v22_close_confirm_robust.py
+      - name: Show result
+        run: cat research/result_v22_close_confirm.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v22-close-confirm
+          path: |
+            research/result_v22_close_confirm.md
+            research/result_v22_close_confirm.json
+          retention-days: 30
