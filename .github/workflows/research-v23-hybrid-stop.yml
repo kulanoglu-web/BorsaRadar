@@ -1,0 +1,26 @@
+name: BorsaRadar v23 Hybrid Stop
+on:
+  push:
+    paths:
+      - 'research/v23_hybrid_disaster_stop.py'
+      - '.github/workflows/research-v23-hybrid-stop.yml'
+  workflow_dispatch:
+jobs:
+  v23:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run v23 hybrid disaster stop validation
+        run: PYTHONPATH=research python3 research/v23_hybrid_disaster_stop.py
+      - name: Show result
+        run: cat research/result_v23_hybrid_stop.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v23-hybrid-stop
+          path: |
+            research/result_v23_hybrid_stop.md
+            research/result_v23_hybrid_stop.json
+          retention-days: 30
