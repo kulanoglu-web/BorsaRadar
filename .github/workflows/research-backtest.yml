@@ -19,24 +19,13 @@ jobs:
           python-version: '3.12'
       - name: Run BR-SMART
         run: PYTHONPATH=research python3 research/backtest_br_smart.py
-      - name: Run window sensitivity
-        run: PYTHONPATH=research python3 research/window_sensitivity.py
-      - name: Run chronological entry classifier
-        run: PYTHONPATH=research python3 research/entry_classifier.py
       - name: Show result
-        run: |
-          cat research/result_br_smart.md
-          cat research/result_window_sensitivity.md
-          cat research/result_entry_classifier.md
+        run: cat research/result_br_smart.md
       - uses: actions/upload-artifact@v4
         with:
           name: borsaradar-br-smart
           path: |
             research/result_br_smart.md
             research/result_br_smart.json
-            research/result_window_sensitivity.md
-            research/result_window_sensitivity.json
-            research/result_entry_classifier.md
-            research/result_entry_classifier.json
           if-no-files-found: error
           retention-days: 30
