@@ -3,11 +3,21 @@ import re
 
 p=Path('app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java')
 s=p.read_text(encoding='utf-8')
+
+# Daha uzun hesap penceresi: grafik kısa kalır, erken kırılım motoru 20+ günü görebilir.
 s=s.replace('MarketDataService.fetchDaily(h.symbol, "6mo")','MarketDataService.fetchDaily(h.symbol, "3mo")')
 s=s.replace('MarketDataService.fetchDaily(sym, "1y")','MarketDataService.fetchDaily(sym, "3mo")')
 s=s.replace('MarketDataService.fetchDaily(symbol, "1y")','MarketDataService.fetchDaily(symbol, "3mo")')
 s=s.replace('MarketDataService.fetchDaily(sym,"1mo")','MarketDataService.fetchDaily(sym,"3mo")')
 s=s.replace('MarketDataService.fetchDaily(sym, "1mo")','MarketDataService.fetchDaily(sym, "3mo")')
+s=s.replace('MarketDataService.fetchDaily(symbol,"1mo")','MarketDataService.fetchDaily(symbol,"3mo")')
+s=s.replace('MarketDataService.fetchDaily(symbol, "1mo")','MarketDataService.fetchDaily(symbol, "3mo")')
+s=s.replace('MarketDataService.fetchDaily(h.symbol,"1mo")','MarketDataService.fetchDaily(h.symbol,"3mo")')
+s=s.replace('MarketDataService.fetchDaily(h.symbol, "1mo")','MarketDataService.fetchDaily(h.symbol, "3mo")')
+s=s.replace('"Telefon her hisse için yalnızca yaklaşık 1 aylık günlük veri çeker; karar motoru son 10–12 işlem gününe ağırlık verir."',
+            '"Hesaplama 3 aylık veride yapılır; grafik kısa tutulur. Radar artık yükseliş sonrası değil, sıkışma + ivme + hacim/para akışı ile kırılım öncesini öne çıkarır."')
+
+# Eski ekran metinleri / metod görünümü.
 s=s.replace('"1 yıllık günlük veri indiriliyor ve strateji geriye dönük çalıştırılıyor..."','"Güncel teknik veri alınıyor; grafik son 10 işlem gününü gösterir..."')
 s=s.replace('"1Y Backtest"','"Grafik / Analiz"')
 s=s.replace('"Detaylı backtest yenile"','"Grafik / Analiz"')
@@ -15,7 +25,8 @@ s=s.replace('"1Y backtest: " + r.bt.summary','"BorsaRadar yöntem sonucu: " + Me
 s=s.replace('shell(symbol + " Backtest")','shell(symbol + " Analiz")')
 s=s.replace('shell(symbol + " Backtest Sonucu")','shell(symbol + " Analiz Sonucu")')
 s=s.replace('"Teknik sinyal: " + s.signal + " • Teknik skor: " + s.score + " • Ölçek: -14…+15"','MethodEngine.analyze(s).label + " • " + MethodEngine.analyze(s).summary')
-s=s.replace('"Mantık: güçlü AL/ERKEN sinyaliyle giriş; ATR + EMA50 tabanlı ilk stop; ATR trailing ve trend/MACD bozulmasında çıkış."','"Metodlar: BR-Pulse + FlowBreak + TrendGuard + V30-Live + BR-KarKoru. V30-Live agresif relatif-güç karakterini; BR-KarKoru açık pozisyon riskini izler."')
+s=s.replace('"Mantık: güçlü AL/ERKEN sinyaliyle giriş; ATR + EMA50 tabanlı ilk stop; ATR trailing ve trend/MACD bozulmasında çıkış."','"Metodlar: EarlyBreak + BR-Pulse + FlowBreak + TrendGuard + V30-Live + BR-KarKoru. EarlyBreak sıkışma, ivmelenme, EMA yakınlığı ve para/hacim akışıyla kırılımı oluşmadan yakalamaya çalışır."')
+
 s=re.sub(r'    private String decision\(IndicatorEngine\.Snapshot s\) \{.*?\n    \}', '''    private String decision(IndicatorEngine.Snapshot s) {
         MethodEngine.Result m = MethodEngine.analyze(s);
         return m.label + " • %" + String.format(Locale.US, "%.0f", m.percent);
@@ -26,6 +37,7 @@ s=re.sub(r'    private int decisionColor\(IndicatorEngine\.Snapshot s\) \{.*?\n 
         if (m.label.contains("SAT") || m.label.contains("RİSK") || m.label.contains("AZALT")) return RED;
         return Color.rgb(225, 145, 0);
     }''', s, count=1, flags=re.S)
+
 s=s.replace('return "Neye göre: " + android.text.TextUtils.join(" • ", why) + ".";', '''MethodEngine.Result m = MethodEngine.analyze(s);
         return "Neye göre: " + android.text.TextUtils.join(" • ", why) + ". • " + m.summary
                 + " • Bu yüzde kazanç garantisi değil, indikatör/metod uyum gücüdür.";''')
@@ -39,11 +51,49 @@ s=s.replace('if (r.s.trendUp && r.s.cmf20 > 0 && !r.s.trap) longTerm.add(r);','i
 s=s.replace('if (dividendWatch.contains(r.symbol) && r.s.score >= 2 && !r.s.trap) dividend.add(r);','if (dividendWatch.contains(r.symbol) && MethodEngine.analyze(r.s).percent >= 52 && !r.s.trap) dividend.add(r);')
 s=s.replace('" • skor " + r.s.score + " (-14…+15)"','" • analiz %" + String.format(Locale.US, "%.0f", MethodEngine.analyze(r.s).percent)')
 s=s.replace('new PriceChartView(this, data)', 'new PriceChartView(this, data, "1 GÜN • SON 10 İŞLEM GÜNÜ")')
+
+# Portföy kâr koruma görünümü.
 s=s.replace('String d = decision(s);', 'String d = decision(s);\n                    ProfitGuardEngine.Result pg = ProfitGuardEngine.analyze(data, h.avg);')
 s=s.replace('explainDecision(s) + "\\n" + indicatorConsensus(s)', 'explainDecision(s) + "\\n" + indicatorConsensus(s) + "\\n" + pg.action + " • " + pg.reason')
+
+# Hisse detayında sağ/sol gezinme. Radar sırası varsa o sıra; yoksa tüm BIST sırası.
+needle='''        Button add=button("Portföye Ekle",GREEN);content.addView(add);add.setOnClickListener(v->portfolioDialog(null,symbol));
+    }
+
+    private void showBaskets()'''
+replacement='''        LinearLayout navRow=new LinearLayout(this); navRow.setOrientation(LinearLayout.HORIZONTAL);
+        Button prev=button("← Önceki",NAVY2), add=button("Portföye Ekle",GREEN), next=button("Sonraki →",NAVY2);
+        navRow.addView(prev,new LinearLayout.LayoutParams(0,-2,1));
+        navRow.addView(add,new LinearLayout.LayoutParams(0,-2,1.25f));
+        navRow.addView(next,new LinearLayout.LayoutParams(0,-2,1));
+        content.addView(navRow);
+        prev.setOnClickListener(v->analyzeStock(adjacentSymbol(symbol,-1)));
+        next.setOnClickListener(v->analyzeStock(adjacentSymbol(symbol,1)));
+        add.setOnClickListener(v->portfolioDialog(null,symbol));
+        content.addView(txt("← → ile radar listesindeki diğer hisselere geçebilirsin.",12,Color.GRAY));
+    }
+
+    private String adjacentSymbol(String symbol,int delta) {
+        List<String> order=new ArrayList<>();
+        synchronized(radarResults){ for(RadarItem r:radarResults) order.add(r.symbol); }
+        if(order.size()<2) order.addAll(Arrays.asList(ALL_SYMBOLS));
+        int i=order.indexOf(symbol);
+        if(i<0){ order.add(0,symbol); i=0; }
+        int n=order.size();
+        return order.get((i+delta+n)%n);
+    }
+
+    private void showBaskets()'''
+if needle in s:
+    s=s.replace(needle,replacement)
+
+# Radar başlığında erken kırılımı açık göster.
+s=s.replace('TextView h=bold("En güçlü adaylar",18,NAVY);content.addView(h);',
+            'TextView h=bold("Erken kırılım + güçlü adaylar",18,NAVY);content.addView(h);')
+
 p.write_text(s, encoding='utf-8')
 
 b=Path('app/build.gradle'); g=b.read_text(encoding='utf-8')
-g=re.sub(r'versionCode\s+\d+', 'versionCode 33', g)
-g=re.sub(r"versionName\s+'[^']+'", "versionName '3.3.0'", g)
+g=re.sub(r'versionCode\s+\d+', 'versionCode 34', g)
+g=re.sub(r"versionName\s+'[^']+'", "versionName '3.4.0'", g)
 b.write_text(g, encoding='utf-8')
