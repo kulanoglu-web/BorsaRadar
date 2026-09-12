@@ -13,7 +13,7 @@ s=s.replace('MarketDataService.fetchDaily(sym, "1mo")','MarketDataService.fetchD
 s=s.replace('MarketDataService.fetchDaily(symbol,"1mo")','MarketDataService.fetchDaily(symbol,"3mo")')
 s=s.replace('MarketDataService.fetchDaily(symbol, "1mo")','MarketDataService.fetchDaily(symbol, "3mo")')
 s=s.replace('MarketDataService.fetchDaily(h.symbol,"1mo")','MarketDataService.fetchDaily(h.symbol,"3mo")')
-s=s.replace('MarketDataService.fetchDaily(h.symbol, "1mo")','MarketDataService.fetchDaily(h.symbol, "3mo")')
+s=s.replace('MarketDataService.fetchDaily(h.symbol, "1mo")','MarketDataService.fetchDaily(h.symbol,"3mo")')
 s=s.replace('"Telefon her hisse için yalnızca yaklaşık 1 aylık günlük veri çeker; karar motoru son 10–12 işlem gününe ağırlık verir."',
             '"Hesaplama 3 aylık veride yapılır; grafik kısa tutulur. Radar artık yükseliş sonrası değil, sıkışma + ivme + hacim/para akışı ile kırılım öncesini öne çıkarır."')
 
@@ -87,13 +87,16 @@ replacement='''        LinearLayout navRow=new LinearLayout(this); navRow.setOri
 if needle in s:
     s=s.replace(needle,replacement)
 
-# Radar başlığında erken kırılımı açık göster.
 s=s.replace('TextView h=bold("En güçlü adaylar",18,NAVY);content.addView(h);',
             'TextView h=bold("Erken kırılım + güçlü adaylar",18,NAVY);content.addView(h);')
+
+# Tüm ekranlarda görünür telif ve risk uyarısı.
+s=s.replace('TextView foot=txt("BorsaRadar • 1–10 işlem günü odaklı teknik karar destek",11,Color.rgb(100,110,124));',
+'''TextView foot=txt("© 2026 BorsaRadar • Tüm hakları saklıdır.  Yatırım danışmanlığı değildir. AL/SAT sinyalleri kesin veya garantili değildir. Kâr garantisi yoktur; yatırımlar zarar riski içerir.",10,Color.rgb(100,110,124));''')
 
 p.write_text(s, encoding='utf-8')
 
 b=Path('app/build.gradle'); g=b.read_text(encoding='utf-8')
-g=re.sub(r'versionCode\s+\d+', 'versionCode 34', g)
-g=re.sub(r"versionName\s+'[^']+'", "versionName '3.4.0'", g)
+g=re.sub(r'versionCode\s+\d+', 'versionCode 35', g)
+g=re.sub(r"versionName\s+'[^']+'", "versionName '3.5.0'", g)
 b.write_text(g, encoding='utf-8')
