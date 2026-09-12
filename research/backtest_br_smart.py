@@ -1,4 +1,4 @@
-# BR-SMART v13: regime ablation, choose on early chunks, test untouched final chunks
+# BR-SMART v13.1: regime holdout + robust window accounting
 import json
 from pathlib import Path
 import backtest_indicators as bi
@@ -14,6 +14,13 @@ def allowed(mode,day):
     if mode=='STRONG':return strong,2,.0022
     if mode=='RECOVERY':return recovery,1,.0015
     return ((strong or recovery) and not weak),(2 if strong else 1),(.0022 if strong else .0013)
+
+def idx_at_or_before(s,day):
+    i=DPOS.get(day,len(DATES)-1)
+    for j in range(i,-1,-1):
+        z=bi.bysym[s].get(DATES[j])
+        if z is not None:return z
+    return None
 
 def sig(s,i,day,mode):
     ok,_,_=allowed(mode,day)
@@ -71,12 +78,17 @@ def sim(mode,days):
                 cost=q*px*(1+FEE);cash-=cost;pos[s]={'q':q,'en':px,'hi':px,'atr':atr,'hard':hard,'age':0,'cost':cost};slots-=1
         eq=cash
         for s,p in pos.items():
-            i=bi.bysym[s].get(day);eq+=p['q']*(bi.data[s][i]['c'] if i is not None else p['en'])
+            i=bi.bysym[s].get(day)
+            if i is None:i=idx_at_or_before(s,day)
+            eq+=p['q']*(bi.data[s][i]['c'] if i is not None else p['en'])
         peak=max(peak,eq);dd=max(dd,(peak-eq)/peak)
+    # Always liquidate every open position at its latest available candle on/before the window end.
     for s,p in list(pos.items()):
-        i=bi.bysym[s].get(last)
-        if i is None:continue
-        px=bi.data[s][i]['c'];pro=p['q']*px*(1-FEE);cash+=pro;pnl=pro-p['cost'];tr.append((pnl,100*pnl/p['cost'],'SON'))
+        i=idx_at_or_before(s,last)
+        px=bi.data[s][i]['c'] if i is not None else p['en']
+        pro=p['q']*px*(1-FEE);cash+=pro;pnl=pro-p['cost'];tr.append((pnl,100*pnl/p['cost'],'SON'))
+    # Include forced terminal liquidation in drawdown accounting.
+    peak=max(peak,cash);dd=max(dd,(peak-cash)/peak)
     gp=sum(x[0] for x in tr if x[0]>0);gl=-sum(x[0] for x in tr if x[0]<0);rets=[x[1] for x in tr];wins=[x for x in rets if x>0]
     return {'ret':(cash/START-1)*100,'dd':dd*100,'n':len(tr),'win':100*len(wins)/len(rets) if rets else 0,'pf':gp/gl if gl else (99 if gp else 0)}
 
@@ -86,7 +98,7 @@ for mode in modes:
     rr=[sim(mode,ch) for ch in dev];active=[x for x in rr if x['n']];avg=sum(x['ret'] for x in rr)/len(rr);worst=min(x['ret'] for x in rr);dd=sum(x['dd'] for x in rr)/len(rr);pf=sum(min(5,x['pf']) for x in active)/len(active) if active else 0;n=sum(x['n'] for x in rr);score=avg+.6*worst-.4*dd+.35*(pf-1)+min(.2,n/80);devrows.append({'mode':mode,'avg':avg,'worst':worst,'dd':dd,'pf':pf,'n':n,'score':score})
 best=max(devrows,key=lambda x:x['score'])['mode'];hr=[sim(best,ch) for ch in hold];active=[x for x in hr if x['n']]
 summary={'selected':best,'hold_avg':sum(x['ret'] for x in hr)/len(hr) if hr else 0,'hold_worst':min(x['ret'] for x in hr) if hr else 0,'hold_positive':sum(x['ret']>0 for x in hr),'hold_n':sum(x['n'] for x in hr),'hold_dd':sum(x['dd'] for x in hr)/len(hr) if hr else 0,'hold_pf':sum(min(5,x['pf']) for x in active)/len(active) if active else 0,'full':sim(best,DATES)}
-lines=['# BR-SMART v13 Regime Holdout','Dört rejim yaklaşımı yalnız ilk 6 dönemde karşılaştırıldı; seçilen yaklaşım son 5 döneme dokunmadan uygulandı. Giriş formülü sabit. TUPRS/savunma hariç, maliyet dahil.','','## Geliştirme dönemi','|Mode|Avg|Worst|DD|N|PF|','|---|---:|---:|---:|---:|---:|']
+lines=['# BR-SMART v13.1 Regime Holdout','Dört rejim yaklaşımı yalnız ilk 6 dönemde karşılaştırıldı; seçilen yaklaşım son 5 döneme dokunmadan uygulandı. Pencere sonunda veri eksik hisseler artık son mevcut mumdan zorunlu kapatılır ve terminal DD hesaba katılır. TUPRS/savunma hariç, maliyet dahil.','','## Geliştirme dönemi','|Mode|Avg|Worst|DD|N|PF|','|---|---:|---:|---:|---:|---:|']
 for r in devrows:lines.append(f'|{r["mode"]}|{r["avg"]:.2f}%|{r["worst"]:.2f}%|{r["dd"]:.2f}%|{r["n"]}|{r["pf"]:.2f}|')
 lines+=['',f'Seçilen: **{best}**',f'Son 5 dokunulmamış dönem: ort **{summary["hold_avg"]:.2f}%**, en kötü **{summary["hold_worst"]:.2f}%**, pozitif **{summary["hold_positive"]}/{len(hr)}**, N **{summary["hold_n"]}**, DD **{summary["hold_dd"]:.2f}%**, PF **{summary["hold_pf"]:.2f}**. Tüm veri: **{summary["full"]["ret"]:.2f}%**, PF **{summary["full"]["pf"]:.2f}**.','','|Holdout|Ret|DD|N|Win|PF|','|---:|---:|---:|---:|---:|---:|']
 for i,r in enumerate(hr,1):lines.append(f'|{i}|{r["ret"]:.2f}%|{r["dd"]:.2f}%|{r["n"]}|{r["win"]:.1f}%|{r["pf"]:.2f}|')
