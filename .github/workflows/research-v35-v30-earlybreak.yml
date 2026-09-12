@@ -1,0 +1,25 @@
+name: BorsaRadar v35 V30 EarlyBreak Hybrid
+on:
+  push:
+    paths:
+      - 'research/v35_v30_earlybreak_hybrid.py'
+      - '.github/workflows/research-v35-v30-earlybreak.yml'
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: PYTHONPATH=research python3 research/v35_v30_earlybreak_hybrid.py
+      - run: cat research/result_v35_v30_earlybreak_hybrid.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v35-v30-earlybreak
+          path: |
+            research/result_v35_v30_earlybreak_hybrid.md
+            research/result_v35_v30_earlybreak_hybrid.json
+          retention-days: 30
