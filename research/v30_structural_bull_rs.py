@@ -25,7 +25,6 @@ def regime(day, confirm=3):
  for k in range(confirm):
   d=D[p-k]; br,bd,strong,recovery,weak=b.state(d)
   if br>=.55 and not weak: ok+=1
- # structural layer: median liquid universe above 50d trend and 20d market proxy momentum positive
  return ok==confirm
 
 def candidates(day,c):
@@ -36,14 +35,13 @@ def candidates(day,c):
   turn,vol,j=b.bi.quality(s,i)
   if turn<120_000_000 or vol<120_000 or j>=2: continue
   f=b.bi.feat(s,i)
-  if f['m']['adx']<18 or f['cmf']<=0: continue
+  if f['adx']<18 or f['cmf']<=0: continue
   p0=close(s,i-c['look']); p1=close(s,i)
   if not p0 or p1<=0:continue
   mom=p1/p0-1
   if mom<=0: continue
-  # require above medium trend and not badly stretched
   if p1<=f['e20'] or p1>f['e20']*1.18: continue
-  out.append((mom+0.002*f['m']['adx'],s,i))
+  out.append((mom+0.002*f['adx'],s,i))
  out.sort(reverse=True)
  return out[:c['top']]
 
@@ -52,7 +50,6 @@ def sleeve(days,c,fee=FEE):
  if not ds:return {'ret':0,'dd':0,'n':0,'turns':0}
  cash=START; pos={}; peak=START; dd=0; tr=[]; last=ds[-1]; turns=0
  for day in ds:
-  # exits: max hold, loss of EMA20, or regime off
   on=regime(day)
   for s in list(pos):
    i=idx(s,day)
@@ -62,7 +59,6 @@ def sleeve(days,c,fee=FEE):
     px=b.bi.data[s][i]['o'] if i>0 else close(s,i); pro=p['q']*px*(1-fee); cash+=pro; tr.append(pro-p['cost']); del pos[s]; turns+=1
   if on:
    picks=candidates(day,c)
-   # rebalance only into free slots; no daily churn of existing leaders
    for _,s,i in picks:
     if s in pos or len(pos)>=c['top']: continue
     px=b.bi.data[s][i]['o']; alloc=(cash*(1-c['cash']))/max(1,c['top']-len(pos)); q=int(alloc/(px*(1+fee)))
@@ -80,7 +76,6 @@ def sleeve(days,c,fee=FEE):
 def mix(days,c,w):
  a=v24.run(days,1.6)
  s=sleeve(days,c)
- # true unlevered split approximation from sleeve-level equity returns
  ret=(1-w)*a['ret']+w*s['ret']; dd=(1-w)*a['dd']+w*s['dd']
  return {'ret':ret,'dd':dd,'active':a['ret'],'sleeve':s['ret'],'n':s['n'],'turns':s['turns']}
 
