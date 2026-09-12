@@ -33,6 +33,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainActivity extends Activity {
     private static final String PREFS = "borsaradar_final";
@@ -71,7 +72,7 @@ public class MainActivity extends Activity {
     private final Map<String, ShortPulseEngine.Result> holdingSignals = new HashMap<>();
     private final List<RadarItem> radarResults = Collections.synchronizedList(new ArrayList<>());
     private volatile boolean scanRunning=false;
-    private volatile int scanDone=0, scanFailed=0;
+    private final AtomicInteger scanDone=new AtomicInteger(0), scanFailed=new AtomicInteger(0);
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -231,8 +232,9 @@ public class MainActivity extends Activity {
         Button scan=button(scanRunning?"Tarama devam ediyor…":"Tüm BIST'i Tara",GREEN); top.addView(scan); scan.setEnabled(!scanRunning); scan.setOnClickListener(v->scanRadar());
         content.addView(top); spacer(8);
         if(scanRunning){
-            ProgressBar pb=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal); pb.setMax(ALL_SYMBOLS.length);pb.setProgress(scanDone);content.addView(pb);
-            content.addView(txt(scanDone+"/"+ALL_SYMBOLS.length+" • başarısız "+scanFailed,14,NAVY));
+            int done=scanDone.get(), failed=scanFailed.get();
+            ProgressBar pb=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal); pb.setMax(ALL_SYMBOLS.length);pb.setProgress(done);content.addView(pb);
+            content.addView(txt(done+"/"+ALL_SYMBOLS.length+" • başarısız "+failed,14,NAVY));
         }
         if(!radarResults.isEmpty()) renderRadarList(new ArrayList<>(radarResults),30);
         else content.addView(txt("Henüz radar sonucu yok.",14,Color.GRAY));
@@ -240,20 +242,20 @@ public class MainActivity extends Activity {
 
     private void scanRadar() {
         if(scanRunning)return;
-        scanRunning=true;scanDone=0;scanFailed=0;radarResults.clear();showRadar();
+        scanRunning=true;scanDone.set(0);scanFailed.set(0);radarResults.clear();showRadar();
         for(String sym:ALL_SYMBOLS) io.execute(()->{
             try{
                 List<MarketDataService.Candle>d=MarketDataService.fetchDaily(sym,"1mo");
                 ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);
                 radarResults.add(new RadarItem(sym,r));
-            }catch(Exception e){scanFailed++;}
-            scanDone++;
-            if(scanDone>=ALL_SYMBOLS.length){
+            }catch(Exception e){scanFailed.incrementAndGet();}
+            int done=scanDone.incrementAndGet();
+            if(done>=ALL_SYMBOLS.length){
                 scanRunning=false;
                 List<RadarItem> sorted=new ArrayList<>(radarResults); sorted.sort((a,b)->Double.compare(b.score,a.score));
                 radarResults.clear(); radarResults.addAll(sorted); saveRadarCache();
                 main.post(this::showRadar);
-            } else if(scanDone%25==0) main.post(this::showRadar);
+            } else if(done%25==0) main.post(this::showRadar);
         });
     }
 
