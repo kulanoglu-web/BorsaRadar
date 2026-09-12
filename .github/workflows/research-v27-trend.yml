@@ -1,0 +1,21 @@
+name: BorsaRadar v27 Trend Engine
+on:
+  push:
+    paths: ['research/v27_trend_engine.py','.github/workflows/research-v27-trend.yml']
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: PYTHONPATH=research python3 research/v27_trend_engine.py
+      - run: cat research/result_v27_trend.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v27-trend
+          path: |
+            research/result_v27_trend.md
+            research/result_v27_trend.json
+          retention-days: 30
