@@ -1,0 +1,31 @@
+name: BorsaRadar Entry Classifier
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'research/entry_classifier.py'
+      - 'research/entry_feature_study.py'
+      - 'research/backtest_indicators.py'
+      - '.github/workflows/research-entry-classifier.yml'
+  workflow_dispatch:
+
+jobs:
+  classifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run chronological classifier
+        run: PYTHONPATH=research python3 research/entry_classifier.py
+      - name: Show result
+        run: cat research/result_entry_classifier.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-entry-classifier
+          path: |
+            research/result_entry_classifier.md
+            research/result_entry_classifier.json
+          retention-days: 30
