@@ -1,0 +1,22 @@
+name: BorsaRadar v33 App Signal Backtest
+on:
+  push:
+    paths: ['research/v33_app_signal_backtest.py','.github/workflows/research-v33-app-signal.yml']
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: PYTHONPATH=research python3 research/v33_app_signal_backtest.py
+      - run: cat research/result_v33_app_signal.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v33-app-signal
+          path: |
+            research/result_v33_app_signal.md
+            research/result_v33_app_signal.json
+          retention-days: 30
