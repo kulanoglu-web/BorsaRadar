@@ -1,4 +1,4 @@
-name: Build BorsaRadar 3.4 APK
+name: Build BorsaRadar 3.5 APK
 on:
   workflow_dispatch:
   push:
@@ -18,17 +18,17 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
-      - name: Apply v3.4 early-break and navigation patch
+      - name: Apply v3.5 branding, risk and early-break patch
         run: python3 .ci/patch_v31.py
       - name: Restore stable signing key
         run: base64 -d .ci/borsaradar-final.keystore.b64 > .ci/borsaradar-final.keystore
       - name: Build APK
         run: gradle --no-daemon clean assembleDebug
       - name: Prepare APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk BorsaRadar-v3.4.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk BorsaRadar-v3.5.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v3.4-APK
-          path: BorsaRadar-v3.4.apk
+          name: BorsaRadar-v3.5-APK
+          path: BorsaRadar-v3.5.apk
           if-no-files-found: error
           retention-days: 30
