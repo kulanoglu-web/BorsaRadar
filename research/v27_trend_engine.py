@@ -16,19 +16,21 @@ CANDS=[
 def prev_high(a,i,n):
  return max(x['h'] for x in a[max(0,i-n-1):i-1]) if i>=3 else 1e99
 
+def mom20(a,i):
+ return a[i-1]['c']/a[i-21]['c']-1 if i>=21 and a[i-21]['c'] else 0
+
 def sig(s,i,day,c):
  if i<70:return None
  br,bd,strong,recovery,weak=b.state(day)
  if weak or br<c['br']:return None
- a=b.bi.data[s]; f=b.bi.feat(s,i); m=f['m']; bar=a[i-1]; close=bar['c']
+ a=b.bi.data[s]; f=b.bi.feat(s,i); bar=a[i-1]; close=bar['c']; m20=mom20(a,i)
  # independent trend logic: EMA structure + momentum + breakout + money flow
- if not (close>f['e20'] and m['s20']>m['s50'] and f['adx']>=c['adx'] and f['rv']>=c['rv'] and f['cmf']>0):return None
- if f['mom20']<c['mom20'] or f['rsi']<52 or f['rsi']>76:return None
+ if not (close>f['e20'] and f['e20']>f['e50'] and f['adx']>=c['adx'] and f['rv']>=c['rv'] and f['cmf']>0):return None
+ if m20<c['mom20'] or f['rsi']<52 or f['rsi']>76:return None
  ph=prev_high(a,i,c['break_n'])
  if close<ph*.995:return None
- # rank stronger continuation without redundant oscillator voting
  breakout=close/ph-1
- sc=35*min(1,max(0,f['mom20']/.15))+25*min(1,max(0,(f['adx']-18)/25))+20*min(1,max(0,(f['rv']-1)/1.2))+20*min(1,max(0,(breakout+.005)/.04))
+ sc=35*min(1,max(0,m20/.15))+25*min(1,max(0,(f['adx']-18)/25))+20*min(1,max(0,(f['rv']-1)/1.2))+20*min(1,max(0,(breakout+.005)/.04))
  return sc,f
 
 def sim(days,c):
@@ -45,7 +47,7 @@ def sim(days,c):
    ex=reason=None
    if bar['l']<=stop:ex=bar['o'] if bar['o']<stop else stop;reason='STOP'
    elif p['age']>=3 and a[i-1]['c']<f['e20']:ex=bar['o'];reason='EMA20'
-   elif p['age']>=5 and f['mom20']<0:ex=bar['o'];reason='MOM'
+   elif p['age']>=5 and mom20(a,i)<0:ex=bar['o'];reason='MOM'
    if ex:
     pro=p['q']*ex*(1-FEE);cash+=pro;tr.append(pro-p['cost']);del pos[s]
   br,bd,strong,recovery,weak=b.state(day);slots=(0 if weak else c['maxpos'])-len(pos)
@@ -68,7 +70,9 @@ def sim(days,c):
     cost=q*px*(1+FEE);cash-=cost;pos[s]={'q':q,'en':px,'hi':px,'atr':atr,'hard':hard,'age':0,'cost':cost};slots-=1
   eq=cash
   for s,p in pos.items():
-   i=b.bi.bysym[s].get(day) or v25.idx_at_or_before(s,day);eq+=p['q']*(b.bi.data[s][i]['c'] if i is not None else p['en'])
+   i=b.bi.bysym[s].get(day)
+   if i is None:i=v25.idx_at_or_before(s,day)
+   eq+=p['q']*(b.bi.data[s][i]['c'] if i is not None else p['en'])
   peak=max(peak,eq);dd=max(dd,(peak-eq)/peak)
  for s,p in list(pos.items()):
   i=v25.idx_at_or_before(s,last);px=b.bi.data[s][i]['c'];pro=p['q']*px*(1-FEE);cash+=pro;tr.append(pro-p['cost'])
