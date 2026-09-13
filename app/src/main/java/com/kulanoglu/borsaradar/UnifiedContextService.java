@@ -10,8 +10,8 @@ public final class UnifiedContextService {
     public static final class Result {
         public double combinedScore,newsScore,kapScore;
         public boolean newsOk,kapOk,hasContext;
-        public int kapEvents;
-        public String coverage="YOK",summary="baglam verisi yok";
+        public int kapEvents,healthScore;
+        public String coverage="YOK",summary="baglam verisi yok",healthLabel="YOK";
         public final List<String> topEvents=new ArrayList<>();
     }
     public static Result analyze(String symbol){
@@ -33,7 +33,8 @@ public final class UnifiedContextService {
         for(String s:kr.topEvents)if(out.topEvents.size()<5)out.topEvents.add("KAP • "+s);
         for(String s:news.catalysts)if(out.topEvents.size()<5)out.topEvents.add("HABER • "+s);
         out.coverage=SourceCoverageTracker.label(out.newsOk,out.kapOk,false);
-        out.summary=String.format(Locale.US,"Birleşik %.1f/8 • Haber %.1f • KAP %.1f • KAP olay %d • kapsama %s",out.combinedScore,out.newsScore,out.kapScore,out.kapEvents,out.coverage);
+        ContextHealthEngine.Result h=ContextHealthEngine.evaluate(out); out.healthScore=h.score; out.healthLabel=h.label;
+        out.summary=String.format(Locale.US,"Birleşik %.1f/8 • Haber %.1f • KAP %.1f • KAP olay %d • kapsama %s • veri sağlığı %d/100",out.combinedScore,out.newsScore,out.kapScore,out.kapEvents,out.coverage,out.healthScore);
         ContextCache.put(symbol,out); return out;
     }
     private static double clamp(double x,double lo,double hi){return Math.max(lo,Math.min(hi,x));}
