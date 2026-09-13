@@ -11,9 +11,18 @@ public final class BacktestEngine {
         public String summary;
     }
 
+    /** Genel optimizasyonda TUPRS varsayilan olarak haric tutulur. */
+    public static Result run(String symbol,List<MarketDataService.Candle> x) {
+        String s=symbol==null?"":symbol.trim().toUpperCase();
+        if("TUPRS".equals(s)||"TUPRS.IS".equals(s)){
+            Result r=new Result(); r.summary="TUPRS genel optimizasyon/backtest havuzundan hariç"; return r;
+        }
+        return run(x);
+    }
+
     public static Result run(List<MarketDataService.Candle> x) {
         Result r = new Result();
-        if (x.size() < 90) { r.summary = "Backtest için yetersiz veri"; return r; }
+        if (x==null || x.size() < 90) { r.summary = "Backtest için yetersiz veri"; return r; }
 
         double capital = 1.0, peak = 1.0, maxDd = 0;
         boolean in = false;
