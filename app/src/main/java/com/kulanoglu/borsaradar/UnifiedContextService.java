@@ -8,10 +8,10 @@ import java.util.Locale;
 public final class UnifiedContextService {
     private UnifiedContextService(){}
     public static final class Result {
-        public double combinedScore,newsScore,kapScore,informationStrength,qualityScore;
+        public double combinedScore,newsScore,kapScore,informationStrength,qualityScore,macroRisk,macroSensitivity;
         public boolean newsOk,kapOk,hasContext;
         public int kapEvents,criticalEvents,healthScore;
-        public String coverage="YOK",summary="baglam verisi yok",healthLabel="YOK",qualityLabel="YOK",strengthLabel="ZAYIF";
+        public String coverage="YOK",summary="baglam verisi yok",healthLabel="YOK",qualityLabel="YOK",strengthLabel="ZAYIF",macroTag="NONE",macroNote="Makro etki yok";
         public final List<String> topEvents=new ArrayList<>();
     }
     public static Result analyze(String symbol){
@@ -39,7 +39,11 @@ public final class UnifiedContextService {
         out.qualityScore=q.quality; out.qualityLabel=q.label;
         InformationStrengthEngine.Result is=InformationStrengthEngine.score(out.combinedScore,out.qualityScore,out.criticalEvents);
         out.informationStrength=is.strength; out.strengthLabel=is.label;
-        out.summary=String.format(Locale.US,"Birleşik %.1f/8 • Haber %.1f • KAP %.1f • Bilgi gücü %.0f/100 %s • kalite %.0f/100 • kritik %d • kapsama %s",out.combinedScore,out.newsScore,out.kapScore,out.informationStrength,out.strengthLabel,out.qualityScore,out.criticalEvents,out.coverage);
+        MacroHeadlineAggregator.Result mr=MacroHeadlineAggregator.analyze(news.acceptedTitles);
+        out.macroTag=mr.tag; out.macroNote=mr.note;
+        out.macroSensitivity=SectorMacroSensitivityEngine.multiplier(symbol,mr.tag);
+        out.macroRisk=Math.min(10,mr.maxRisk*out.macroSensitivity);
+        out.summary=String.format(Locale.US,"Birleşik %.1f/8 • Haber %.1f • KAP %.1f • Bilgi gücü %.0f/100 %s • kalite %.0f/100 • kritik %d • makro %s %.1f/10 • kapsama %s",out.combinedScore,out.newsScore,out.kapScore,out.informationStrength,out.strengthLabel,out.qualityScore,out.criticalEvents,out.macroTag,out.macroRisk,out.coverage);
         ContextCache.put(symbol,out); return out;
     }
     private static double clamp(double x,double lo,double hi){return Math.max(lo,Math.min(hi,x));}
