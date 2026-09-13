@@ -50,6 +50,17 @@ public final class MarketDataService {
     public static String normalizeSymbol(String input){
         if(input==null)return "";
         String s=input.trim().toUpperCase();
+        // UI/portfolio market prefixes are routing hints, not Yahoo ticker syntax.
+        // Examples: US:NVDA -> NVDA, DE:S92 -> S92.DE, BIST:THYAO -> THYAO.IS.
+        if(s.startsWith("US:")||s.startsWith("USA:")||s.startsWith("NASDAQ:")||s.startsWith("NYSE:")){
+            int k=s.indexOf(':'); return s.substring(k+1).trim();
+        }
+        if(s.startsWith("DE:")||s.startsWith("GER:")||s.startsWith("XETRA:")){
+            int k=s.indexOf(':'); String code=s.substring(k+1).trim(); return code.endsWith(".DE")?code:code+".DE";
+        }
+        if(s.startsWith("BIST:")||s.startsWith("TR:")){
+            int k=s.indexOf(':'); String code=s.substring(k+1).trim(); return code.endsWith(".IS")?code:code+".IS";
+        }
         if(s.endsWith(".IS")||s.endsWith(".DE")||s.endsWith(".L")||s.endsWith(".PA")||s.contains("=")||s.startsWith("^"))return s;
         if(inUniverse(s,GlobalStockUniverse.USA))return s;
         if(inUniverse(s,GlobalStockUniverse.GERMANY))return s+".DE";
@@ -59,6 +70,8 @@ public final class MarketDataService {
     public static boolean isGlobalSymbol(String input){
         if(input==null)return false;
         String s=input.trim().toUpperCase();
+        if(s.startsWith("US:")||s.startsWith("USA:")||s.startsWith("NASDAQ:")||s.startsWith("NYSE:")||s.startsWith("DE:")||s.startsWith("GER:")||s.startsWith("XETRA:"))return true;
+        if(s.startsWith("BIST:")||s.startsWith("TR:"))return false;
         if(s.endsWith(".DE")||s.endsWith(".L")||s.endsWith(".PA"))return true;
         if(s.endsWith(".IS"))return false;
         return inUniverse(s,GlobalStockUniverse.USA)||inUniverse(s,GlobalStockUniverse.GERMANY);
