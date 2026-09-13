@@ -48,6 +48,12 @@ public final class MarketSymbol {
         return stored+" • Türkiye";
     }
 
+    public static String currency(String stored){
+        if(stored!=null && stored.startsWith("DE:")) return "€";
+        if(stored!=null && stored.startsWith("US:")) return "$";
+        return "₺";
+    }
+
     public static boolean isTurkey(String stored){
         return stored!=null && !stored.startsWith("DE:") && !stored.startsWith("US:");
     }
