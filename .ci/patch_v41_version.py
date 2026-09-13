@@ -15,3 +15,7 @@ t=m.read_text(encoding='utf-8')
 t=re.sub(r'^\s*cost\.setHint\(pos==0\?.*?\);\s*$', '', t, flags=re.M)
 t=t.replace('EditText cost=new EditText(this); cost.setHint("Alış fiyatı (₺)");','EditText cost=new EditText(this); cost.setHint("Alış fiyatı (TL / EUR)");')
 m.write_text(t,encoding='utf-8')
+
+fix_patch=Path('.ci/patch_v44_decision_fix.py')
+if fix_patch.exists():
+    exec(compile(fix_patch.read_text(encoding='utf-8'),str(fix_patch),'exec'))
