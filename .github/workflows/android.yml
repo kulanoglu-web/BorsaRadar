@@ -1,4 +1,4 @@
-name: Build BorsaRadar 3.8.1 APK
+name: Build BorsaRadar 3.9 APK
 on:
   workflow_dispatch:
   push:
@@ -24,15 +24,21 @@ jobs:
         run: python3 .ci/patch_v37.py
       - name: Apply v3.8.1 V35 and notification tap patch
         run: python3 .ci/patch_v38.py
+      - name: Enable Germany and US quote symbols
+        run: python3 .ci/patch_v41_market.py
+      - name: Add Germany and US direct entry UI
+        run: python3 .ci/patch_v41_ui.py
+      - name: Set v3.9 version
+        run: python3 .ci/patch_v41_version.py
       - name: Restore stable signing key
         run: base64 -d .ci/borsaradar-final.keystore.b64 > .ci/borsaradar-final.keystore
       - name: Build APK
         run: gradle --no-daemon clean assembleDebug
       - name: Prepare APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk BorsaRadar-v3.8.1.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk BorsaRadar-v3.9.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v3.8.1-APK
-          path: BorsaRadar-v3.8.1.apk
+          name: BorsaRadar-v3.9-APK
+          path: BorsaRadar-v3.9.apk
           if-no-files-found: error
           retention-days: 30
