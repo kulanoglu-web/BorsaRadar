@@ -12,18 +12,24 @@ replacement='''    private void portfolioDialog(Holding edit,String preset) {
         Spinner market=new Spinner(this);
         String[] markets={"Türkiye / BIST","Almanya / Xetra-Frankfurt","ABD / Nasdaq-NYSE"};
         market.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,markets));
-        AutoCompleteTextView sym=new AutoCompleteTextView(this); sym.setHint("Direkt kod: THYAO / SAP / NVDA"); sym.setThreshold(1); sym.setSingleLine(true);
-        sym.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_dropdown_item_1line,BistUniverse.ENTRIES));
+        AutoCompleteTextView sym=new AutoCompleteTextView(this); sym.setHint("Harf yaz: THY / SAP / NVD"); sym.setThreshold(1); sym.setSingleLine(true);
+        market.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
+            @Override public void onItemSelected(android.widget.AdapterView<?> p,android.view.View v,int pos,long id){
+                String[] a=pos==1?GlobalStockUniverse.GERMANY:pos==2?GlobalStockUniverse.USA:BistUniverse.ENTRIES;
+                sym.setAdapter(new ArrayAdapter<>(MainActivity.this,android.R.layout.simple_dropdown_item_1line,a));
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> p){}
+        });
         EditText qty=new EditText(this); qty.setHint("Adet / lot"); qty.setInputType(InputType.TYPE_CLASS_NUMBER);
         EditText cost=new EditText(this); cost.setHint("Alış fiyatı"); cost.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL);
         if(edit!=null){market.setSelection(MarketSymbol.marketIndex(edit.symbol));sym.setText(edit.symbol,false);qty.setText(String.valueOf(edit.qty));cost.setText(String.valueOf(edit.cost));}
         else if(preset!=null){market.setSelection(MarketSymbol.marketIndex(preset));sym.setText(preset,false);}
         box.addView(txt("Piyasa",12,Color.DKGRAY)); box.addView(market); box.addView(sym);box.addView(qty);box.addView(cost);
-        box.addView(txt("Almanya ve ABD için toplu tarama yok; hisse kodunu doğrudan gir.",12,Color.GRAY));
+        box.addView(txt("Harf yazınca seçili piyasadaki hisseler önerilir; istersen kodu doğrudan da girebilirsin.",12,Color.GRAY));
         new AlertDialog.Builder(this).setTitle(edit==null?"Alış / portföy girişi":"Pozisyonu düzenle").setView(box)
                 .setPositiveButton("Kaydet",(d,w)->{
                     try{
-                        int mi=market.getSelectedItemPosition(); String raw=sym.getText().toString().trim().toUpperCase(Locale.ROOT); String code;
+                        int mi=market.getSelectedItemPosition(); String raw=GlobalStockUniverse.code(sym.getText().toString()); String code;
                         if(mi==0){code=BistUniverse.symbolFromEntry(raw);if(code.length()<2)code=raw;code=MarketSymbol.manual(code,0);}else code=MarketSymbol.manual(raw,mi);
                         if(code.length()<4)throw new Exception();
                         int q=Integer.parseInt(qty.getText().toString()); double c=Double.parseDouble(cost.getText().toString().replace(',','.'));
@@ -42,11 +48,17 @@ replacement='''    private void singleStockDialog() {
         LinearLayout box=new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setPadding(dp(18),dp(6),dp(18),0);
         Spinner market=new Spinner(this);
         market.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Türkiye / BIST","Almanya / Xetra-Frankfurt","ABD / Nasdaq-NYSE"}));
-        AutoCompleteTextView x=new AutoCompleteTextView(this); x.setHint("Direkt kod: THYAO / SAP / NVDA"); x.setThreshold(1); x.setSingleLine(true);
-        x.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_dropdown_item_1line,BistUniverse.ENTRIES));
-        box.addView(market); box.addView(x); box.addView(txt("Almanya ve ABD hisseleri direkt kod girişiyle analiz edilir.",12,Color.GRAY));
+        AutoCompleteTextView x=new AutoCompleteTextView(this); x.setHint("Harf yaz: THY / SAP / NVD"); x.setThreshold(1); x.setSingleLine(true);
+        market.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
+            @Override public void onItemSelected(android.widget.AdapterView<?> p,android.view.View v,int pos,long id){
+                String[] a=pos==1?GlobalStockUniverse.GERMANY:pos==2?GlobalStockUniverse.USA:BistUniverse.ENTRIES;
+                x.setAdapter(new ArrayAdapter<>(MainActivity.this,android.R.layout.simple_dropdown_item_1line,a));
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> p){}
+        });
+        box.addView(market); box.addView(x); box.addView(txt("Harf yazınca hisse önerileri açılır. Almanya ve ABD'de yine manuel kod da girebilirsin.",12,Color.GRAY));
         new AlertDialog.Builder(this).setTitle("Tek hisse analiz").setView(box)
-                .setPositiveButton("Analiz et",(d,w)->{int mi=market.getSelectedItemPosition();String raw=x.getText().toString().trim().toUpperCase(Locale.ROOT);String code;if(mi==0){code=BistUniverse.symbolFromEntry(raw);if(code.length()<2)code=raw;code=MarketSymbol.manual(code,0);}else code=MarketSymbol.manual(raw,mi);if(code.length()>=4)analyzeStock(code);else Toast.makeText(this,"Hisse kodunu kontrol et",Toast.LENGTH_SHORT).show();})
+                .setPositiveButton("Analiz et",(d,w)->{int mi=market.getSelectedItemPosition();String raw=GlobalStockUniverse.code(x.getText().toString());String code;if(mi==0){code=BistUniverse.symbolFromEntry(raw);if(code.length()<2)code=raw;code=MarketSymbol.manual(code,0);}else code=MarketSymbol.manual(raw,mi);if(code.length()>=4)analyzeStock(code);else Toast.makeText(this,"Hisse kodunu kontrol et",Toast.LENGTH_SHORT).show();})
                 .setNegativeButton("İptal",null).show();
     }'''
 s,n=re.subn(pattern,replacement,s,count=1,flags=re.S)
