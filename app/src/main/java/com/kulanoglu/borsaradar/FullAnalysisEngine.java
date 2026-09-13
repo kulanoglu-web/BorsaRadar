@@ -10,6 +10,7 @@ public final class FullAnalysisEngine {
         public ShortPulseEngine.Result pulse;
         public LegacyTechnicalEnsemble.Result legacy;
         public AdditionalIndicatorEngine.Result additional;
+        public AdvancedIndicatorEngine.Result advanced;
         public TechnicalConsensusEngine.Result consensus;
         public MultiHorizonEngine.Result horizons;
         public CalendarEffectEngine.Result calendar;
@@ -23,6 +24,7 @@ public final class FullAnalysisEngine {
         r.pulse=ShortPulseEngine.analyze(candles);
         r.legacy=LegacyTechnicalEnsemble.analyze(candles);
         r.additional=AdditionalIndicatorEngine.analyze(candles);
+        r.advanced=AdvancedIndicatorEngine.analyze(candles);
         r.consensus=TechnicalConsensusEngine.score(r.legacy.indicators,r.additional,r.legacy.methods);
         r.horizons=MultiHorizonEngine.analyze(candles);
         r.calendar=CalendarEffectEngine.analyze(candles);
