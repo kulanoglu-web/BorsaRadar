@@ -7,9 +7,9 @@ s=p.read_text(encoding='utf-8')
 def inject_after(var):
     needle=f'{var}.setThreshold(1); {var}.setSingleLine(true);'
     repl=needle+f'''\n        {var}.addTextChangedListener(new android.text.TextWatcher(){{
-            @Override public void beforeTextChanged(CharSequence x,int st,int c,int a){{}}
-            @Override public void onTextChanged(CharSequence x,int st,int before,int count){{
-                if(x!=null && x.length()>=1) {var}.post(()->{{ if({var}.hasFocus()) {var}.showDropDown(); }});
+            @Override public void beforeTextChanged(CharSequence cs,int st,int c,int a){{}}
+            @Override public void onTextChanged(CharSequence cs,int st,int before,int count){{
+                if(cs!=null && cs.length()>=1) {var}.post(()->{{ if({var}.hasFocus()) {var}.showDropDown(); }});
             }}
             @Override public void afterTextChanged(android.text.Editable e){{}}
         }});'''
