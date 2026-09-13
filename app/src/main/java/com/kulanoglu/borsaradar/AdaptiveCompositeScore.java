@@ -9,7 +9,8 @@ public final class AdaptiveCompositeScore {
         double legacy=(a.legacy.technicalStrength-50)/10.0;
         double pulse=a.pulse.score;
         double v35=a.v35==null?0:(a.v35.opportunity?4:a.v35.risk?-4:0);
-        double add=(a.additional.score-50)/10.0;
+        int addVotes=(a.additional.mostBull?1:-1)+(a.additional.qqeBull?1:-1)+(a.additional.abovePivot?1:-1);
+        double add=addVotes*1.5;
         double ctx=a.context.hasContext?a.context.combinedScore/2.0:0;
         r.rawScore=legacy*w.weights.get("LEGACY")+pulse*w.weights.get("SHORT_PULSE")+v35*w.weights.get("V35")+add*w.weights.get("ADDITIONAL")+ctx*w.weights.get("CONTEXT");
         r.reliability=OverfitGuard.multiplier(a.backtest,a.walkForward);
