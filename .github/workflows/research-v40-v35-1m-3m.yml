@@ -1,0 +1,27 @@
+name: BorsaRadar V40 V35 1M 3M Test
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run V35 1M 3M rolling test
+        run: PYTHONPATH=research python3 research/v40_v35_1m_3m.py
+      - name: Show result
+        run: cat research/result_v40_v35_1m_3m.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v40-v35-1m-3m
+          path: |
+            research/result_v40_v35_1m_3m.md
+            research/result_v40_v35_1m_3m.json
+          retention-days: 30
