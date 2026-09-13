@@ -1,4 +1,4 @@
-name: Build BorsaRadar 3.9.1 APK
+name: Build BorsaRadar 3.10.4 APK
 on:
   workflow_dispatch:
   push:
@@ -30,17 +30,17 @@ jobs:
         run: python3 .ci/patch_v41_ui.py
       - name: Fix autocomplete dropdown
         run: python3 .ci/patch_v42_autocomplete_fix.py
-      - name: Set v3.9 version
+      - name: Apply current version patches
         run: python3 .ci/patch_v41_version.py
       - name: Restore stable signing key
         run: base64 -d .ci/borsaradar-final.keystore.b64 > .ci/borsaradar-final.keystore
-      - name: Build APK
-        run: gradle --no-daemon clean assembleDebug
+      - name: Build signed release APK
+        run: gradle --no-daemon clean assembleRelease
       - name: Prepare APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk BorsaRadar-v3.9.1.apk
+        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.10.4.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v3.9.1-APK
-          path: BorsaRadar-v3.9.1.apk
+          name: BorsaRadar-v3.10.4-APK
+          path: BorsaRadar-v3.10.4.apk
           if-no-files-found: error
           retention-days: 30
