@@ -1,0 +1,27 @@
+name: BorsaRadar v38 V35 Annual Revalidation
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run annual V35 revalidation
+        run: PYTHONPATH=research python3 research/v38_v35_annual_retest.py
+      - name: Show result
+        run: cat research/result_v38_v35_annual_retest.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v38-v35-annual
+          path: |
+            research/result_v38_v35_annual_retest.md
+            research/result_v38_v35_annual_retest.json
+          retention-days: 30
