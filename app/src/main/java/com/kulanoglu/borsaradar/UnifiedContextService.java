@@ -29,10 +29,10 @@ public final class UnifiedContextService {
         out.hasContext=hasNews||hasKap;
         if(!out.hasContext){
             Result stale=ContextCache.getStale(symbol);
-            if(stale!=null){stale.stale=true;stale.summary="ESKİ VERİ ("+ContextCache.ageMinutes(symbol)+" dk) • "+stale.summary;return stale;}
+            if(stale!=null){stale.stale=true; if(!stale.summary.startsWith("ESKİ VERİ")) stale.summary="ESKİ VERİ ("+ContextCache.ageMinutes(symbol)+" dk) • "+stale.summary; return stale;}
         }
-        if(hasKap&&hasNews)out.combinedScore=clamp(kap.contextScore*.55+news.score*.45,-8,8);
-        else if(hasKap)out.combinedScore=clamp(kap.contextScore,-8,8);
+        if(hasKap&&hasNews)out.combinedScore=clamp(kr.contextScore*.55+news.score*.45,-8,8);
+        else if(hasKap)out.combinedScore=clamp(kr.contextScore,-8,8);
         else if(hasNews)out.combinedScore=clamp(news.score,-8,8);
         else out.combinedScore=0;
         for(String s:kr.topEvents)if(out.topEvents.size()<5)out.topEvents.add("KAP • "+s);
