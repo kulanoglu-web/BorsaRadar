@@ -29,7 +29,12 @@ public final class UnifiedContextService {
         out.hasContext=hasNews||hasKap;
         if(!out.hasContext){
             Result stale=ContextCache.getStale(symbol);
-            if(stale!=null){stale.stale=true; if(!stale.summary.startsWith("ESKİ VERİ")) stale.summary="ESKİ VERİ ("+ContextCache.ageMinutes(symbol)+" dk) • "+stale.summary; return stale;}
+            if(stale!=null){
+                stale.stale=true;
+                if(stale.summary==null||!stale.summary.startsWith("ESKİ VERİ"))
+                    stale.summary="ESKİ VERİ ("+ContextCache.ageMinutes(symbol)+" dk) • "+stale.summary;
+                return stale;
+            }
         }
         if(hasKap&&hasNews)out.combinedScore=clamp(kr.contextScore*.55+news.score*.45,-8,8);
         else if(hasKap)out.combinedScore=clamp(kr.contextScore,-8,8);
