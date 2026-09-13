@@ -19,6 +19,9 @@ public final class FullAnalysisEngine {
         public WalkForwardEvaluator.Result walkForward;
         public AdaptiveMethodWeights.Result adaptiveWeights;
         public AdaptiveCompositeScore.Result adaptive;
+        public MethodPerformanceLearner.Result learnedPerformance;
+        public LearnedWeightEngine.Result learnedWeights;
+        public LearnedTechnicalScore.Result learnedScore;
         public CatalystContextEngine.Result context;
         public DecisionContextEngine.Result decision;
         public int combinedConfidence;
@@ -41,7 +44,10 @@ public final class FullAnalysisEngine {
         r.combinedConfidence=SignalConfidenceEngine.combined(r.pulse,r.context);
         r.adaptiveWeights=AdaptiveMethodWeights.from(r.backtest);
         r.adaptive=AdaptiveCompositeScore.score(r,r.adaptiveWeights);
-        r.summary=String.format(Locale.US,"Pulse %.2f • Eski teknik %.0f/100 • Teknik teyit +%d/-%d • Bilgi %.0f/100 • Adaptif %.2f • Guven %d%% • %s",r.pulse.score,r.legacy.technicalStrength,r.consensus.positive,r.consensus.negative,r.context.informationStrength,r.adaptive.score,r.combinedConfidence,r.decision.state);
+        r.learnedPerformance=MethodPerformanceLearner.learn(candles);
+        r.learnedWeights=LearnedWeightEngine.build(r.learnedPerformance);
+        r.learnedScore=LearnedTechnicalScore.score(r,r.learnedWeights);
+        r.summary=String.format(Locale.US,"Pulse %.2f • Eski teknik %.0f/100 • Teknik teyit +%d/-%d • Bilgi %.0f/100 • Adaptif %.2f • Ogrenilmis %.2f • Guven %d%% • %s",r.pulse.score,r.legacy.technicalStrength,r.consensus.positive,r.consensus.negative,r.context.informationStrength,r.adaptive.score,r.learnedScore.score,r.combinedConfidence,r.decision.state);
         return r;
     }
 }
