@@ -84,7 +84,11 @@ public final class PriceChartView extends View {
         paint.setFakeBoldText(true);
         canvas.drawText("ZAMAN DİLİMİ: " + label, left, dp(24), paint);
         paint.setFakeBoldText(false);
-        String latest = "Son " + fmt(last) + " ₺";
+
+        String symbol = data.get(data.size() - 1).symbol;
+        String cur = currencySymbol(symbol);
+        double displayLast = displayValue(last, symbol);
+        String latest = "Son " + fmt(displayLast) + " " + cur;
         canvas.drawText(latest, right - paint.measureText(latest), dp(24), paint);
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd.MM", Locale.getDefault());
@@ -97,10 +101,23 @@ public final class PriceChartView extends View {
 
         paint.setColor(Color.WHITE);
         paint.setTextSize(dp(11));
-        String low = "Düşük " + fmt(min);
-        String high = "Yüksek " + fmt(max);
+        String low = "Düşük " + fmt(displayValue(min, symbol)) + " " + cur;
+        String high = "Yüksek " + fmt(displayValue(max, symbol)) + " " + cur;
         canvas.drawText(low, left, getHeight() - dp(7), paint);
         canvas.drawText(high, right - paint.measureText(high), getHeight() - dp(7), paint);
+    }
+
+    private double displayValue(double v, String symbol) {
+        String n = MarketDataService.normalizeSymbol(symbol);
+        if (n.endsWith(".IS") || n.endsWith(".DE")) return v;
+        double rate = CurrencyService.usdToEur();
+        return Double.isFinite(rate) ? v * rate : v;
+    }
+
+    private String currencySymbol(String symbol) {
+        String n = MarketDataService.normalizeSymbol(symbol);
+        if (n.endsWith(".IS")) return "₺";
+        return "€";
     }
 
     private String fmt(double v) { return String.format(Locale.US, "%.2f", v); }
