@@ -4,9 +4,9 @@ package com.kulanoglu.borsaradar;
 public final class CatalystContextEngine {
     private CatalystContextEngine(){}
     public static final class Result {
-        public double newsScore,kapScore,combinedScore,contextWeight,informationStrength,qualityScore;
+        public double newsScore,kapScore,combinedScore,contextWeight,informationStrength,qualityScore,macroRisk;
         public boolean positiveCatalyst,negativeCatalyst,technicalConflict,hasContext;
-        public String note,dataStatus,coverage,summary,strengthLabel,qualityLabel,conflictLabel;
+        public String note,dataStatus,coverage,summary,strengthLabel,qualityLabel,conflictLabel,macroTag,macroNote;
         public java.util.List<String> topEvents=new java.util.ArrayList<>();
     }
     public static Result analyze(String symbol,double technicalScore){
@@ -15,6 +15,7 @@ public final class CatalystContextEngine {
         out.newsScore=ctx.newsScore; out.kapScore=ctx.kapScore; out.combinedScore=ctx.combinedScore;
         out.informationStrength=ctx.informationStrength; out.qualityScore=ctx.qualityScore;
         out.strengthLabel=ctx.strengthLabel; out.qualityLabel=ctx.qualityLabel;
+        out.macroRisk=ctx.macroRisk; out.macroTag=ctx.macroTag; out.macroNote=ctx.macroNote;
         out.hasContext=ctx.hasContext;
         out.contextWeight=out.hasContext?Math.max(-2.2,Math.min(2.2,ctx.combinedScore*0.34)):0;
         out.positiveCatalyst=out.hasContext&&ctx.combinedScore>=3.0;
