@@ -27,3 +27,11 @@ if q.exists():
 v46=Path('.ci/patch_v46_terms_checkbox.py')
 if v46.exists():
     exec(compile(v46.read_text(encoding='utf-8'),str(v46),'exec'))
+
+# Ensure a normal signed release variant exists for device installation.
+b=Path('app/build.gradle')
+g=b.read_text(encoding='utf-8')
+if 'release { signingConfig signingConfigs.stable' not in g:
+    g=g.replace('buildTypes { debug { signingConfig signingConfigs.stable } }',
+                'buildTypes { debug { signingConfig signingConfigs.stable } release { signingConfig signingConfigs.stable; minifyEnabled false; shrinkResources false } }')
+b.write_text(g,encoding='utf-8')
