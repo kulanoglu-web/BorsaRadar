@@ -22,6 +22,7 @@ public final class NewsContextService {
         public String summary="haber verisi yok",dataStatus="NO_DATA";
         public final List<String> catalysts=new ArrayList<>();
         public final List<String> eventTypes=new ArrayList<>();
+        public final List<String> acceptedTitles=new ArrayList<>();
     }
     public static Result safeAnalyze(String rawSymbol){try{return analyze(rawSymbol);}catch(Exception e){Result r=new Result();r.dataStatus="SOURCE_ERROR";r.summary="haber kaynağına erişilemedi";return r;}}
     public static Result analyze(String rawSymbol)throws Exception{
@@ -29,7 +30,7 @@ public final class NewsContextService {
         String u="https://query1.finance.yahoo.com/v1/finance/search?q="+URLEncoder.encode(q,"UTF-8")+"&quotesCount=1&newsCount=30&enableFuzzyQuery=false";
         HttpURLConnection c=(HttpURLConnection)new URL(u).openConnection();
         try{
-            c.setConnectTimeout(6500);c.setReadTimeout(7500);c.setRequestMethod("GET");c.setRequestProperty("User-Agent","Mozilla/5.0 BorsaRadar/4.0");c.setRequestProperty("Accept","application/json");
+            c.setConnectTimeout(6500);c.setReadTimeout(7500);c.setRequestMethod("GET");c.setRequestProperty("User-Agent","Mozilla/5.0 BorsaRadar/4.2");c.setRequestProperty("Accept","application/json");
             int code=c.getResponseCode();if(code<200||code>=300)throw new Exception("news HTTP "+code);
             StringBuilder sb=new StringBuilder();try(BufferedReader br=new BufferedReader(new InputStreamReader(c.getInputStream()))){String line;while((line=br.readLine())!=null)sb.append(line);}
             JSONObject root=new JSONObject(sb.toString());
@@ -41,6 +42,7 @@ public final class NewsContextService {
                 JSONObject n=news.optJSONObject(i);if(n==null)continue; String title=n.optString("title",""); if(title.isEmpty())continue;
                 String key=EventDeduplicator.key(title); if(!key.isEmpty()&&!seen.add(key))continue;
                 double rel=SymbolRelevanceEngine.relevance(q,company,title,""); if(rel<0.55){out.rejectedCount++;continue;} out.acceptedCount++;
+                if(out.acceptedTitles.size()<12)out.acceptedTitles.add(title);
                 long ts=n.optLong("providerPublishTime",0L); double ageHours=ts<=0?999:Math.max(0,(now-ts)/3600.0); if(ageHours<=168)out.freshCount++;
                 String provider=n.optString("publisher",""); String link=n.optString("link","");
                 InformationImportanceEngine.Source src=SourceTrustResolver.resolve(provider,link);
