@@ -23,3 +23,7 @@ if fix_patch.exists():
 q=Path('.ci/patch_v45_terms_acceptance.py')
 if q.exists():
     exec(compile(q.read_text(encoding='utf-8'),str(q),'exec'))
+
+v46=Path('.ci/patch_v46_terms_checkbox.py')
+if v46.exists():
+    exec(compile(v46.read_text(encoding='utf-8'),str(v46),'exec'))
