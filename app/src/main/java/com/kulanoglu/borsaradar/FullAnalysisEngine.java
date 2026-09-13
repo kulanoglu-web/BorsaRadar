@@ -3,7 +3,7 @@ package com.kulanoglu.borsaradar;
 import java.util.List;
 import java.util.Locale;
 
-/** Eski teknik motoru korur; yeni baglam katmanini ayrica ekler. */
+/** Eski teknik motoru korur; yeni baglam ve adaptif backtest katmanlarini ayrica ekler. */
 public final class FullAnalysisEngine {
     private FullAnalysisEngine(){}
     public static final class Result {
@@ -14,6 +14,11 @@ public final class FullAnalysisEngine {
         public TechnicalConsensusEngine.Result consensus;
         public MultiHorizonEngine.Result horizons;
         public CalendarEffectEngine.Result calendar;
+        public V35HybridEngine.Result v35;
+        public BacktestEngine.Result backtest;
+        public WalkForwardEvaluator.Result walkForward;
+        public AdaptiveMethodWeights.Result adaptiveWeights;
+        public AdaptiveCompositeScore.Result adaptive;
         public CatalystContextEngine.Result context;
         public DecisionContextEngine.Result decision;
         public int combinedConfidence;
@@ -28,10 +33,15 @@ public final class FullAnalysisEngine {
         r.consensus=TechnicalConsensusEngine.score(r.legacy.indicators,r.additional,r.legacy.methods);
         r.horizons=MultiHorizonEngine.analyze(candles);
         r.calendar=CalendarEffectEngine.analyze(candles);
+        r.v35=V35HybridEngine.analyze(candles,0);
+        r.backtest=BacktestEngine.run(symbol,candles);
+        r.walkForward=WalkForwardEvaluator.evaluate(symbol,candles);
         r.context=CatalystContextEngine.analyze(symbol,r.pulse.score);
         r.decision=DecisionContextEngine.evaluate(r.pulse,r.context);
         r.combinedConfidence=SignalConfidenceEngine.combined(r.pulse,r.context);
-        r.summary=String.format(Locale.US,"Pulse %.2f • Eski teknik %.0f/100 • Teknik teyit +%d/-%d • Bilgi %.0f/100 • Guven %d%% • %s",r.pulse.score,r.legacy.technicalStrength,r.consensus.positive,r.consensus.negative,r.context.informationStrength,r.combinedConfidence,r.decision.state);
+        r.adaptiveWeights=AdaptiveMethodWeights.from(r.backtest);
+        r.adaptive=AdaptiveCompositeScore.score(r,r.adaptiveWeights);
+        r.summary=String.format(Locale.US,"Pulse %.2f • Eski teknik %.0f/100 • Teknik teyit +%d/-%d • Bilgi %.0f/100 • Adaptif %.2f • Guven %d%% • %s",r.pulse.score,r.legacy.technicalStrength,r.consensus.positive,r.consensus.negative,r.context.informationStrength,r.adaptive.score,r.combinedConfidence,r.decision.state);
         return r;
     }
 }
