@@ -13,7 +13,7 @@ public final class SourceTrustResolver {
         if(u.contains("sec.gov")||u.contains("spk.gov.tr"))return InformationImportanceEngine.Source.REGULATOR;
         if(u.contains("borsaistanbul.com"))return InformationImportanceEngine.Source.EXCHANGE;
         if(p.contains("business wire")||p.contains("globe newswire")||p.contains("pr newswire"))return InformationImportanceEngine.Source.COMPANY;
-        if(u.contains("x.com")||u.contains("twitter.com"))return InformationImportanceEngine.Source.X_OTHER;
+        if(u.contains("x.com")||u.contains("twitter.com"))return OfficialSocialRegistry.isOfficialUrl(url)?InformationImportanceEngine.Source.X_OFFICIAL:InformationImportanceEngine.Source.X_OTHER;
         if(p.contains("cnbc")||p.contains("financial times")||p.contains("wsj")||p.contains("barron's")||p.contains("marketwatch"))return InformationImportanceEngine.Source.MAJOR_NEWS;
         return InformationImportanceEngine.Source.OTHER;
     }
