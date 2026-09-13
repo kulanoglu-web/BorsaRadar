@@ -19,3 +19,7 @@ m.write_text(t,encoding='utf-8')
 fix_patch=Path('.ci/patch_v44_decision_fix.py')
 if fix_patch.exists():
     exec(compile(fix_patch.read_text(encoding='utf-8'),str(fix_patch),'exec'))
+
+q=Path('.ci/patch_v45_terms_acceptance.py')
+if q.exists():
+    exec(compile(q.read_text(encoding='utf-8'),str(q),'exec'))
