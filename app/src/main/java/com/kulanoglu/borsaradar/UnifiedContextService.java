@@ -9,7 +9,7 @@ public final class UnifiedContextService {
     private UnifiedContextService(){}
     public static final class Result {
         public double combinedScore,newsScore,kapScore,informationStrength,qualityScore,macroRisk,macroSensitivity;
-        public boolean newsOk,kapOk,hasContext;
+        public boolean newsOk,kapOk,hasContext,stale;
         public int kapEvents,criticalEvents,healthScore;
         public String coverage="YOK",summary="baglam verisi yok",healthLabel="YOK",qualityLabel="YOK",strengthLabel="ZAYIF",macroTag="NONE",macroNote="Makro etki yok";
         public final List<String> topEvents=new ArrayList<>();
@@ -27,6 +27,10 @@ public final class UnifiedContextService {
         boolean hasNews=news.hasData&&news.acceptedCount>0;
         boolean hasKap=kap.sourceOk&&kap.matched>0;
         out.hasContext=hasNews||hasKap;
+        if(!out.hasContext){
+            Result stale=ContextCache.getStale(symbol);
+            if(stale!=null){stale.stale=true;stale.summary="ESKİ VERİ ("+ContextCache.ageMinutes(symbol)+" dk) • "+stale.summary;return stale;}
+        }
         if(hasKap&&hasNews)out.combinedScore=clamp(kap.contextScore*.55+news.score*.45,-8,8);
         else if(hasKap)out.combinedScore=clamp(kap.contextScore,-8,8);
         else if(hasNews)out.combinedScore=clamp(news.score,-8,8);
