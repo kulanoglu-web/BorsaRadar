@@ -37,6 +37,8 @@ jobs:
         run: python3 .ci/patch_v49_buildfix.py
       - name: Enable two-stage radar enrichment
         run: python3 .ci/patch_v50_two_stage_radar.py
+      - name: Use preserved multi-engine technical radar score
+        run: python3 .ci/patch_v52_multi_technical_radar.py
       - name: Add portfolio risk and action labels
         run: python3 .ci/patch_v51_portfolio_decisions.py
       - name: Apply current version patches
