@@ -23,7 +23,8 @@ rep='''    private void analyzeStock(String symbol) {
         decision.addView(txt(a.decision.note,14,Color.DKGRAY)); decision.addView(txt("Birleşik güven %"+a.combinedConfidence+" • "+a.consensus.label,13,NAVY2)); content.addView(decision);spacer(7);
         content.addView(new PriceChartView(this,chart,"SON 10 İŞLEM GÜNÜ"),new LinearLayout.LayoutParams(-1,dp(300)));spacer(7);
         LinearLayout tech=card();tech.addView(bold("Teknik motorlar",17,NAVY));tech.addView(txt(a.legacy.summary,13,Color.DKGRAY));
-        tech.addView(txt(a.additional.summary,13,Color.DKGRAY));tech.addView(txt("Teknik teyit +"+a.consensus.positive+" / -"+a.consensus.negative+" / nötr "+a.consensus.neutral,13,NAVY2));content.addView(tech);spacer(7);
+        tech.addView(txt(a.additional.summary,13,Color.DKGRAY));tech.addView(txt(a.advanced.summary,13,Color.DKGRAY));
+        tech.addView(txt("Teknik teyit +"+a.consensus.positive+" / -"+a.consensus.negative+" / nötr "+a.consensus.neutral,13,NAVY2));content.addView(tech);spacer(7);
         LinearLayout horizon=card();horizon.addView(bold("Zaman ufku",17,NAVY));
         horizon.addView(txt(a.horizons.shortTerm.label+" • "+fmt(a.horizons.shortTerm.strength)+"/100 • "+a.horizons.shortTerm.note,13,Color.DKGRAY));
         horizon.addView(txt(a.horizons.mediumTerm.label+" • "+fmt(a.horizons.mediumTerm.strength)+"/100 • "+a.horizons.mediumTerm.note,13,Color.DKGRAY));
