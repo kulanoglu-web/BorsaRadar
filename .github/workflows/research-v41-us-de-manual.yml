@@ -1,0 +1,27 @@
+name: BorsaRadar V41 US DE Manual 1M 3M
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run US and Germany manual-stock test
+        run: python3 research/v41_us_de_manual_1m3m.py
+      - name: Show result
+        run: cat research/result_v41_us_de_manual_1m3m.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: borsaradar-v41-us-de-manual
+          path: |
+            research/result_v41_us_de_manual_1m3m.md
+            research/result_v41_us_de_manual_1m3m.json
+          retention-days: 30
