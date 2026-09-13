@@ -41,6 +41,8 @@ jobs:
         run: python3 .ci/patch_v52_multi_technical_radar.py
       - name: Add portfolio risk and action labels
         run: python3 .ci/patch_v51_portfolio_decisions.py
+      - name: Display US stocks in EUR
+        run: python3 .ci/patch_v53_euro_display.py
       - name: Verify preserved technical set
         run: python3 .ci/verify_preserved_technical_set.py
       - name: Apply current version patches
