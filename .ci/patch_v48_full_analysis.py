@@ -20,11 +20,15 @@ rep='''    private void analyzeStock(String symbol) {
         q.addView(txt("Son gün %"+fmt(r.changePct)+"  •  ATR% "+fmt(r.atrPct)+"  •  RelVol x"+fmt(r.relativeVolume),14,Color.DKGRAY));content.addView(q);spacer(7);
         content.addView(signalBanner(r));spacer(7);content.addView(contextBanner(cx));spacer(7);
         LinearLayout decision=card(); decision.addView(bold(a.decision.state,18,a.decision.caution?AMBER:GREEN));
-        decision.addView(txt(a.decision.note,14,Color.DKGRAY)); decision.addView(txt("Birleşik güven %"+a.combinedConfidence+" • "+a.consensus.label,13,NAVY2)); content.addView(decision);spacer(7);
+        decision.addView(txt(a.decision.note,14,Color.DKGRAY)); decision.addView(txt("Birleşik güven %"+a.combinedConfidence+" • "+a.consensus.label,13,NAVY2));
+        decision.addView(bold(a.adaptive.summary,14,a.adaptive.score>=1?GREEN:a.adaptive.score<=-1?RED:AMBER)); content.addView(decision);spacer(7);
         content.addView(new PriceChartView(this,chart,"SON 10 İŞLEM GÜNÜ"),new LinearLayout.LayoutParams(-1,dp(300)));spacer(7);
         LinearLayout tech=card();tech.addView(bold("Teknik motorlar",17,NAVY));tech.addView(txt(a.legacy.summary,13,Color.DKGRAY));
         tech.addView(txt(a.additional.summary,13,Color.DKGRAY));tech.addView(txt(a.advanced.summary,13,Color.DKGRAY));
         tech.addView(txt("Teknik teyit +"+a.consensus.positive+" / -"+a.consensus.negative+" / nötr "+a.consensus.neutral,13,NAVY2));content.addView(tech);spacer(7);
+        LinearLayout learn=card();learn.addView(bold("Geriye dönük öğrenme",17,NAVY));learn.addView(txt(a.backtest.summary,13,Color.DKGRAY));
+        learn.addView(txt(a.walkForward.summary,13,Color.DKGRAY));learn.addView(txt(a.adaptiveWeights.summary,13,Color.DKGRAY));
+        learn.addView(txt("Aşırı uyum koruması: "+fmt(a.adaptive.reliability)+" • geçmiş performans sadece ağırlığı sınırlar, tek başına karar vermez.",12,Color.GRAY));content.addView(learn);spacer(7);
         LinearLayout horizon=card();horizon.addView(bold("Zaman ufku",17,NAVY));
         horizon.addView(txt(a.horizons.shortTerm.label+" • "+fmt(a.horizons.shortTerm.strength)+"/100 • "+a.horizons.shortTerm.note,13,Color.DKGRAY));
         horizon.addView(txt(a.horizons.mediumTerm.label+" • "+fmt(a.horizons.mediumTerm.strength)+"/100 • "+a.horizons.mediumTerm.note,13,Color.DKGRAY));
