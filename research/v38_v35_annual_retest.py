@@ -8,10 +8,10 @@ if not DATES:
     raise SystemExit('No dates')
 
 # Fixed model: V35-C only, no parameter retuning.
-base_fee = bi.FEE
+base_fee = v35.FEE
 rows=[]
 for fee in [0.001,0.002,0.003]:
-    bi.FEE=fee
+    v35.FEE=fee
     full=v35.run(DATES, False, True)
     # rolling windows: 44,66,88 trading days with 11-day step
     for win in [44,66,88]:
@@ -20,16 +20,17 @@ for fee in [0.001,0.002,0.003]:
             r=v35.run(DATES[i:i+win],False,True)
             windows.append(r)
         active=[r for r in windows if r['n']>0]
+        vals=sorted([r['ret'] for r in active])
         rows.append({
             'fee':fee,'win':win,'full_ret':full['ret'],'full_dd':full['dd'],'pf':full['pf'],'winrate':full['win'],'n':full['n'],
             'windows':len(windows),'active':len(active),
-            'active_avg':sum(r['ret'] for r in active)/len(active) if active else 0,
-            'active_median':sorted([r['ret'] for r in active])[len(active)//2] if active else 0,
-            'worst':min([r['ret'] for r in active]) if active else 0,
-            'positive':sum(r['ret']>0 for r in active),
+            'active_avg':sum(vals)/len(vals) if vals else 0,
+            'active_median':vals[len(vals)//2] if vals else 0,
+            'worst':min(vals) if vals else 0,
+            'positive':sum(x>0 for x in vals),
             'max_window_dd':max([r['dd'] for r in active]) if active else 0,
         })
-bi.FEE=base_fee
+v35.FEE=base_fee
 
 lines=['# V35 Hybrid Annual Revalidation',f'Date range: {v35.dt(DATES[0])} -> {v35.dt(DATES[-1])}',
        'Fixed V35-C model; no parameter tuning. TUPRS + existing defense exclusions remain.',
