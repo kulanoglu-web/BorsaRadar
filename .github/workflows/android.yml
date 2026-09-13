@@ -33,6 +33,8 @@ jobs:
         run: python3 .ci/patch_v42_autocomplete_fix.py
       - name: Add full technical and context detail analysis
         run: python3 .ci/patch_v48_full_analysis.py
+      - name: Apply robust build compatibility fixes
+        run: python3 .ci/patch_v49_buildfix.py
       - name: Apply current version patches
         run: python3 .ci/patch_v41_version.py
       - name: Fix release build type
