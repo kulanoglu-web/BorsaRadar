@@ -49,8 +49,7 @@ if need:
 
 p.write_text(s,encoding='utf-8')
 
-# The Android workflow already runs this patch. Chain the two-stage radar upgrade here
-# so the existing signed-APK pipeline receives it without changing workflow permissions.
-radar_patch=Path('.ci/patch_v50_two_stage_radar.py')
-if radar_patch.exists():
-    exec(compile(radar_patch.read_text(encoding='utf-8'),str(radar_patch),'exec'),{})
+for name in ['patch_v50_two_stage_radar.py','patch_v51_portfolio_decisions.py']:
+    extra=Path('.ci')/name
+    if extra.exists():
+        exec(compile(extra.read_text(encoding='utf-8'),str(extra),'exec'),{})
