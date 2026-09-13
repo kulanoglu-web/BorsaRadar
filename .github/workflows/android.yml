@@ -18,6 +18,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
+          cache-disabled: true
       - name: Apply broker and alarm base patch
         run: python3 .ci/patch_v31.py
       - name: Apply lazy timeframe patch
