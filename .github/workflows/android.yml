@@ -41,6 +41,8 @@ jobs:
         run: python3 .ci/patch_v52_multi_technical_radar.py
       - name: Add portfolio risk and action labels
         run: python3 .ci/patch_v51_portfolio_decisions.py
+      - name: Verify preserved technical set
+        run: python3 .ci/verify_preserved_technical_set.py
       - name: Apply current version patches
         run: python3 .ci/patch_v41_version.py
       - name: Fix release build type
