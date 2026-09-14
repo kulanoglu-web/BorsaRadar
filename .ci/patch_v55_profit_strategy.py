@@ -5,8 +5,8 @@ p=Path('app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java')
 s=p.read_text(encoding='utf-8')
 
 # Keep completed main radar visible while a new scan runs; build new results in a buffer.
-# Be tolerant of earlier patches inserting fields around scan state.
-pat=r'(\s*private\s+volatile\s+boolean\s+scanRunning\s*=\s*false\s*;\s*\n\s*private\s+final\s+AtomicInteger\s+scanDone\s*=\s*new\s+AtomicInteger\(0\)\s*,\s*scanFailed\s*=\s*new\s+AtomicInteger\(0\)\s*;)'
+# Anchor on radarResults instead of exact scan-state formatting, because earlier patches may reformat fields.
+pat=r'(\s*private\s+final\s+List<RadarItem>\s+radarResults\s*=\s*Collections\.synchronizedList\(new\s+ArrayList<>\(\)\)\s*;)'
 rep=r'''\1
     private final List<RadarItem> scanBuffer=Collections.synchronizedList(new ArrayList<>());
     private final List<RadarItem> shortRadarResults=Collections.synchronizedList(new ArrayList<>());
