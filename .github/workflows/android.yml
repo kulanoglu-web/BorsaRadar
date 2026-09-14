@@ -1,10 +1,10 @@
-name: Build BorsaRadar 3.12.0 APK
+name: Build BorsaRadar 3.12.1 APK
 on:
   workflow_dispatch:
   push:
     branches: [ main ]
 permissions:
-  contents: write
+  contents: read
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -49,6 +49,8 @@ jobs:
         run: python3 .ci/patch_v41_version.py
       - name: Add separate exchange profiles
         run: python3 .ci/patch_v54_exchange_profiles.py
+      - name: Add persistent short-term and three-strategy radar
+        run: python3 .ci/patch_v55_profit_strategy.py
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
@@ -56,19 +58,10 @@ jobs:
       - name: Build signed release APK
         run: gradle --no-daemon clean assembleRelease
       - name: Prepare APK
-        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.12.0.apk
+        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.12.1.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v3.12.0-APK
-          path: BorsaRadar-v3.12.0.apk
+          name: BorsaRadar-v3.12.1-APK
+          path: BorsaRadar-v3.12.1.apk
           if-no-files-found: error
           retention-days: 30
-      - name: Publish installable APK
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if gh release view v3.12.0 >/dev/null 2>&1; then
-            gh release upload v3.12.0 BorsaRadar-v3.12.0.apk --clobber
-          else
-            gh release create v3.12.0 BorsaRadar-v3.12.0.apk --title "BorsaRadar 3.12.0" --notes "Tarama sonuçları yeni tarama tamamlanana kadar korunur. 3 Sepet bölümüne güncel kısa vadeli AL/SAT fırsat taraması eklendi."
-          fi
