@@ -126,9 +126,11 @@ s=s.replace('''        box.addView(market); box.addView(x);''','''        market
 s=s.replace('.setTitle("Tek hisse analiz")','.setTitle(L("Tek hisse analiz","Einzeltitel-Analyse","Single-stock analysis"))')
 s=s.replace('.setPositiveButton("Analiz et",','.setPositiveButton(L("Analiz et","Analysieren","Analyze"),')
 
-# Replace BIST-only radar with primary-market radar.
-pat=r'    private void showRadar\(\) \{.*?\n    \}\n\n    private void scanRadar\(\) \{.*?\n    \}\n\n    private void renderRadarList'
-rep=r'''    private void showRadar() {
+# Replace radar UI and scan, but preserve v50 two-stage enrichment method.
+start=s.find('private void showRadar()')
+end=s.find('private void enrichRadarTopCandidates',start)
+if start<0 or end<0: raise SystemExit('radar boundaries missing')
+radar=r'''private void showRadar() {
         int pm=primaryMarket(); String[] universe=marketSymbols(pm);
         shell(L("Ana Borsa Radarı","Hauptmarkt-Radar","Primary Market Radar"));
         LinearLayout top=card();
@@ -146,12 +148,11 @@ rep=r'''    private void showRadar() {
         if(scanRunning)return;
         final int pm=primaryMarket(); final String[] universe=marketSymbols(pm);
         scanRunning=true;scanDone.set(0);scanFailed.set(0);radarResults.clear();showRadar();
-        for(String sym:universe)io.execute(()->{try{List<MarketDataService.Candle>d=MarketDataService.fetchDaily(sym,"1mo");ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);radarResults.add(new RadarItem(sym,r));}catch(Exception e){scanFailed.incrementAndGet();}int done=scanDone.incrementAndGet();if(done>=universe.length){scanRunning=false;List<RadarItem>sorted=new ArrayList<>(radarResults);sorted.sort((a,b)->Double.compare(b.score,a.score));radarResults.clear();radarResults.addAll(sorted);saveRadarCache();main.post(this::showRadar);}else if(done%10==0)main.post(this::showRadar);});
+        for(String sym:universe)io.execute(()->{try{List<MarketDataService.Candle>d=MarketDataService.fetchDaily(sym,"1mo");ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);radarResults.add(new RadarItem(sym,r));}catch(Exception e){scanFailed.incrementAndGet();}int done=scanDone.incrementAndGet();if(done>=universe.length){List<RadarItem>sorted=new ArrayList<>(radarResults);sorted.sort((a,b)->Double.compare(b.score,a.score));radarResults.clear();radarResults.addAll(sorted);main.post(this::showRadar);enrichRadarTopCandidates(25);}else if(done%10==0)main.post(this::showRadar);});
     }
 
-    private void renderRadarList'''
-s,n=re.subn(pat,rep,s,count=1,flags=re.S)
-if n!=1: raise SystemExit('radar patch failed')
+    '''
+s=s[:start]+radar+s[end:]
 
 s=s.replace('content.addView(bold("En güçlü adaylar",18,NAVY));','content.addView(bold(L("En güçlü adaylar","Stärkste Kandidaten","Strongest candidates"),18,NAVY));')
 
@@ -162,7 +163,6 @@ g=re.sub(r'versionCode\s+\d+','versionCode 46',g)
 g=re.sub(r"versionName\s+['\"][^'\"]+['\"]","versionName '3.11.0'",g)
 b.write_text(g,encoding='utf-8')
 
-# Info version text where present.
 s=s.replace('Sürüm 3.10.4 • Teknik karar destek uygulaması','Sürüm 3.11.0 • International • Teknik karar destek uygulaması')
 
 p.write_text(s,encoding='utf-8')
