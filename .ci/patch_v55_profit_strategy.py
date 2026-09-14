@@ -5,16 +5,47 @@ p=Path('app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java')
 s=p.read_text(encoding='utf-8')
 
 # Keep completed main radar visible while a new scan runs; build new results in a buffer.
-needle='''    private volatile boolean scanRunning=false;\n    private final AtomicInteger scanDone=new AtomicInteger(0), scanFailed=new AtomicInteger(0);'''
-rep='''    private volatile boolean scanRunning=false;\n    private final AtomicInteger scanDone=new AtomicInteger(0), scanFailed=new AtomicInteger(0);\n    private final List<RadarItem> scanBuffer=Collections.synchronizedList(new ArrayList<>());\n    private final List<RadarItem> shortRadarResults=Collections.synchronizedList(new ArrayList<>());\n    private volatile boolean shortScanRunning=false;\n    private final AtomicInteger shortScanDone=new AtomicInteger(0), shortScanFailed=new AtomicInteger(0);\n    private String shortScanMode="1S";'''
-if needle not in s: raise SystemExit('radar fields patch failed')
-s=s.replace(needle,rep,1)
+# Be tolerant of earlier patches inserting fields around scan state.
+pat=r'(\s*private\s+volatile\s+boolean\s+scanRunning\s*=\s*false\s*;\s*\n\s*private\s+final\s+AtomicInteger\s+scanDone\s*=\s*new\s+AtomicInteger\(0\)\s*,\s*scanFailed\s*=\s*new\s+AtomicInteger\(0\)\s*;)'
+rep=r'''\1
+    private final List<RadarItem> scanBuffer=Collections.synchronizedList(new ArrayList<>());
+    private final List<RadarItem> shortRadarResults=Collections.synchronizedList(new ArrayList<>());
+    private volatile boolean shortScanRunning=false;
+    private final AtomicInteger shortScanDone=new AtomicInteger(0), shortScanFailed=new AtomicInteger(0);
+    private String shortScanMode="1S";'''
+s,n=re.subn(pat,rep,s,count=1)
+if n!=1: raise SystemExit('radar fields patch failed')
 
-s=s.replace('''        loadPortfolio();\n        loadRadarCache();\n        showPortfolio();''','''        loadPortfolio();\n        loadRadarCache();\n        loadShortRadarCache();\n        showPortfolio();''',1)
+s=s.replace('''        loadPortfolio();
+        loadRadarCache();
+        showPortfolio();''','''        loadPortfolio();
+        loadRadarCache();
+        loadShortRadarCache();
+        showPortfolio();''',1)
 
 # Replace the main scan so the old, completed scan never disappears during refresh.
 pat=r'    private void scanRadar\(\) \{.*?\n    \}\n\n    private void enrichRadarTopCandidates'
-rep='''    private void scanRadar() {\n        if(scanRunning)return;\n        scanRunning=true;scanDone.set(0);scanFailed.set(0);scanBuffer.clear();showRadar();\n        for(String sym:ALL_SYMBOLS)io.execute(()->{\n            try{\n                List<MarketDataService.Candle>d=MarketDataService.fetchDaily(sym,"3mo");\n                ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);\n                scanBuffer.add(new RadarItem(sym,r));\n            }catch(Exception e){scanFailed.incrementAndGet();}\n            int done=scanDone.incrementAndGet();\n            if(done>=ALL_SYMBOLS.length){\n                List<RadarItem>sorted=new ArrayList<>(scanBuffer);\n                sorted.sort((a,b)->Double.compare(b.score,a.score));\n                if(!sorted.isEmpty()){radarResults.clear();radarResults.addAll(sorted);}\n                main.post(this::showRadar);\n                enrichRadarTopCandidates(25);\n            }else if(done%25==0)main.post(this::showRadar);\n        });\n    }\n\n    private void enrichRadarTopCandidates'''
+rep='''    private void scanRadar() {
+        if(scanRunning)return;
+        scanRunning=true;scanDone.set(0);scanFailed.set(0);scanBuffer.clear();showRadar();
+        for(String sym:ALL_SYMBOLS)io.execute(()->{
+            try{
+                List<MarketDataService.Candle>d=MarketDataService.fetchDaily(sym,"3mo");
+                ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);
+                scanBuffer.add(new RadarItem(sym,r));
+            }catch(Exception e){scanFailed.incrementAndGet();}
+            int done=scanDone.incrementAndGet();
+            if(done>=ALL_SYMBOLS.length){
+                List<RadarItem>sorted=new ArrayList<>(scanBuffer);
+                sorted.sort((a,b)->Double.compare(b.score,a.score));
+                if(!sorted.isEmpty()){radarResults.clear();radarResults.addAll(sorted);}
+                main.post(this::showRadar);
+                enrichRadarTopCandidates(25);
+            }else if(done%25==0)main.post(this::showRadar);
+        });
+    }
+
+    private void enrichRadarTopCandidates'''
 s,n=re.subn(pat,rep,s,count=1,flags=re.S)
 if n!=1: raise SystemExit('persistent main radar patch failed')
 
@@ -24,7 +55,73 @@ s=s.replace('''1) Tüm BIST teknik olarak hızlı taranır. 2) En güçlü 25 ad
 
 # Add hourly/daily opportunity radar and reshape 3 baskets around the user's core strategy.
 pat=r'    private void showBaskets\(\) \{.*?\n    \}\n\n    private void basket\('
-rep='''    private void showBaskets() {\n        shell("3 Strateji • Kâr + Temettü");\n        LinearLayout shortCard=card();\n        shortCard.addView(bold("1 • KISA VADE AL–SAT RADARI",20,GREEN));\n        shortCard.addView(txt("Saatlik veya günlük veriyle tüm BIST içinde güncel momentum fırsatlarını ara. Önceki kısa-vade sonucu yeni tarama bitene kadar korunur.",13,Color.DKGRAY));\n        LinearLayout scanRow=new LinearLayout(this);scanRow.setOrientation(LinearLayout.HORIZONTAL);\n        Button hourly=button(shortScanRunning?"Taranıyor…":"Saatlik Tara",GREEN);\n        Button daily=button(shortScanRunning?"Taranıyor…":"Günlük Tara",NAVY2);\n        hourly.setEnabled(!shortScanRunning);daily.setEnabled(!shortScanRunning);\n        scanRow.addView(hourly,new LinearLayout.LayoutParams(0,-2,1));scanRow.addView(daily,new LinearLayout.LayoutParams(0,-2,1));shortCard.addView(scanRow);\n        hourly.setOnClickListener(v->scanShortTerm("1S"));daily.setOnClickListener(v->scanShortTerm("1G"));\n        if(shortScanRunning){ProgressBar pb=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);pb.setMax(ALL_SYMBOLS.length);pb.setProgress(shortScanDone.get());shortCard.addView(pb);shortCard.addView(txt(shortScanMode+" • "+shortScanDone.get()+"/"+ALL_SYMBOLS.length+" • başarısız "+shortScanFailed.get(),12,Color.GRAY));}\n        content.addView(shortCard);spacer(8);\n        if(!shortRadarResults.isEmpty()){content.addView(bold("Güncel kısa-vade fırsatları • "+shortScanMode,17,NAVY));renderRadarList(new ArrayList<>(shortRadarResults),10);spacer(10);}\n\n        if(radarResults.isEmpty()){\n            LinearLayout c=card();c.addView(bold("Ana radar sonucu yok",18,NAVY));c.addView(txt("Uzun vade ve temettü sepeti için önce Ana Radar'da BIST taramasını bir kez tamamla. Kısa-vade saatlik/günlük tarama ise yukarıdan bağımsız çalışır.",13,Color.DKGRAY));content.addView(c);return;\n        }\n\n        List<RadarItem>all=new ArrayList<>(radarResults);\n        all.sort((a,b)->Double.compare(b.rankedScore,a.rankedScore));\n        List<RadarItem>growth=new ArrayList<>(),div=new ArrayList<>();\n        List<String>dp=Arrays.asList(DIVIDEND_POOL);\n        for(RadarItem r:all){\n            if(r.rankedScore>=3.6&&r.confidence>=58&&!r.recommendation.contains("SAT")&&!r.recommendation.contains("RİSK"))growth.add(r);\n            if(dp.contains(r.symbol)&&r.rankedScore>=1.5&&!r.recommendation.contains("SAT")&&!r.recommendation.contains("RİSK"))div.add(r);\n        }\n        basket("2 • UZUN VADE BÜYÜME / KÂR",33333,growth,NAVY2,"Amaç: güçlü trendi ve bağlamı olan hisseleri daha uzun süre taşımak. Kısa dalgalanmada gereksiz satış yerine trend bozulmasını izler.");\n        basket("3 • TEMETTÜ + UZUN VADE TUT",33334,div,PURPLE,"Amaç: temettü kalitesi olan hisselerde giriş zamanını teknik görünümle iyileştirip uzun vadeli tutmak.");\n        content.addView(txt("Hiçbir sinyal kârı garanti etmez. Sistem fırsat, risk, stop ve güven düzeyini birlikte gösterir; zayıf durumda nakitte beklemek de geçerli sonuçtur.",12,Color.GRAY));\n    }\n\n    private void scanShortTerm(String mode){\n        if(shortScanRunning)return;\n        shortScanRunning=true;shortScanMode=mode;shortScanDone.set(0);shortScanFailed.set(0);\n        final List<RadarItem> buffer=Collections.synchronizedList(new ArrayList<>());\n        showBaskets();\n        for(String sym:ALL_SYMBOLS)io.execute(()->{\n            try{\n                List<MarketDataService.Candle>d;\n                if("1S".equals(mode))d=MarketDataService.fetchSeries(sym,"5d","1h",100);\n                else d=MarketDataService.fetchSeries(sym,"1mo","1d",40);\n                ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);\n                if(r.price>0)buffer.add(new RadarItem(sym,r));\n            }catch(Exception e){shortScanFailed.incrementAndGet();}\n            int done=shortScanDone.incrementAndGet();\n            if(done>=ALL_SYMBOLS.length){\n                List<RadarItem> sorted=new ArrayList<>(buffer);\n                sorted.sort((a,b)->Double.compare(b.score,a.score));\n                if(!sorted.isEmpty()){shortRadarResults.clear();int n=Math.min(40,sorted.size());shortRadarResults.addAll(sorted.subList(0,n));saveShortRadarCache();}\n                shortScanRunning=false;main.post(this::showBaskets);\n            }else if(done%30==0)main.post(this::showBaskets);\n        });\n    }\n\n    private void saveShortRadarCache(){\n        JSONArray a=new JSONArray();\n        try{int n=Math.min(40,shortRadarResults.size());for(int i=0;i<n;i++){RadarItem r=shortRadarResults.get(i);JSONObject o=new JSONObject();o.put("s",r.symbol);o.put("r",r.recommendation);o.put("w",r.why);o.put("h",r.horizon);o.put("p",r.price);o.put("sc",r.score);o.put("cf",r.confidence);a.put(o);}}catch(Exception ignored){}\n        getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putString(profileKey("short_radar"),a.toString()).putString(profileKey("short_mode"),shortScanMode).apply();\n    }\n\n    private void loadShortRadarCache(){\n        shortRadarResults.clear();\n        try{android.content.SharedPreferences sp=getSharedPreferences(PREFS,Context.MODE_PRIVATE);shortScanMode=sp.getString(profileKey("short_mode"),"1S");JSONArray a=new JSONArray(sp.getString(profileKey("short_radar"),"[]"));for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);ShortPulseEngine.Result pr=new ShortPulseEngine.Result();pr.recommendation=o.getString("r");pr.explanation=o.getString("w");pr.horizonText=o.getString("h");pr.price=o.getDouble("p");pr.score=o.getDouble("sc");pr.confidence=o.getDouble("cf");shortRadarResults.add(new RadarItem(o.getString("s"),pr));}}catch(Exception ignored){}\n    }\n\n    private void basket('''
+rep='''    private void showBaskets() {
+        shell("3 Strateji • Kâr + Temettü");
+        LinearLayout shortCard=card();
+        shortCard.addView(bold("1 • KISA VADE AL–SAT RADARI",20,GREEN));
+        shortCard.addView(txt("Saatlik veya günlük veriyle tüm BIST içinde güncel momentum fırsatlarını ara. Önceki kısa-vade sonucu yeni tarama bitene kadar korunur.",13,Color.DKGRAY));
+        LinearLayout scanRow=new LinearLayout(this);scanRow.setOrientation(LinearLayout.HORIZONTAL);
+        Button hourly=button(shortScanRunning?"Taranıyor…":"Saatlik Tara",GREEN);
+        Button daily=button(shortScanRunning?"Taranıyor…":"Günlük Tara",NAVY2);
+        hourly.setEnabled(!shortScanRunning);daily.setEnabled(!shortScanRunning);
+        scanRow.addView(hourly,new LinearLayout.LayoutParams(0,-2,1));scanRow.addView(daily,new LinearLayout.LayoutParams(0,-2,1));shortCard.addView(scanRow);
+        hourly.setOnClickListener(v->scanShortTerm("1S"));daily.setOnClickListener(v->scanShortTerm("1G"));
+        if(shortScanRunning){ProgressBar pb=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);pb.setMax(ALL_SYMBOLS.length);pb.setProgress(shortScanDone.get());shortCard.addView(pb);shortCard.addView(txt(shortScanMode+" • "+shortScanDone.get()+"/"+ALL_SYMBOLS.length+" • başarısız "+shortScanFailed.get(),12,Color.GRAY));}
+        content.addView(shortCard);spacer(8);
+        if(!shortRadarResults.isEmpty()){content.addView(bold("Güncel kısa-vade fırsatları • "+shortScanMode,17,NAVY));renderRadarList(new ArrayList<>(shortRadarResults),10);spacer(10);}
+
+        if(radarResults.isEmpty()){
+            LinearLayout c=card();c.addView(bold("Ana radar sonucu yok",18,NAVY));c.addView(txt("Uzun vade ve temettü sepeti için önce Ana Radar'da BIST taramasını bir kez tamamla. Kısa-vade saatlik/günlük tarama ise yukarıdan bağımsız çalışır.",13,Color.DKGRAY));content.addView(c);return;
+        }
+
+        List<RadarItem>all=new ArrayList<>(radarResults);
+        all.sort((a,b)->Double.compare(b.rankedScore,a.rankedScore));
+        List<RadarItem>growth=new ArrayList<>(),div=new ArrayList<>();
+        List<String>dp=Arrays.asList(DIVIDEND_POOL);
+        for(RadarItem r:all){
+            if(r.rankedScore>=3.6&&r.confidence>=58&&!r.recommendation.contains("SAT")&&!r.recommendation.contains("RİSK"))growth.add(r);
+            if(dp.contains(r.symbol)&&r.rankedScore>=1.5&&!r.recommendation.contains("SAT")&&!r.recommendation.contains("RİSK"))div.add(r);
+        }
+        basket("2 • UZUN VADE BÜYÜME / KÂR",33333,growth,NAVY2,"Amaç: güçlü trendi ve bağlamı olan hisseleri daha uzun süre taşımak. Kısa dalgalanmada gereksiz satış yerine trend bozulmasını izler.");
+        basket("3 • TEMETTÜ + UZUN VADE TUT",33334,div,PURPLE,"Amaç: temettü kalitesi olan hisselerde giriş zamanını teknik görünümle iyileştirip uzun vadeli tutmak.");
+        content.addView(txt("Hiçbir sinyal kârı garanti etmez. Sistem fırsat, risk, stop ve güven düzeyini birlikte gösterir; zayıf durumda nakitte beklemek de geçerli sonuçtur.",12,Color.GRAY));
+    }
+
+    private void scanShortTerm(String mode){
+        if(shortScanRunning)return;
+        shortScanRunning=true;shortScanMode=mode;shortScanDone.set(0);shortScanFailed.set(0);
+        final List<RadarItem> buffer=Collections.synchronizedList(new ArrayList<>());
+        showBaskets();
+        for(String sym:ALL_SYMBOLS)io.execute(()->{
+            try{
+                List<MarketDataService.Candle>d;
+                if("1S".equals(mode))d=MarketDataService.fetchSeries(sym,"5d","1h",100);
+                else d=MarketDataService.fetchSeries(sym,"1mo","1d",40);
+                ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);
+                if(r.price>0)buffer.add(new RadarItem(sym,r));
+            }catch(Exception e){shortScanFailed.incrementAndGet();}
+            int done=shortScanDone.incrementAndGet();
+            if(done>=ALL_SYMBOLS.length){
+                List<RadarItem> sorted=new ArrayList<>(buffer);
+                sorted.sort((a,b)->Double.compare(b.score,a.score));
+                if(!sorted.isEmpty()){shortRadarResults.clear();int n=Math.min(40,sorted.size());shortRadarResults.addAll(sorted.subList(0,n));saveShortRadarCache();}
+                shortScanRunning=false;main.post(this::showBaskets);
+            }else if(done%30==0)main.post(this::showBaskets);
+        });
+    }
+
+    private void saveShortRadarCache(){
+        JSONArray a=new JSONArray();
+        try{int n=Math.min(40,shortRadarResults.size());for(int i=0;i<n;i++){RadarItem r=shortRadarResults.get(i);JSONObject o=new JSONObject();o.put("s",r.symbol);o.put("r",r.recommendation);o.put("w",r.why);o.put("h",r.horizon);o.put("p",r.price);o.put("sc",r.score);o.put("cf",r.confidence);a.put(o);}}catch(Exception ignored){}
+        getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putString(profileKey("short_radar"),a.toString()).putString(profileKey("short_mode"),shortScanMode).apply();
+    }
+
+    private void loadShortRadarCache(){
+        shortRadarResults.clear();
+        try{android.content.SharedPreferences sp=getSharedPreferences(PREFS,Context.MODE_PRIVATE);shortScanMode=sp.getString(profileKey("short_mode"),"1S");JSONArray a=new JSONArray(sp.getString(profileKey("short_radar"),"[]"));for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);ShortPulseEngine.Result pr=new ShortPulseEngine.Result();pr.recommendation=o.getString("r");pr.explanation=o.getString("w");pr.horizonText=o.getString("h");pr.price=o.getDouble("p");pr.score=o.getDouble("sc");pr.confidence=o.getDouble("cf");shortRadarResults.add(new RadarItem(o.getString("s"),pr));}}catch(Exception ignored){}
+    }
+
+    private void basket('''
 s,n=re.subn(pat,rep,s,count=1,flags=re.S)
 if n!=1: raise SystemExit('three strategy patch failed')
 
