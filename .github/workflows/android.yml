@@ -1,4 +1,4 @@
-name: Build BorsaRadar 3.10.4 APK
+name: Build BorsaRadar 3.11.0 APK
 on:
   workflow_dispatch:
   push:
@@ -54,10 +54,10 @@ jobs:
       - name: Build signed release APK
         run: gradle --no-daemon clean assembleRelease
       - name: Prepare APK
-        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.10.4.apk
+        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.11.0.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v3.10.4-APK
-          path: BorsaRadar-v3.10.4.apk
+          name: BorsaRadar-v3.11.0-APK
+          path: BorsaRadar-v3.11.0.apk
           if-no-files-found: error
           retention-days: 30
