@@ -1,4 +1,4 @@
-name: Build BorsaRadar 3.12.6 APK
+name: Build BorsaRadar 3.12.7 APK
 on:
   workflow_dispatch:
   push:
@@ -67,6 +67,10 @@ jobs:
         run: python3 .ci/patch_v63_scan_retry_errors.py
       - name: Tune parallel general and intraday scans
         run: python3 .ci/patch_v64_parallel_scan.py
+      - name: Add dedicated hourly radar tab
+        run: python3 .ci/patch_v65_hourly_tab.py
+      - name: Gate strong hourly candidates with news KAP and social risk
+        run: python3 .ci/patch_v66_hourly_gate_hook.py
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
@@ -74,10 +78,10 @@ jobs:
       - name: Build signed release APK
         run: gradle --no-daemon clean assembleRelease
       - name: Prepare APK
-        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.12.6.apk
+        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.12.7.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v3.12.6-APK
-          path: BorsaRadar-v3.12.6.apk
+          name: BorsaRadar-v3.12.7-APK
+          path: BorsaRadar-v3.12.7.apk
           if-no-files-found: error
           retention-days: 30
