@@ -4,31 +4,20 @@ import re
 p=Path('app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java')
 s=p.read_text(encoding='utf-8')
 
-# Foreground auto-refresh state. 15 minutes matches the practical market-data delay
-# without hammering the data source. Completed results always remain visible.
+# Keep the last completed radar persistent. Opening/navigating to Radar must never
+# automatically start a new full scan. Refreshing is explicit via the scan button.
 field_anchor='    private String shortScanMode="1S";'
 fields='''    private String shortScanMode="1S";
-    private static final long MAIN_RADAR_REFRESH_MS=15L*60L*1000L;
-    private static final long MAIN_RADAR_FIRST_CHECK_MS=3500L;
     private boolean appInForeground=false;
     private String currentPage="";
-    private long lastRadarRefreshAt=0L;
-    private final Runnable autoRadarRefresh=new Runnable(){
-        @Override public void run(){
-            if(!appInForeground)return;
-            long now=System.currentTimeMillis();
-            if(primaryMarket()==0 && !scanRunning && (radarResults.isEmpty() || now-lastRadarRefreshAt>=MAIN_RADAR_REFRESH_MS)) scanRadar();
-            main.postDelayed(this,MAIN_RADAR_REFRESH_MS);
-        }
-    };'''
-if 'MAIN_RADAR_REFRESH_MS' not in s:
+    private long lastRadarRefreshAt=0L;'''
+if 'private String currentPage=' not in s:
     if field_anchor not in s: raise SystemExit('continuous radar field anchor missing')
     s=s.replace(field_anchor,fields,1)
 
-# Track page so background refresh never yanks the user away from Portfolio/Detail/3 Strategy.
+# Track page so scan progress/completion never yanks the user away from Portfolio/Detail/3 Strategy.
 s=s.replace('private void shell(String page) {','private void shell(String page) {\n        currentPage=page==null?"":page;',1)
 
-# Helper methods before showPortfolio.
 marker='    private void showPortfolio()'
 helpers='''    private boolean radarPageVisible(){
         return currentPage.contains("Radar") || currentPage.contains("radar");
@@ -47,13 +36,10 @@ helpers='''    private boolean radarPageVisible(){
         super.onResume();
         appInForeground=true;
         lastRadarRefreshAt=getSharedPreferences(PREFS,Context.MODE_PRIVATE).getLong(profileKey("radar_last_refresh"),0L);
-        main.removeCallbacks(autoRadarRefresh);
-        main.postDelayed(autoRadarRefresh,MAIN_RADAR_FIRST_CHECK_MS);
     }
 
     @Override protected void onPause(){
         appInForeground=false;
-        main.removeCallbacks(autoRadarRefresh);
         super.onPause();
     }
 
@@ -62,14 +48,8 @@ if 'private boolean radarPageVisible()' not in s:
     if marker not in s: raise SystemExit('showPortfolio marker missing')
     s=s.replace(marker,helpers+marker,1)
 
-# Ensure destroy also removes callbacks.
-s=s.replace('''    @Override protected void onDestroy() {
-        io.shutdownNow();''','''    @Override protected void onDestroy() {
-        main.removeCallbacks(autoRadarRefresh);
-        io.shutdownNow();''',1)
-
 # Main scan: keep old completed list on screen while scanBuffer is filled.
-# Never force navigation during an automatic background refresh.
+# Never force navigation during a manual/background completion callback.
 start=s.find('private void scanRadar()')
 end=s.find('private void enrichRadarTopCandidates',start)
 if start<0 or end<0: raise SystemExit('scanRadar boundaries missing')
@@ -106,13 +86,13 @@ s=s.replace('if(n==0){scanRunning=false;main.post(this::showRadar);return;}','if
 s=s.replace('saveRadarCache();scanRunning=false;\n                    main.post(this::showRadar);','saveRadarCache();scanRunning=false;markRadarRefreshCompleted();\n                    main.post(this::refreshRadarUiIfVisible);',1)
 s=s.replace('}else if(k%5==0)main.post(this::showRadar);','}else if(k%5==0)main.post(this::refreshRadarUiIfVisible);',1)
 
-# Radar screen status: explicitly tell user that the old list stays visible and auto-refresh is active.
+# Radar screen status: emphasize persistence instead of automatic rescanning.
 status_anchor='''top.addView(txt("Son tamamlanan tarama ekranda kalır. Yeni tarama arkada hazırlanır; bitince liste tek seferde yenilenir. En güçlü adaylar haber/KAP/makro bağlamıyla ikinci kez sıralanır.",13,Color.DKGRAY));'''
-status_repl=status_anchor+'''\n        long age=lastRadarRefreshAt>0?Math.max(0,(System.currentTimeMillis()-lastRadarRefreshAt)/60000L):-1;\n        top.addView(txt("Otomatik yenileme: 15 dk"+(age>=0?" • son tamamlanma "+age+" dk önce":" • ilk tarama hazırlanıyor"),12,Color.GRAY));'''
-if status_anchor in s and 'Otomatik yenileme: 15 dk' not in s:
+status_repl=status_anchor+'''\n        long age=lastRadarRefreshAt>0?Math.max(0,(System.currentTimeMillis()-lastRadarRefreshAt)/60000L):-1;\n        top.addView(txt("Kalıcı radar"+(age>=0?" • son tamamlanma "+age+" dk önce":" • henüz tamamlanmış tarama yok")+" • yeniden tarama yalnızca düğmeyle",12,Color.GRAY));'''
+if status_anchor in s and 'Kalıcı radar' not in s:
     s=s.replace(status_anchor,status_repl,1)
 
-# Version bump.
+# Version bump retained here; later patches may bump further.
 b=Path('app/build.gradle')
 g=b.read_text(encoding='utf-8')
 g=re.sub(r'versionCode\s+\d+','versionCode 52',g)
