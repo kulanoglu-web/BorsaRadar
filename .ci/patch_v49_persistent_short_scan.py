@@ -8,10 +8,13 @@ s=s.replace('button("Radar",GREEN)', 'button("Tarama",GREEN)')
 s=s.replace('shell("Tüm Borsa İstanbul Radarı")', 'shell("Güncel Fırsat Taraması")')
 s=s.replace('button(scanRunning?"Tarama devam ediyor…":"Tüm BIST\'i Tara",GREEN)', 'button(scanRunning?"Tarama devam ediyor…":"Güncel AL/SAT Fırsatlarını Tara",GREEN)')
 
-# Keep the last completed snapshot visible while a fresh scan is collected.
-# Preserve the two-stage enrichRadarTopCandidates method introduced by v50.
-pat=r'    private void scanRadar\(\) \{.*?\n    \}\n\n    private void enrichRadarTopCandidates'
-rep='''    private void scanRadar() {
+# Replace only scanRadar by method-name boundaries. This is robust against
+# formatting/body changes from v50/v52 and preserves the enrichment method.
+start=s.find('private void scanRadar()')
+end=s.find('private void enrichRadarTopCandidates',start)
+if start<0 or end<0:
+    raise SystemExit('persistent radar boundaries missing')
+scan='''private void scanRadar() {
         if(scanRunning)return;
         final int pm=primaryMarket(); final String[] universe=marketSymbols(pm);
         scanRunning=true;scanDone.set(0);scanFailed.set(0);
@@ -38,15 +41,14 @@ rep='''    private void scanRadar() {
         });
     }
 
-    private void enrichRadarTopCandidates'''
-s,n=re.subn(pat,rep,s,count=1,flags=re.S)
-if n!=1:
-    raise SystemExit('persistent radar method patch failed')
+    '''
+s=s[:start]+scan+s[end:]
 
-m=re.search(r'(private void showBaskets\(\) \{.*?shell\([^;]+;)',s,re.S)
-if not m:
-    raise SystemExit('three basket insertion point missing')
-ui='''
+# Add the legacy short-term card only when a suitable insertion point exists.
+# v55 later replaces this whole basket screen, so failure here must not abort builds.
+m=re.search(r'(private void showBaskets\(\)\s*\{.*?shell\([^;]+;)',s,re.S)
+if m:
+    ui='''
         LinearLayout shortTermScanCard=card();
         shortTermScanCard.addView(bold("Kısa Vade Güncel AL/SAT Taraması",19,GREEN));
         shortTermScanCard.addView(txt("BIST hisselerini güncel teknik veriyle tarar. Son tamamlanan sonuçlar yeni tarama bitene kadar ekranda ve üçlü stratejide korunur.",13,Color.DKGRAY));
@@ -56,7 +58,8 @@ ui='''
         shortTermScanCard.addView(shortTermScanButton); content.addView(shortTermScanCard); spacer(8);
         if(!radarResults.isEmpty()){ content.addView(bold("Güncel 1–3 günlük fırsatlar",17,NAVY)); renderRadarList(new ArrayList<>(radarResults),10); spacer(8); }
 '''
-s=s[:m.end()]+ui+s[m.end():]
+    s=s[:m.end()]+ui+s[m.end():]
+
 p.write_text(s,encoding='utf-8')
 
 b=Path('app/build.gradle')
