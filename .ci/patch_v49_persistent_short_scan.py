@@ -8,9 +8,9 @@ s=s.replace('button("Radar",GREEN)', 'button("Tarama",GREEN)')
 s=s.replace('shell("Tüm Borsa İstanbul Radarı")', 'shell("Güncel Fırsat Taraması")')
 s=s.replace('button(scanRunning?"Tarama devam ediyor…":"Tüm BIST\'i Tara",GREEN)', 'button(scanRunning?"Tarama devam ediyor…":"Güncel AL/SAT Fırsatlarını Tara",GREEN)')
 
-# This patch runs after international-market patches. Keep the last completed
-# snapshot visible while a fresh primary-market scan is collected separately.
-pat=r'    private void scanRadar\(\) \{.*?\n    \}\n\n    private void renderRadarList'
+# Keep the last completed snapshot visible while a fresh scan is collected.
+# Preserve the two-stage enrichRadarTopCandidates method introduced by v50.
+pat=r'    private void scanRadar\(\) \{.*?\n    \}\n\n    private void enrichRadarTopCandidates'
 rep='''    private void scanRadar() {
         if(scanRunning)return;
         final int pm=primaryMarket(); final String[] universe=marketSymbols(pm);
@@ -31,14 +31,14 @@ rep='''    private void scanRadar() {
             if(done>=universe.length){
                 List<RadarItem>sorted=new ArrayList<>(freshResults);
                 sorted.sort((a,b)->Double.compare(b.rankedScore,a.rankedScore));
-                radarResults.clear();radarResults.addAll(sorted);
-                saveRadarCache();scanRunning=false;
+                if(!sorted.isEmpty()){radarResults.clear();radarResults.addAll(sorted);}
                 main.post(this::showRadar);
+                enrichRadarTopCandidates(25);
             }else if(done%10==0)main.post(this::showRadar);
         });
     }
 
-    private void renderRadarList'''
+    private void enrichRadarTopCandidates'''
 s,n=re.subn(pat,rep,s,count=1,flags=re.S)
 if n!=1:
     raise SystemExit('persistent radar method patch failed')
