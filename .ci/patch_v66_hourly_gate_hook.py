@@ -8,4 +8,7 @@ if old not in s: raise SystemExit('hourly item anchor missing')
 s=s.replace(old,new,1)
 s=s.replace('main.post(this::showBaskets);','main.post(this::showHourlyRadar);',1)
 p.write_text(s,encoding='utf-8')
-b=Path('app/build.gradle');g=b.read_text(encoding='utf-8');g=re.sub(r'versionCode\s+\d+','versionCode 55',g);g=re.sub(r"versionName\s+['\"][^'\"]+['\"]","versionName '3.12.7'",g);b.write_text(g,encoding='utf-8')
+# Apply the fast-hourly replacement after the risk hook. It reuses the already completed main-radar shortlist.
+fast=Path('.ci/patch_v67_fast_hourly_from_main.py')
+exec(compile(fast.read_text(encoding='utf-8'),str(fast),'exec'))
+b=Path('app/build.gradle');g=b.read_text(encoding='utf-8');g=re.sub(r'versionCode\s+\d+','versionCode 56',g);g=re.sub(r"versionName\s+['\"][^'\"]+['\"]","versionName '3.12.8'",g);b.write_text(g,encoding='utf-8')
