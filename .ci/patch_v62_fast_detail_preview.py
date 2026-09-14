@@ -13,6 +13,9 @@ new='''private void analyzeStock(String symbol) {
         ProgressBar p=new ProgressBar(this);content.addView(p);
         content.addView(txt("Fiyat ve teknik göstergeler hazırlanıyor…",15,Color.GRAY));
         detailIo.execute(()->{try{
+            // US stocks are displayed in EUR. Prime the cached USD/EUR rate before
+            // the fast detail card is rendered so the first price is not shown as — €.
+            CurrencyService.refreshIfNeeded();
             List<MarketDataService.Candle>d=MarketDataService.fetchDaily(symbol,"6mo");
             if(d==null||d.size()<20)throw new Exception("yetersiz fiyat verisi");
             final List<MarketDataService.Candle> data=d;
