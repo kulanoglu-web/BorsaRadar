@@ -28,6 +28,10 @@ v46=Path('.ci/patch_v46_terms_checkbox.py')
 if v46.exists():
     exec(compile(v46.read_text(encoding='utf-8'),str(v46),'exec'))
 
+v48=Path('.ci/patch_v48_international_mode.py')
+if v48.exists():
+    exec(compile(v48.read_text(encoding='utf-8'),str(v48),'exec'))
+
 # Ensure a normal signed release variant exists for device installation.
 b=Path('app/build.gradle')
 g=b.read_text(encoding='utf-8')
