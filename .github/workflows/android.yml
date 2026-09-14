@@ -1,4 +1,4 @@
-name: Build BorsaRadar 3.12.8 APK
+name: Build BorsaRadar 3.12.9 APK
 on:
   workflow_dispatch:
   push:
@@ -41,7 +41,7 @@ jobs:
         run: python3 .ci/patch_v52_multi_technical_radar.py
       - name: Add portfolio risk and action labels
         run: python3 .ci/patch_v51_portfolio_decisions.py
-      - name: Use native BIST Germany and US currencies
+      - name: Display BIST in TRY and Germany plus US in EUR
         run: python3 .ci/patch_v53_euro_display.py
       - name: Verify preserved technical set
         run: python3 .ci/verify_preserved_technical_set.py
@@ -71,6 +71,8 @@ jobs:
         run: python3 .ci/patch_v65_hourly_tab.py
       - name: Gate strong hourly candidates with news KAP and social risk
         run: python3 .ci/patch_v66_hourly_gate_hook.py
+      - name: Guard sell signals near support or without confirmation
+        run: python3 .ci/patch_v68_decision_guard.py
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
@@ -78,10 +80,10 @@ jobs:
       - name: Build signed release APK
         run: gradle --no-daemon clean assembleRelease
       - name: Prepare APK
-        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.12.8.apk
+        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.12.9.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v3.12.8-APK
-          path: BorsaRadar-v3.12.8.apk
+          name: BorsaRadar-v3.12.9-APK
+          path: BorsaRadar-v3.12.9.apk
           if-no-files-found: error
           retention-days: 30
