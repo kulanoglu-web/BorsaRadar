@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
 permissions:
-  contents: read
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -61,3 +61,12 @@ jobs:
           path: BorsaRadar-v3.11.1.apk
           if-no-files-found: error
           retention-days: 30
+      - name: Publish installable APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v3.11.1 >/dev/null 2>&1; then
+            gh release upload v3.11.1 BorsaRadar-v3.11.1.apk --clobber
+          else
+            gh release create v3.11.1 BorsaRadar-v3.11.1.apk --title "BorsaRadar 3.11.1" --notes "Tarama sonuçları yeni tarama tamamlanana kadar korunur. 3 Sepet bölümüne güncel kısa vadeli AL/SAT fırsat taraması eklendi."
+          fi
