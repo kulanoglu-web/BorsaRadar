@@ -5,7 +5,6 @@ p=Path('app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java')
 s=p.read_text(encoding='utf-8')
 
 # Keep completed main radar visible while a new scan runs; build new results in a buffer.
-# Anchor on radarResults instead of exact scan-state formatting, because earlier patches may reformat fields.
 pat=r'(\s*private\s+final\s+List<RadarItem>\s+radarResults\s*=\s*Collections\.synchronizedList\(new\s+ArrayList<>\(\)\)\s*;)'
 rep=r'''\1
     private final List<RadarItem> scanBuffer=Collections.synchronizedList(new ArrayList<>());
@@ -23,16 +22,23 @@ s=s.replace('''        loadPortfolio();
         loadShortRadarCache();
         showPortfolio();''',1)
 
-# Replace the main scan so the old, completed scan never disappears during refresh.
-pat=r'    private void scanRadar\(\) \{.*?\n    \}\n\n    private void enrichRadarTopCandidates'
-rep='''    private void scanRadar() {
+# Replace main scan using method-name boundaries, independent of intermediate formatting patches.
+start=s.find('private void scanRadar()')
+end=s.find('private void enrichRadarTopCandidates',start)
+if start<0 or end<0: raise SystemExit('persistent main radar boundaries not found')
+indent='    '
+main_scan='''private void scanRadar() {
         if(scanRunning)return;
         scanRunning=true;scanDone.set(0);scanFailed.set(0);scanBuffer.clear();showRadar();
         for(String sym:ALL_SYMBOLS)io.execute(()->{
             try{
                 List<MarketDataService.Candle>d=MarketDataService.fetchDaily(sym,"3mo");
                 ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);
-                scanBuffer.add(new RadarItem(sym,r));
+                RadarTechnicalEngine.Result rt=RadarTechnicalEngine.analyze(d);
+                RadarItem item=new RadarItem(sym,r);
+                item.score=rt.score; item.rankedScore=rt.score;
+                item.why=rt.summary+" • "+item.why;
+                scanBuffer.add(item);
             }catch(Exception e){scanFailed.incrementAndGet();}
             int done=scanDone.incrementAndGet();
             if(done>=ALL_SYMBOLS.length){
@@ -45,17 +51,17 @@ rep='''    private void scanRadar() {
         });
     }
 
-    private void enrichRadarTopCandidates'''
-s,n=re.subn(pat,rep,s,count=1,flags=re.S)
-if n!=1: raise SystemExit('persistent main radar patch failed')
+    '''
+s=s[:start]+main_scan+s[end:]
 
-# Make the radar page explicit that the previous completed scan remains visible.
 s=s.replace('''top.addView(bold("Tüm hisseler • iki aşamalı radar",19,NAVY));''','''top.addView(bold("Ana Radar • sonuçlar kaybolmaz",19,NAVY));''',1)
 s=s.replace('''1) Tüm BIST teknik olarak hızlı taranır. 2) En güçlü 25 aday için haber/KAP/makro bağlamı alınır ve liste yeniden sıralanır. Böylece yüzlerce gereksiz haber isteği yapılmaz.''','''Son tamamlanan tarama ekranda kalır. Yeni tarama arkada hazırlanır; bitince liste tek seferde yenilenir. En güçlü adaylar haber/KAP/makro bağlamıyla ikinci kez sıralanır.''',1)
 
-# Add hourly/daily opportunity radar and reshape 3 baskets around the user's core strategy.
-pat=r'    private void showBaskets\(\) \{.*?\n    \}\n\n    private void basket\('
-rep='''    private void showBaskets() {
+# Replace baskets using method-name boundaries as well.
+start=s.find('private void showBaskets()')
+end=s.find('private void basket(',start)
+if start<0 or end<0: raise SystemExit('three strategy boundaries not found')
+strategy='''private void showBaskets() {
         shell("3 Strateji • Kâr + Temettü");
         LinearLayout shortCard=card();
         shortCard.addView(bold("1 • KISA VADE AL–SAT RADARI",20,GREEN));
@@ -69,11 +75,9 @@ rep='''    private void showBaskets() {
         if(shortScanRunning){ProgressBar pb=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);pb.setMax(ALL_SYMBOLS.length);pb.setProgress(shortScanDone.get());shortCard.addView(pb);shortCard.addView(txt(shortScanMode+" • "+shortScanDone.get()+"/"+ALL_SYMBOLS.length+" • başarısız "+shortScanFailed.get(),12,Color.GRAY));}
         content.addView(shortCard);spacer(8);
         if(!shortRadarResults.isEmpty()){content.addView(bold("Güncel kısa-vade fırsatları • "+shortScanMode,17,NAVY));renderRadarList(new ArrayList<>(shortRadarResults),10);spacer(10);}
-
         if(radarResults.isEmpty()){
-            LinearLayout c=card();c.addView(bold("Ana radar sonucu yok",18,NAVY));c.addView(txt("Uzun vade ve temettü sepeti için önce Ana Radar'da BIST taramasını bir kez tamamla. Kısa-vade saatlik/günlük tarama ise yukarıdan bağımsız çalışır.",13,Color.DKGRAY));content.addView(c);return;
+            LinearLayout c=card();c.addView(bold("Ana radar sonucu yok",18,NAVY));c.addView(txt("Uzun vade ve temettü sepeti için önce Ana Radar'da BIST taramasını bir kez tamamla. Kısa-vade saatlik/günlük tarama yukarıdan bağımsız çalışır.",13,Color.DKGRAY));content.addView(c);return;
         }
-
         List<RadarItem>all=new ArrayList<>(radarResults);
         all.sort((a,b)->Double.compare(b.rankedScore,a.rankedScore));
         List<RadarItem>growth=new ArrayList<>(),div=new ArrayList<>();
@@ -98,7 +102,9 @@ rep='''    private void showBaskets() {
                 if("1S".equals(mode))d=MarketDataService.fetchSeries(sym,"5d","1h",100);
                 else d=MarketDataService.fetchSeries(sym,"1mo","1d",40);
                 ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);
-                if(r.price>0)buffer.add(new RadarItem(sym,r));
+                RadarTechnicalEngine.Result rt=RadarTechnicalEngine.analyze(d);
+                RadarItem item=new RadarItem(sym,r); item.score=rt.score; item.rankedScore=rt.score; item.why=rt.summary+" • "+item.why;
+                if(r.price>0)buffer.add(item);
             }catch(Exception e){shortScanFailed.incrementAndGet();}
             int done=shortScanDone.incrementAndGet();
             if(done>=ALL_SYMBOLS.length){
@@ -118,17 +124,14 @@ rep='''    private void showBaskets() {
 
     private void loadShortRadarCache(){
         shortRadarResults.clear();
-        try{android.content.SharedPreferences sp=getSharedPreferences(PREFS,Context.MODE_PRIVATE);shortScanMode=sp.getString(profileKey("short_mode"),"1S");JSONArray a=new JSONArray(sp.getString(profileKey("short_radar"),"[]"));for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);ShortPulseEngine.Result pr=new ShortPulseEngine.Result();pr.recommendation=o.getString("r");pr.explanation=o.getString("w");pr.horizonText=o.getString("h");pr.price=o.getDouble("p");pr.score=o.getDouble("sc");pr.confidence=o.getDouble("cf");shortRadarResults.add(new RadarItem(o.getString("s"),pr));}}catch(Exception ignored){}
+        try{android.content.SharedPreferences sp=getSharedPreferences(PREFS,Context.MODE_PRIVATE);shortScanMode=sp.getString(profileKey("short_mode"),"1S");JSONArray a=new JSONArray(sp.getString(profileKey("short_radar"),"[]"));for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);ShortPulseEngine.Result pr=new ShortPulseEngine.Result();pr.recommendation=o.getString("r");pr.explanation=o.getString("w");pr.horizonText=o.getString("h");pr.price=o.getDouble("p");pr.score=o.getDouble("sc");pr.confidence=o.getDouble("cf");RadarItem ri=new RadarItem(o.getString("s"),pr);ri.rankedScore=ri.score;shortRadarResults.add(ri);}}catch(Exception ignored){}
     }
 
-    private void basket('''
-s,n=re.subn(pat,rep,s,count=1,flags=re.S)
-if n!=1: raise SystemExit('three strategy patch failed')
+    '''
+s=s[:start]+strategy+s[end:]
 
-# Profile switches also load that profile's independent short-term cache.
 s=s.replace('''        loadPortfolio(); loadRadarCache(); showPortfolio();''','''        loadPortfolio(); loadRadarCache(); loadShortRadarCache(); showPortfolio();''',1)
 
-# Version bump.
 b=Path('app/build.gradle')
 g=b.read_text(encoding='utf-8')
 g=re.sub(r'versionCode\s+\d+','versionCode 49',g)
