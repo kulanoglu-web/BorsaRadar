@@ -73,7 +73,6 @@ public class MainActivity extends Activity {
     private final Map<String, CatalystContextEngine.Result> holdingContexts = new HashMap<>();
     private final List<RadarItem> radarResults = Collections.synchronizedList(new ArrayList<>());
     private volatile boolean scanRunning=false;
-    private volatile boolean showBasketsAfterScan=false;
     private final AtomicInteger scanDone=new AtomicInteger(0), scanFailed=new AtomicInteger(0);
 
     @Override public void onCreate(Bundle b) {
@@ -202,18 +201,8 @@ public class MainActivity extends Activity {
     }
 
     private void scanRadar() {
-        if(scanRunning)return;
-        scanRunning=true;scanDone.set(0);scanFailed.set(0);
-        // Tamamlanmış son taramayı ekranda ve 3 Sepet'te tut; yeni sonuçlar ayrı tamponda birikir.
-        final List<RadarItem> scanBuffer=Collections.synchronizedList(new ArrayList<>());
-        showRadar();
-        for(String sym:ALL_SYMBOLS)io.execute(()->{try{List<MarketDataService.Candle>d=MarketDataService.fetchDaily(sym,"1mo");ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);scanBuffer.add(new RadarItem(sym,r));}catch(Exception e){scanFailed.incrementAndGet();}int done=scanDone.incrementAndGet();if(done>=ALL_SYMBOLS.length){List<RadarItem>sorted=new ArrayList<>(scanBuffer);sorted.sort((a,b)->Double.compare(b.score,a.score));radarResults.clear();radarResults.addAll(sorted);saveRadarCache();scanRunning=false;boolean baskets=showBasketsAfterScan;showBasketsAfterScan=false;main.post(baskets?this::showBaskets:this::showRadar);}else if(done%25==0)main.post(this::showRadar);});
-    }
-
-    private void scanShortTermOpportunities() {
-        if(scanRunning){Toast.makeText(this,"Tarama zaten devam ediyor",Toast.LENGTH_SHORT).show();return;}
-        showBasketsAfterScan=true;
-        scanRadar();
+        if(scanRunning)return; scanRunning=true;scanDone.set(0);scanFailed.set(0);radarResults.clear();showRadar();
+        for(String sym:ALL_SYMBOLS)io.execute(()->{try{List<MarketDataService.Candle>d=MarketDataService.fetchDaily(sym,"1mo");ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);radarResults.add(new RadarItem(sym,r));}catch(Exception e){scanFailed.incrementAndGet();}int done=scanDone.incrementAndGet();if(done>=ALL_SYMBOLS.length){scanRunning=false;List<RadarItem>sorted=new ArrayList<>(radarResults);sorted.sort((a,b)->Double.compare(b.score,a.score));radarResults.clear();radarResults.addAll(sorted);saveRadarCache();main.post(this::showRadar);}else if(done%25==0)main.post(this::showRadar);});
     }
 
     private void renderRadarList(List<RadarItem> items,int max) {
@@ -240,13 +229,7 @@ public class MainActivity extends Activity {
     }
 
     private void showBaskets() {
-        shell("100.000 TL • 3 Sepet");
-        LinearLayout scanCard=card();
-        scanCard.addView(bold("Kısa vade güncel al-sat taraması",18,NAVY));
-        scanCard.addView(txt("BIST hisselerini 1 aylık veriyle yeniden tarar; 1–3 günlük fırsat sepetini günceller. Eski sonuçlar yeni tarama tamamlanana kadar kaybolmaz.",13,Color.DKGRAY));
-        Button shortScan=button(scanRunning?"Tarama devam ediyor…":"Kısa Vade Fırsatlarını Tara",GREEN);
-        shortScan.setEnabled(!scanRunning);shortScan.setOnClickListener(v->scanShortTermOpportunities());scanCard.addView(shortScan);content.addView(scanCard);spacer(8);
-        if(radarResults.isEmpty()){content.addView(txt(scanRunning?"İlk tarama tamamlanınca 1–3 günlük fırsatlar burada görünecek.":"Henüz kayıtlı tarama sonucu yok.",14,Color.GRAY));return;}
+        shell("100.000 TL • 3 Sepet"); if(radarResults.isEmpty()){LinearLayout c=card();c.addView(bold("Önce radar taraması gerekiyor",18,NAVY));c.addView(txt("Tarama bir kez tamamlanınca sonuç kaydedilir; ekrandan çıksan da kaybolmaz.",13,Color.DKGRAY));Button go=button("Radarı Aç",GREEN);c.addView(go);go.setOnClickListener(v->showRadar());content.addView(c);return;}
         List<RadarItem>all=new ArrayList<>(radarResults);all.sort((a,b)->Double.compare(b.score,a.score));List<RadarItem>fast=new ArrayList<>(),twoWeek=new ArrayList<>(),div=new ArrayList<>();List<String>dp=Arrays.asList(DIVIDEND_POOL);for(RadarItem r:all){if(r.score>=5.2&&r.confidence>=60)fast.add(r);if(r.score>=3.7&&!r.recommendation.contains("SAT")&&!r.recommendation.contains("RİSK"))twoWeek.add(r);if(dp.contains(r.symbol)&&r.score>=1.5&&!r.recommendation.contains("SAT"))div.add(r);}basket("1 • HIZLI 1–3 GÜN",33333,fast,GREEN,"Güçlü momentum + hacim + kısa trend.");basket("2 • 4–10 İŞLEM GÜNÜ",33333,twoWeek,NAVY2,"Daha dengeli Pulse skoru; en fazla yaklaşık iki hafta.");basket("3 • TEMETTÜ + TEKNİK",33334,div,PURPLE,"Temettü geçmişi güçlü şirket havuzu içinden mevcut teknik görünümü zayıf olmayanlar.");
     }
 
