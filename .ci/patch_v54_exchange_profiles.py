@@ -73,7 +73,7 @@ s=s.replace('''getString("radar","[]")''','''getString(profileKey("radar"),getSh
 
 # Respect the earlier rule: foreign profiles use direct stock analysis, no bulk scan.
 needle='''        int pm=primaryMarket(); String[] universe=marketSymbols(pm);
-        String title=L("Ana Borsa Radarı","Hauptmarkt-Radar","Primary Market Radar");'''
+        shell(L("Ana Borsa Radarı","Hauptmarkt-Radar","Primary Market Radar"));'''
 replacement='''        int pm=primaryMarket(); String[] universe=marketSymbols(pm);
         if(pm!=0){
             shell(L("Yurtdışı Hisse Profili","Auslandsaktien-Profil","International Stock Profile"));
@@ -83,7 +83,7 @@ replacement='''        int pm=primaryMarket(); String[] universe=marketSymbols(p
             Button select=button(L("Hisse Seç ve Analiz Et","Aktie wählen und analysieren","Select and analyze stock"),PURPLE);
             select.setOnClickListener(v->singleStockDialog());direct.addView(select);content.addView(direct);return;
         }
-        String title=L("Ana Borsa Radarı","Hauptmarkt-Radar","Primary Market Radar");'''
+        shell(L("Ana Borsa Radarı","Hauptmarkt-Radar","Primary Market Radar"));'''
 if needle not in s: raise SystemExit('foreign radar guard patch failed')
 s=s.replace(needle,replacement,1)
 
