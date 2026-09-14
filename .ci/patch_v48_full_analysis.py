@@ -4,13 +4,31 @@ p=Path('app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java')
 s=p.read_text(encoding='utf-8')
 pat=r'    private void analyzeStock\(String symbol\) \{.*?\n    \}\n\n    private void renderStockDetail\(String symbol,ShortPulseEngine\.Result r,CatalystContextEngine\.Result cx,List<MarketDataService\.Candle> chart\) \{.*?\n    \}'
 rep='''    private void analyzeStock(String symbol) {
-        shell(symbol+" • analiz"); ProgressBar p=new ProgressBar(this);content.addView(p);content.addView(txt("Teknik + eski metodlar + haber/KAP + makro analiz ediliyor…",15,NAVY));
+        shell(symbol+" • analiz"); ProgressBar p=new ProgressBar(this);content.addView(p);content.addView(txt("Fiyat ve teknik göstergeler hazırlanıyor…",15,NAVY));
         io.execute(()->{try{
             List<MarketDataService.Candle>d=MarketDataService.fetchDaily(symbol,"6mo");
-            FullAnalysisEngine.Result a=FullAnalysisEngine.analyze(symbol,d);
-            List<MarketDataService.Candle>chart=d.subList(Math.max(0,d.size()-10),d.size());
-            main.post(()->renderStockDetail(symbol,a,chart));
-        }catch(Exception e){main.post(()->{shell(symbol+" • analiz");content.addView(txt("Veri alınamadı: "+e.getMessage(),15,RED));});}});
+            if(d==null||d.size()<20)throw new Exception("yetersiz fiyat verisi");
+            final List<MarketDataService.Candle> data=d;
+            main.post(()->renderFastTechnicalDetail(symbol,data));
+            FullAnalysisEngine.Result a=FullAnalysisEngine.analyze(symbol,data);
+            List<MarketDataService.Candle>chart=data.subList(Math.max(0,data.size()-10),data.size());
+            main.post(()->{ if(currentPage.startsWith(symbol+" •")) renderStockDetail(symbol,a,chart); });
+        }catch(Exception e){main.post(()->{shell(symbol+" • analiz");String m=e.getMessage();if(m==null||m.trim().isEmpty())m=e.getClass().getSimpleName();content.addView(txt("Analiz verisi alınamadı: "+m,15,RED));});}});
+    }
+
+    private void renderFastTechnicalDetail(String symbol,List<MarketDataService.Candle> data){
+        ShortPulseEngine.Result r=ShortPulseEngine.analyze(data);
+        RadarTechnicalEngine.Result rt=RadarTechnicalEngine.analyze(data);
+        LegacyTechnicalEnsemble.Result legacy=LegacyTechnicalEnsemble.analyze(data);
+        AdditionalIndicatorEngine.Result add=AdditionalIndicatorEngine.analyze(data);
+        AdvancedIndicatorEngine.Result adv=AdvancedIndicatorEngine.analyze(data);
+        List<MarketDataService.Candle>chart=data.subList(Math.max(0,data.size()-35),data.size());
+        shell(symbol+" • hızlı teknik");
+        LinearLayout q=card();q.addView(bold(symbol,22,NAVY));q.addView(bold(money(r.price,symbol),25,r.changePct>=0?GREEN:RED));q.addView(txt("Son gün %"+fmt(r.changePct)+" • ATR% "+fmt(r.atrPct)+" • RelVol x"+fmt(r.relativeVolume),14,Color.DKGRAY));content.addView(q);spacer(7);
+        LinearLayout sig=card();String rec=r.recommendation==null?"BEKLE":r.recommendation;int rc=rec.contains("SAT")||rec.contains("RİSK")?RED:rec.contains("AL")?GREEN:AMBER;sig.addView(bold("Hızlı teknik sonuç: "+rec,19,rc));sig.addView(txt("Radar teknik skor: "+fmt(rt.score),14,Color.DKGRAY));sig.addView(txt(rt.summary,13,Color.DKGRAY));sig.addView(txt("Momentum: "+r.momentumText,13,Color.DKGRAY));sig.addView(txt("Para/Hacim: "+r.flowText,13,Color.DKGRAY));sig.addView(txt("Trend: "+r.trendText,13,Color.DKGRAY));content.addView(sig);spacer(7);
+        LinearLayout ind=card();ind.addView(bold("Teknik göstergeler",17,NAVY));ind.addView(txt(legacy.summary,13,Color.DKGRAY));ind.addView(txt(add.summary,13,Color.DKGRAY));ind.addView(txt(adv.summary,13,Color.DKGRAY));content.addView(ind);spacer(7);
+        content.addView(new PriceChartView(this,chart,"SON "+chart.size()+" GÜN"),new LinearLayout.LayoutParams(-1,dp(280)));spacer(7);
+        LinearLayout wait=card();wait.addView(bold("Derin analiz arka planda sürüyor",15,AMBER));wait.addView(txt("Haber/KAP/makro, geri test ve öğrenilmiş skor hazır olunca ekran otomatik tamamlanır.",12,Color.GRAY));content.addView(wait);
     }
 
     private void renderStockDetail(String symbol,FullAnalysisEngine.Result a,List<MarketDataService.Candle> chart) {
