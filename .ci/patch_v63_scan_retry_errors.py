@@ -5,8 +5,9 @@ p=Path('app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java')
 s=p.read_text(encoding='utf-8')
 
 # Track retry/error state without dropping successfully completed radar results.
-anchor='    private static final long MAIN_RADAR_REFRESH_MS=15L*60L*1000L;'
-fields='''    private static final long MAIN_RADAR_REFRESH_MS=15L*60L*1000L;
+# v59 no longer has an automatic-refresh constant, so anchor to a stable field.
+anchor='    private boolean appInForeground=false;'
+fields='''    private boolean appInForeground=false;
     private static final int MAIN_SCAN_MAX_RETRIES=2;
     private final java.util.concurrent.ConcurrentHashMap<String,String> radarScanErrors=new java.util.concurrent.ConcurrentHashMap<>();
     private final AtomicInteger radarRetryCount=new AtomicInteger(0);'''
@@ -72,9 +73,9 @@ replacement='''private void scanRadar() {
     '''
 s=s[:start]+replacement+s[end:]
 
-# Add transparent scan health/error reporting to the Radar page.
-needle='top.addView(txt("Otomatik yenileme: 15 dk"+(age>=0?" • son tamamlanma "+age+" dk önce":" • ilk tarama hazırlanıyor"),12,Color.GRAY));'
-extra='''top.addView(txt("Otomatik yenileme: 15 dk"+(age>=0?" • son tamamlanma "+age+" dk önce":" • ilk tarama hazırlanıyor"),12,Color.GRAY));
+# Add transparent scan health/error reporting to the Radar page after the persistent-radar status line.
+needle='top.addView(txt("Kalıcı radar"+(age>=0?" • son tamamlanma "+age+" dk önce":" • henüz tamamlanmış tarama yok")+" • yeniden tarama yalnızca düğmeyle",12,Color.GRAY));'
+extra='''top.addView(txt("Kalıcı radar"+(age>=0?" • son tamamlanma "+age+" dk önce":" • henüz tamamlanmış tarama yok")+" • yeniden tarama yalnızca düğmeyle",12,Color.GRAY));
         int terminal=scanDone.get(), failed=scanFailed.get(), retries=radarRetryCount.get();
         top.addView(txt("Tarama durumu: "+terminal+"/"+ALL_SYMBOLS.length+" tamamlandı • başarısız "+failed+" • yeniden deneme "+retries,12,failed>0?AMBER:Color.GRAY));
         if(!radarScanErrors.isEmpty()){
@@ -92,7 +93,7 @@ extra='''top.addView(txt("Otomatik yenileme: 15 dk"+(age>=0?" • son tamamlanma
 if needle in s and 'Veri alınamayan / yeniden denenen hisseler' not in s:
     s=s.replace(needle,extra,1)
 
-# Version 3.12.6
+# Version retained here; later patches bump further.
 b=Path('app/build.gradle')
 g=b.read_text(encoding='utf-8')
 g=re.sub(r'versionCode\s+\d+','versionCode 54',g)
