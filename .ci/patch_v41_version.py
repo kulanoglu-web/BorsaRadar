@@ -32,6 +32,10 @@ v48=Path('.ci/patch_v48_international_mode.py')
 if v48.exists():
     exec(compile(v48.read_text(encoding='utf-8'),str(v48),'exec'))
 
+v55=Path('.ci/patch_v55_terms_fallback.py')
+if v55.exists():
+    exec(compile(v55.read_text(encoding='utf-8'),str(v55),'exec'))
+
 # Ensure a normal signed release variant exists for device installation.
 b=Path('app/build.gradle')
 g=b.read_text(encoding='utf-8')
