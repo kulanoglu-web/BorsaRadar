@@ -65,6 +65,8 @@ jobs:
         run: python3 .ci/patch_v62_fast_detail_preview.py
       - name: Retry failed radar symbols and show errors
         run: python3 .ci/patch_v63_scan_retry_errors.py
+      - name: Tune parallel general and intraday scans
+        run: python3 .ci/patch_v64_parallel_scan.py
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
