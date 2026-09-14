@@ -19,6 +19,17 @@ rep='''    private int primaryMarket(){
 
     private String profileKey(String base){ return base+"_"+primaryMarket(); }
 
+    private String loadProfileJson(String base){
+        android.content.SharedPreferences sp=getSharedPreferences(PREFS,Context.MODE_PRIVATE);
+        String key=profileKey(base); String raw=sp.getString(key,null);
+        if(raw==null){
+            String migrated=base+"_profiles_migrated";
+            raw=sp.getBoolean(migrated,false)?"[]":sp.getString(base,"[]");
+            sp.edit().putString(key,raw).putBoolean(migrated,true).apply();
+        }
+        return raw;
+    }
+
     private void switchExchangeProfile(int profile){
         if(profile==primaryMarket()){showPortfolio();return;}
         if(scanRunning){Toast.makeText(this,L("Tarama tamamlanınca profil değiştirilebilir.","Profilwechsel nach Abschluss des Scans.","Switch profiles after the scan finishes."),Toast.LENGTH_LONG).show();return;}
@@ -62,14 +73,14 @@ s=s.replace(old,new,1)
 # Separate portfolio storage, with one-time migration of the old shared portfolio.
 pat=r'    private void savePortfolio\(\)\{.*?\n    private void loadPortfolio\(\)\{.*?\n'
 rep='''    private void savePortfolio(){JSONArray a=new JSONArray();try{for(Holding h:holdings){JSONObject o=new JSONObject();o.put("s",h.symbol);o.put("q",h.qty);o.put("c",h.cost);a.put(o);}}catch(Exception ignored){}getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putString(profileKey("portfolio"),a.toString()).apply();}
-    private void loadPortfolio(){holdings.clear();try{android.content.SharedPreferences sp=getSharedPreferences(PREFS,Context.MODE_PRIVATE);String key=profileKey("portfolio");String raw=sp.getString(key,null);if(raw==null){raw=sp.getString("portfolio","[]");sp.edit().putString(key,raw).apply();}JSONArray a=new JSONArray(raw);for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);holdings.add(new Holding(o.getString("s"),o.getInt("q"),o.getDouble("c")));}}catch(Exception ignored){}}
+    private void loadPortfolio(){holdings.clear();try{android.content.SharedPreferences sp=getSharedPreferences(PREFS,Context.MODE_PRIVATE);String raw=loadProfileJson("portfolio");JSONArray a=new JSONArray(raw);for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);holdings.add(new Holding(o.getString("s"),o.getInt("q"),o.getDouble("c")));}}catch(Exception ignored){}}
 '''
 s,n=re.subn(pat,rep,s,count=1,flags=re.S)
 if n!=1: raise SystemExit('portfolio profile storage patch failed')
 
 # Separate radar cache per exchange profile. Legacy radar is migrated once.
 s=s.replace('''putString("radar",a.toString()).apply();}''','''putString(profileKey("radar"),a.toString()).apply();}''',1)
-s=s.replace('''getString("radar","[]")''','''getString(profileKey("radar"),getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString("radar","[]"))''',1)
+s=s.replace('''getString("radar","[]")''','''getString(profileKey("radar"),loadProfileJson("radar"))''',1)
 
 # Respect the earlier rule: foreign profiles use direct stock analysis, no bulk scan.
 needle='''        int pm=primaryMarket(); String[] universe=marketSymbols(pm);
