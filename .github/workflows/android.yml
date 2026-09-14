@@ -1,4 +1,4 @@
-name: Build BorsaRadar 3.12.7 APK
+name: Build BorsaRadar 3.12.8 APK
 on:
   workflow_dispatch:
   push:
@@ -41,7 +41,7 @@ jobs:
         run: python3 .ci/patch_v52_multi_technical_radar.py
       - name: Add portfolio risk and action labels
         run: python3 .ci/patch_v51_portfolio_decisions.py
-      - name: Display US stocks in EUR
+      - name: Use native BIST Germany and US currencies
         run: python3 .ci/patch_v53_euro_display.py
       - name: Verify preserved technical set
         run: python3 .ci/verify_preserved_technical_set.py
@@ -57,7 +57,7 @@ jobs:
         run: python3 .ci/patch_v57_fix_dark_nav.py
       - name: Add trading-style stock detail screen
         run: python3 .ci/patch_v57_trade_detail.py
-      - name: Keep main radar visible and refresh continuously
+      - name: Keep main radar persistent and manually refreshed
         run: python3 .ci/patch_v59_continuous_radar.py
       - name: Prioritize interactive stock detail analysis
         run: python3 .ci/patch_v60_detail_priority.py
@@ -78,10 +78,10 @@ jobs:
       - name: Build signed release APK
         run: gradle --no-daemon clean assembleRelease
       - name: Prepare APK
-        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.12.7.apk
+        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.12.8.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v3.12.7-APK
-          path: BorsaRadar-v3.12.7.apk
+          name: BorsaRadar-v3.12.8-APK
+          path: BorsaRadar-v3.12.8.apk
           if-no-files-found: error
           retention-days: 30
