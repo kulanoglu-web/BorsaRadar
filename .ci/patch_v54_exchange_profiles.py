@@ -19,8 +19,33 @@ rep='''    private int primaryMarket(){
 
     private String profileKey(String base){ return base+"_"+primaryMarket(); }
 
+    private void migrateLegacyPortfolioProfiles(){
+        android.content.SharedPreferences sp=getSharedPreferences(PREFS,Context.MODE_PRIVATE);
+        if(sp.getBoolean("portfolio_profiles_migrated",false)) return;
+        JSONArray[] buckets={new JSONArray(),new JSONArray(),new JSONArray()};
+        try{
+            JSONArray old=new JSONArray(sp.getString("portfolio","[]"));
+            for(int i=0;i<old.length();i++){
+                JSONObject o=old.getJSONObject(i);
+                int market=MarketSymbol.marketIndex(o.optString("s",""));
+                if(market<0||market>2) market=0;
+                buckets[market].put(o);
+            }
+        }catch(Exception ignored){}
+        sp.edit()
+                .putString("portfolio_0",buckets[0].toString())
+                .putString("portfolio_1",buckets[1].toString())
+                .putString("portfolio_2",buckets[2].toString())
+                .putBoolean("portfolio_profiles_migrated",true)
+                .apply();
+    }
+
     private String loadProfileJson(String base){
         android.content.SharedPreferences sp=getSharedPreferences(PREFS,Context.MODE_PRIVATE);
+        if("portfolio".equals(base)){
+            migrateLegacyPortfolioProfiles();
+            return sp.getString(profileKey(base),"[]");
+        }
         String key=profileKey(base); String raw=sp.getString(key,null);
         if(raw==null){
             String migrated=base+"_profiles_migrated";
@@ -73,10 +98,20 @@ s=s.replace(old,new,1)
 # Separate portfolio storage, with one-time migration of the old shared portfolio.
 pat=r'    private void savePortfolio\(\)\{.*?\n    private void loadPortfolio\(\)\{.*?\n'
 rep='''    private void savePortfolio(){JSONArray a=new JSONArray();try{for(Holding h:holdings){JSONObject o=new JSONObject();o.put("s",h.symbol);o.put("q",h.qty);o.put("c",h.cost);a.put(o);}}catch(Exception ignored){}getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putString(profileKey("portfolio"),a.toString()).apply();}
-    private void loadPortfolio(){holdings.clear();try{android.content.SharedPreferences sp=getSharedPreferences(PREFS,Context.MODE_PRIVATE);String raw=loadProfileJson("portfolio");JSONArray a=new JSONArray(raw);for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);holdings.add(new Holding(o.getString("s"),o.getInt("q"),o.getDouble("c")));}}catch(Exception ignored){}}
+    private void loadPortfolio(){holdings.clear();try{String raw=loadProfileJson("portfolio");JSONArray a=new JSONArray(raw);for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);if(MarketSymbol.marketIndex(o.optString("s",""))==primaryMarket())holdings.add(new Holding(o.getString("s"),o.getInt("q"),o.getDouble("c")));}}catch(Exception ignored){}}
 '''
 s,n=re.subn(pat,rep,s,count=1,flags=re.S)
 if n!=1: raise SystemExit('portfolio profile storage patch failed')
+
+# Lock portfolio entry to the active exchange profile so holdings cannot leak across profiles.
+needle='''        market.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,markets));
+        AutoCompleteTextView sym=new AutoCompleteTextView(this);'''
+replacement='''        market.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,markets));
+        market.setSelection(primaryMarket());
+        market.setEnabled(false);
+        AutoCompleteTextView sym=new AutoCompleteTextView(this);'''
+if needle not in s: raise SystemExit('portfolio market lock patch failed')
+s=s.replace(needle,replacement,1)
 
 # Separate radar cache per exchange profile. Legacy radar is migrated once.
 s=s.replace('''putString("radar",a.toString()).apply();}''','''putString(profileKey("radar"),a.toString()).apply();}''',1)
