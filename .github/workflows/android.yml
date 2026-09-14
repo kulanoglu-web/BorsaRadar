@@ -1,4 +1,4 @@
-name: Build BorsaRadar 3.12.3 APK
+name: Build BorsaRadar 3.12.4 APK
 on:
   workflow_dispatch:
   push:
@@ -57,6 +57,8 @@ jobs:
         run: python3 .ci/patch_v57_fix_dark_nav.py
       - name: Add trading-style stock detail screen
         run: python3 .ci/patch_v57_trade_detail.py
+      - name: Keep main radar visible and refresh continuously
+        run: python3 .ci/patch_v59_continuous_radar.py
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
@@ -64,10 +66,10 @@ jobs:
       - name: Build signed release APK
         run: gradle --no-daemon clean assembleRelease
       - name: Prepare APK
-        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.12.3.apk
+        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.12.4.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v3.12.3-APK
-          path: BorsaRadar-v3.12.3.apk
+          name: BorsaRadar-v3.12.4-APK
+          path: BorsaRadar-v3.12.4.apk
           if-no-files-found: error
           retention-days: 30
