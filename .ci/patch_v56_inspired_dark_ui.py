@@ -70,18 +70,28 @@ s,n=re.subn(pat,rep,s,count=1,flags=re.S)
 if n!=1: print('card primitive already changed or not found')
 
 # Final shell: compact dark trading layout with top search-like title and bottom nav.
+# On a global stock detail screen, header market follows the viewed stock rather than
+# the active portfolio profile, so US:NVDA never shows a BIST badge/breadcrumb.
 pat=r'''    private void shell\(String page\) \{.*?\n    \}\n\n    private void showPortfolio\(\)'''
 rep='''    private void shell(String page) {
         final int SURFACE=Color.rgb(18,21,25), CARD=Color.rgb(29,33,39), MUTED=Color.rgb(151,160,171), ACCENT=Color.rgb(219,45,55);
         LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(SURFACE);
+
+        int shellMarket=primaryMarket();
+        int split=page.indexOf(" •");
+        if(split>0){
+            String maybeSymbol=page.substring(0,split).trim();
+            if(MarketDataService.isGlobalSymbol(maybeSymbol)) shellMarket=MarketSymbol.marketIndex(maybeSymbol);
+        }
+        final int displayMarket=shellMarket;
 
         LinearLayout head=new LinearLayout(this); head.setOrientation(LinearLayout.VERTICAL); head.setPadding(dp(14),dp(10),dp(14),dp(8)); head.setBackgroundColor(Color.rgb(21,25,30));
         LinearLayout titleRow=new LinearLayout(this); titleRow.setOrientation(LinearLayout.HORIZONTAL); titleRow.setGravity(Gravity.CENTER_VERTICAL);
         TextView logo=bold("BR",20,Color.WHITE); logo.setGravity(Gravity.CENTER); logo.setBackground(roundedBg(ACCENT,10)); logo.setPadding(dp(10),dp(7),dp(10),dp(7));
         titleRow.addView(logo,new LinearLayout.LayoutParams(-2,-2));
         TextView title=bold(page,18,Color.WHITE); title.setPadding(dp(10),0,dp(6),0); titleRow.addView(title,new LinearLayout.LayoutParams(0,-2,1));
-        Button intl=button("🌐 "+uiLang()+" • "+marketShort(primaryMarket()),Color.rgb(48,54,62)); intl.setTextSize(12); titleRow.addView(intl,new LinearLayout.LayoutParams(-2,-2)); head.addView(titleRow);
-        TextView sub=txt(marketName(primaryMarket())+"  •  BorsaRadar",11,MUTED); sub.setPadding(dp(2),dp(4),0,0); head.addView(sub); root.addView(head);
+        Button intl=button("🌐 "+uiLang()+" • "+marketShort(displayMarket),Color.rgb(48,54,62)); intl.setTextSize(12); titleRow.addView(intl,new LinearLayout.LayoutParams(-2,-2)); head.addView(titleRow);
+        TextView sub=txt(marketName(displayMarket)+"  •  BorsaRadar",11,MUTED); sub.setPadding(dp(2),dp(4),0,0); head.addView(sub); root.addView(head);
         intl.setOnClickListener(v->showInternationalSetup());
 
         ScrollView sv=new ScrollView(this); sv.setFillViewport(true); content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(10),dp(8),dp(10),dp(14)); sv.addView(content); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
