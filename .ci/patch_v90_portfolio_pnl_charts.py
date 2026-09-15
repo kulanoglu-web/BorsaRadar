@@ -1,7 +1,8 @@
 from pathlib import Path
 p=Path('app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java')
 s=p.read_text(encoding='utf-8')
-anchor='    private LinearLayout collapsible(String title, android.view.View body, boolean open){'
+# v90 hardened. Insert helpers before the known v89 paper summary helper rather than relying on a UI signature.
+anchor='    private String paperPositionSummary(String symbol,double now){'
 helper='''    private android.view.View pnlBar(final double rawPct){
         double pct=Double.isFinite(rawPct)?rawPct:0.0;
         android.widget.ProgressBar b=new android.widget.ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);
@@ -16,9 +17,8 @@ helper='''    private android.view.View pnlBar(final double rawPct){
         return "Gerçek portföyde yok";
     }
 '''
-if anchor not in s: raise SystemExit('v90 collapsible anchor missing')
+if anchor not in s: raise SystemExit('v90 paper helper anchor missing')
 s=s.replace(anchor,helper+anchor,1)
-# Replace v89's one-line fake summary by locating the call, independent of whitespace.
 pos=s.find('pfBody.addView(bold(paperPositionSummary(symbol,paperNow)')
 if pos<0: raise SystemExit('v90 paper summary call missing')
 end=s.find(';',pos)
