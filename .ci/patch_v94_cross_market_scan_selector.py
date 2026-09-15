@@ -45,9 +45,6 @@ if start>=0:
     block=block.replace('String[] universe=marketSymbols(primaryMarket());','String[] universe=radarUniverse();')
     s=s[:start]+block+s[end:]
 p.write_text(s,encoding='utf-8')
-q=Path('.ci/patch_v95_portfolio_persistence.py')
-if q.exists(): exec(q.read_text(encoding='utf-8'),{'__name__':'v95'})
-r=Path('.ci/patch_v96_portfolio_add_fix.py')
-if r.exists(): exec(r.read_text(encoding='utf-8'),{'__name__':'v96'})
-t=Path('.ci/patch_v97_radar_market_state.py')
-if t.exists(): exec(t.read_text(encoding='utf-8'),{'__name__':'v97'})
+for name in ['patch_v95_portfolio_persistence.py','patch_v96_portfolio_add_fix.py','patch_v97_radar_market_state.py','patch_v98_chart_trade_levels.py']:
+    q=Path('.ci')/name
+    if q.exists(): exec(q.read_text(encoding='utf-8'),{'__name__':name})
