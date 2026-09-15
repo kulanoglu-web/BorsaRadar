@@ -2,7 +2,8 @@ from pathlib import Path
 p=Path('app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java')
 s=p.read_text(encoding='utf-8')
 # v88 helpers: compact collapsible sections + separate paper portfolio storage.
-anchor='    private void renderStockDetail(String symbol,FullAnalysisEngine.Result a,List<MarketDataService.Candle> chart) {'
+# v86 validates the framed deep renderer, so inject helpers before that renderer.
+anchor='    private void renderStockDetail(String symbol,FullAnalysisEngine.Result a,List<MarketDataService.Candle> chart,String frame) {'
 helpers='''    private LinearLayout collapsible(String title, android.view.View body, boolean open){
         LinearLayout box=card(); Button h=button((open?"▾ ":"▸ ")+title,Color.rgb(49,55,63)); h.setGravity(Gravity.LEFT|Gravity.CENTER_VERTICAL); box.addView(h);
         body.setVisibility(open?View.VISIBLE:View.GONE); box.addView(body);
@@ -14,10 +15,12 @@ helpers='''    private LinearLayout collapsible(String title, android.view.View 
         Toast.makeText(this,"Fake portföye eklendi: "+symbol,Toast.LENGTH_SHORT).show();
     }
 '''
-if anchor not in s: raise SystemExit('renderStockDetail anchor missing')
+if anchor not in s: raise SystemExit('framed renderStockDetail anchor missing')
 s=s.replace(anchor,helpers+'\n'+anchor,1)
 # Deep renderer: add risk/fake portfolio controls before previous/next navigation.
-nav='        LinearLayout navRow=new LinearLayout(this); navRow.setOrientation(LinearLayout.HORIZONTAL);'
+deep=s.find(anchor)
+nav=s.find('        LinearLayout navRow=new LinearLayout(this); navRow.setOrientation(LinearLayout.HORIZONTAL);',deep)
+if nav<0: raise SystemExit('deep nav anchor missing')
 insert='''        LinearLayout riskBody=new LinearLayout(this); riskBody.setOrientation(LinearLayout.VERTICAL);
         riskBody.addView(txt("Zararı minimize et: teknik stop referansı "+money(r.stopReference,symbol)+" • hedef süre "+r.horizonText,13,Color.DKGRAY));
         riskBody.addView(txt("Stop seviyesi kırılırsa pozisyonu yeniden değerlendir; körlemesine zararda bekleme yok.",12,Color.GRAY));
@@ -32,9 +35,7 @@ insert='''        LinearLayout riskBody=new LinearLayout(this); riskBody.setOrie
         fakePf.setOnClickListener(v->addPaperPosition(symbol,paperPrice,1));
         content.addView(collapsible("🧪 Portföy / Fake Portföy",pfBody,false)); spacer(7);
 '''
-if nav not in s: raise SystemExit('nav anchor missing')
-s=s.replace(nav,insert+nav,1)
-# Ensure all timeframe labels remain available in the full renderer and use common loader.
-# v57's buttons are later expanded by v69; assert the generated source still has timeframe loading.
+s=s[:nav]+insert+s[nav:]
+# v69/v86 must have left the common timeframe loader intact.
 if 'loadFullChartFrame(symbol,a,x)' not in s: raise SystemExit('timeframe handler missing')
 p.write_text(s,encoding='utf-8')
