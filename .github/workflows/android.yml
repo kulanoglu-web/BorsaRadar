@@ -75,6 +75,8 @@ jobs:
         run: python3 .ci/patch_v68_decision_guard.py
       - name: Add full 5m to 2y chart timeframes
         run: python3 .ci/patch_v69_full_timeframes.py
+      - name: Add time-bound short-term targets
+        run: python3 .ci/patch_v70_short_target.py
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
