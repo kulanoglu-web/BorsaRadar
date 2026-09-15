@@ -32,7 +32,7 @@ start=s.find('private void scanRadar()')
 end=s.find('private void enrichRadarTopCandidates',start)
 if start<0 or end<0: raise SystemExit('scanRadar missing')
 block=s[start:end]
-block=block.replace('for(String sym:ALL_SYMBOLS)','String[] scanUniverse=radarUniverse();\n        for(String sym:scanUniverse',1)
+block=block.replace('for(String sym:ALL_SYMBOLS)','String[] scanUniverse=radarUniverse();\n        for(String sym:scanUniverse)',1)
 block=block.replace('if(done>=ALL_SYMBOLS.length)','if(done>=scanUniverse.length)',1)
 s=s[:start]+block+s[end:]
 
