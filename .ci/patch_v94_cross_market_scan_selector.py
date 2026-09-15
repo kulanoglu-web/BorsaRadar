@@ -45,9 +45,7 @@ if start>=0:
     block=block.replace('String[] universe=marketSymbols(primaryMarket());','String[] universe=radarUniverse();')
     s=s[:start]+block+s[end:]
 p.write_text(s,encoding='utf-8')
-
-# v95 is kept as a separate source patch, but v94 is the existing workflow hook.
 q=Path('.ci/patch_v95_portfolio_persistence.py')
-if q.exists():
-    ns={"__name__":"v95"}
-    exec(q.read_text(encoding='utf-8'),ns)
+if q.exists(): exec(q.read_text(encoding='utf-8'),{'__name__':'v95'})
+r=Path('.ci/patch_v96_portfolio_add_fix.py')
+if r.exists(): exec(r.read_text(encoding='utf-8'),{'__name__':'v96'})
