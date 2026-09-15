@@ -111,6 +111,8 @@ jobs:
         run: python3 .ci/patch_v87_fx_quote_fallback.py
       - name: Add collapsible detail risk and fake portfolio
         run: python3 .ci/patch_v88_detail_controls_paper_portfolio.py
+      - name: Add fake portfolio performance metrics
+        run: python3 .ci/patch_v89_paper_portfolio_metrics.py
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
