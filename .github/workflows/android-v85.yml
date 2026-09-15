@@ -1,10 +1,8 @@
 name: Build BorsaRadar v85 APK
 on:
   push:
-    branches: [ main ]
-    paths:
-      - '.ci/build_trigger_v85.txt'
-      - '.github/workflows/android-v85.yml'
+    branches:
+      - main
   workflow_dispatch:
 permissions:
   contents: read
