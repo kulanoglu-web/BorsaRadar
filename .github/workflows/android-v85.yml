@@ -1,4 +1,4 @@
-name: Build BorsaRadar v85 APK
+name: Build BorsaRadar v91 APK
 on:
   push:
     branches:
@@ -20,7 +20,7 @@ jobs:
         with:
           gradle-version: '8.11.1'
           cache-disabled: true
-      - name: Run production patch chain
+      - name: Run production patch chain through v91
         run: |
           python3 .ci/patch_v31.py
           python3 .ci/patch_v37.py
@@ -65,16 +65,22 @@ jobs:
           python3 .ci/patch_v83_quote_refresh.py
           python3 .ci/patch_v84_single_stock_results.py
           python3 .ci/patch_v85_stable_single_stock.py
+          python3 .ci/patch_v86_unified_chart_detail.py
+          python3 .ci/patch_v87_fx_quote_fallback.py
+          python3 .ci/patch_v88_detail_controls_paper_portfolio.py
+          python3 .ci/patch_v89_paper_portfolio_metrics.py
+          python3 .ci/patch_v90_portfolio_pnl_charts.py
+          python3 .ci/patch_v91_portfolio_backup_restore.py
           python3 .ci/patch_v47_release_build.py
       - name: Restore signing key
         run: base64 -d .ci/borsaradar-final.keystore.b64 > .ci/borsaradar-final.keystore
       - name: Build signed APK
         run: gradle --no-daemon clean assembleRelease
       - name: Prepare APK
-        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.12.9-v85.apk
+        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.12.9-v91.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v3.12.9-v85-APK
-          path: BorsaRadar-v3.12.9-v85.apk
+          name: BorsaRadar-v3.12.9-v91-APK
+          path: BorsaRadar-v3.12.9-v91.apk
           if-no-files-found: error
           retention-days: 30
