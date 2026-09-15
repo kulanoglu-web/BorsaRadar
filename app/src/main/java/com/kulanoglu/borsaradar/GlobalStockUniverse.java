@@ -24,7 +24,7 @@ public final class GlobalStockUniverse {
         "KO • Coca-Cola","LLY • Eli Lilly","MA • Mastercard","META • Meta Platforms","MMM • 3M",
         "MRK • Merck & Co","MSFT • Microsoft","NFLX • Netflix","NKE • Nike","NVDA • NVIDIA",
         "ORCL • Oracle","PEP • PepsiCo","PFE • Pfizer","PG • Procter & Gamble","PLTR • Palantir",
-        "PYPL • PayPal","QCOM • Qualcomm","SBUX • Starbucks","T • AT&T","TSLA • Tesla",
+        "PYPL • PayPal","QCOM • Qualcomm","SBUX • Starbucks","SPCX • SpaceX","T • AT&T","TSLA • Tesla",
         "TXN • Texas Instruments","UNH • UnitedHealth","V • Visa","VZ • Verizon","WMT • Walmart",
         "XOM • Exxon Mobil","XWEL • XWELL"
     };
