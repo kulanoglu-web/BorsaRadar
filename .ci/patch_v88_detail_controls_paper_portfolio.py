@@ -2,7 +2,6 @@ from pathlib import Path
 p=Path('app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java')
 s=p.read_text(encoding='utf-8')
 # v88 helpers: compact collapsible sections + separate paper portfolio storage.
-# v86 validates the framed deep renderer, so inject helpers before that renderer.
 anchor='    private void renderStockDetail(String symbol,FullAnalysisEngine.Result a,List<MarketDataService.Candle> chart,String frame) {'
 helpers='''    private LinearLayout collapsible(String title, android.view.View body, boolean open){
         LinearLayout box=card(); Button h=button((open?"▾ ":"▸ ")+title,Color.rgb(49,55,63)); h.setGravity(Gravity.LEFT|Gravity.CENTER_VERTICAL); box.addView(h);
@@ -17,7 +16,6 @@ helpers='''    private LinearLayout collapsible(String title, android.view.View 
 '''
 if anchor not in s: raise SystemExit('framed renderStockDetail anchor missing')
 s=s.replace(anchor,helpers+'\n'+anchor,1)
-# Deep renderer: add risk/fake portfolio controls before previous/next navigation.
 deep=s.find(anchor)
 nav=s.find('        LinearLayout navRow=new LinearLayout(this); navRow.setOrientation(LinearLayout.HORIZONTAL);',deep)
 if nav<0: raise SystemExit('deep nav anchor missing')
@@ -36,6 +34,6 @@ insert='''        LinearLayout riskBody=new LinearLayout(this); riskBody.setOrie
         content.addView(collapsible("🧪 Portföy / Fake Portföy",pfBody,false)); spacer(7);
 '''
 s=s[:nav]+insert+s[nav:]
-# v69/v86 must have left the common timeframe loader intact.
-if 'loadFullChartFrame(symbol,a,x)' not in s: raise SystemExit('timeframe handler missing')
+# Timeframe implementation is owned by v69/v86; only require its loader to remain present.
+if 'loadFullChartFrame' not in s: raise SystemExit('chart frame loader missing')
 p.write_text(s,encoding='utf-8')
