@@ -87,6 +87,8 @@ jobs:
         run: python3 .ci/patch_v74_hourly_fast.py
       - name: Keep Android back navigation inside app
         run: python3 .ci/patch_v75_back_navigation.py
+      - name: Publish hourly results progressively
+        run: python3 .ci/patch_v76_hourly_progressive.py
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
