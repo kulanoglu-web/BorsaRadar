@@ -101,6 +101,8 @@ jobs:
         run: python3 .ci/patch_v82_detail_price_and_tabs.py
       - name: Refresh quote after chart data arrives
         run: python3 .ci/patch_v83_quote_refresh.py
+      - name: Unify single stock results and refresh
+        run: python3 .ci/patch_v84_single_stock_results.py
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
