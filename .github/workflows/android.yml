@@ -19,108 +19,61 @@ jobs:
         with:
           gradle-version: '8.11.1'
           cache-disabled: true
-      - name: Apply broker and alarm base patch
-        run: python3 .ci/patch_v31.py
-      - name: Apply lazy timeframe patch
-        run: python3 .ci/patch_v37.py
-      - name: Apply v3.8.1 V35 and notification tap patch
-        run: python3 .ci/patch_v38.py
-      - name: Enable Germany and US quote symbols
-        run: python3 .ci/patch_v41_market.py
-      - name: Add Germany and US direct entry UI
-        run: python3 .ci/patch_v41_ui.py
-      - name: Fix autocomplete dropdown
-        run: python3 .ci/patch_v42_autocomplete_fix.py
-      - name: Add full technical and context detail analysis
-        run: python3 .ci/patch_v48_full_analysis.py
-      - name: Apply robust build compatibility fixes
-        run: python3 .ci/patch_v49_buildfix.py
-      - name: Enable two-stage radar enrichment
-        run: python3 .ci/patch_v50_two_stage_radar.py
-      - name: Use preserved multi-engine technical radar score
-        run: python3 .ci/patch_v52_multi_technical_radar.py
-      - name: Add portfolio risk and action labels
-        run: python3 .ci/patch_v51_portfolio_decisions.py
-      - name: Display BIST in TRY and Germany plus US in EUR
-        run: python3 .ci/patch_v53_euro_display.py
-      - name: Verify preserved technical set
-        run: python3 .ci/verify_preserved_technical_set.py
-      - name: Apply current version patches
-        run: python3 .ci/patch_v41_version.py
-      - name: Add separate exchange profiles
-        run: python3 .ci/patch_v54_exchange_profiles.py
-      - name: Add persistent short-term and three-strategy radar
-        run: python3 .ci/patch_v55_profit_strategy.py
-      - name: Add inspired dark trading UI
-        run: python3 .ci/patch_v56_inspired_dark_ui.py
-      - name: Fix dark UI navigation literals
-        run: python3 .ci/patch_v57_fix_dark_nav.py
-      - name: Add trading-style stock detail screen
-        run: python3 .ci/patch_v57_trade_detail.py
-      - name: Keep main radar persistent and manually refreshed
-        run: python3 .ci/patch_v59_continuous_radar.py
-      - name: Prioritize interactive stock detail analysis
-        run: python3 .ci/patch_v60_detail_priority.py
-      - name: Show fast technical detail before heavy analysis
-        run: python3 .ci/patch_v62_fast_detail_preview.py
-      - name: Retry failed radar symbols and show errors
-        run: python3 .ci/patch_v63_scan_retry_errors.py
-      - name: Tune parallel general and intraday scans
-        run: python3 .ci/patch_v64_parallel_scan.py
-      - name: Add dedicated hourly radar tab
-        run: python3 .ci/patch_v65_hourly_tab.py
-      - name: Gate strong hourly candidates with news KAP and social risk
-        run: python3 .ci/patch_v66_hourly_gate_hook.py
-      - name: Guard sell signals near support or without confirmation
-        run: python3 .ci/patch_v68_decision_guard.py
-      - name: Add full 5m to 2y chart timeframes
-        run: python3 .ci/patch_v69_full_timeframes.py
-      - name: Add time-bound short-term targets
-        run: python3 .ci/patch_v70_short_target.py
-      - name: Speed up single stock first paint
-        run: python3 .ci/patch_v71_fast_detail_load.py
-      - name: Guard detail UI runtime failures
-        run: python3 .ci/patch_v72_runtime_guard.py
-      - name: Make first stock detail instant and robust
-        run: python3 .ci/patch_v73_instant_detail.py
-      - name: Make hourly radar market-specific and fast
-        run: python3 .ci/patch_v74_hourly_fast.py
-      - name: Keep Android back navigation inside app
-        run: python3 .ci/patch_v75_back_navigation.py
-      - name: Publish hourly results progressively
-        run: python3 .ci/patch_v76_hourly_progressive.py
-      - name: Remove blocking stock detail spinner
-        run: python3 .ci/patch_v77_detail_no_spinner.py
-      - name: Sync detail price target and timeframe loading
-        run: python3 .ci/patch_v78_detail_sync.py
-      - name: Fix detail quote and initial frame
-        run: python3 .ci/patch_v79_detail_price_frame.py
-      - name: Add icon detail and institutional flow
-        run: python3 .ci/patch_v81_icon_detail.py
-      - name: Fix visible detail price and labels
-        run: python3 .ci/patch_v82_detail_price_and_tabs.py
-      - name: Refresh quote after chart data arrives
-        run: python3 .ci/patch_v83_quote_refresh.py
-      - name: Unify single stock results and refresh
-        run: python3 .ci/patch_v84_single_stock_results.py
-      - name: Stabilize single stock cache quote and refresh
-        run: python3 .ci/patch_v85_stable_single_stock.py
-      - name: Use same chart on every stock detail
-        run: python3 .ci/patch_v86_unified_chart_detail.py
-      - name: Fix US euro quote fallback and FX refresh
-        run: python3 .ci/patch_v87_fx_quote_fallback.py
-      - name: Add collapsible detail risk and fake portfolio
-        run: python3 .ci/patch_v88_detail_controls_paper_portfolio.py
-      - name: Add fake portfolio performance metrics
-        run: python3 .ci/patch_v89_paper_portfolio_metrics.py
-      - name: Add real and fake portfolio PnL charts
-        run: python3 .ci/patch_v90_portfolio_pnl_charts.py
-      - name: Add portable portfolio backup and restore
-        run: python3 .ci/patch_v91_portfolio_backup_restore.py
-      - name: Fix stuck detail and legacy portfolio runtime
-        run: python3 .ci/patch_v92_runtime_detail_portfolio.py
-      - name: Fix hourly radar and add separate fake portfolio
-        run: python3 .ci/patch_v93_hourly_fake_portfolio_ui.py
+      - name: Apply all app patches through v93
+        run: |
+          python3 .ci/patch_v31.py
+          python3 .ci/patch_v37.py
+          python3 .ci/patch_v38.py
+          python3 .ci/patch_v41_market.py
+          python3 .ci/patch_v41_ui.py
+          python3 .ci/patch_v42_autocomplete_fix.py
+          python3 .ci/patch_v48_full_analysis.py
+          python3 .ci/patch_v49_buildfix.py
+          python3 .ci/patch_v50_two_stage_radar.py
+          python3 .ci/patch_v52_multi_technical_radar.py
+          python3 .ci/patch_v51_portfolio_decisions.py
+          python3 .ci/patch_v53_euro_display.py
+          python3 .ci/verify_preserved_technical_set.py
+          python3 .ci/patch_v41_version.py
+          python3 .ci/patch_v54_exchange_profiles.py
+          python3 .ci/patch_v55_profit_strategy.py
+          python3 .ci/patch_v56_inspired_dark_ui.py
+          python3 .ci/patch_v57_fix_dark_nav.py
+          python3 .ci/patch_v57_trade_detail.py
+          python3 .ci/patch_v59_continuous_radar.py
+          python3 .ci/patch_v60_detail_priority.py
+          python3 .ci/patch_v62_fast_detail_preview.py
+          python3 .ci/patch_v63_scan_retry_errors.py
+          python3 .ci/patch_v64_parallel_scan.py
+          python3 .ci/patch_v65_hourly_tab.py
+          python3 .ci/patch_v66_hourly_gate_hook.py
+          python3 .ci/patch_v68_decision_guard.py
+          python3 .ci/patch_v69_full_timeframes.py
+          python3 .ci/patch_v70_short_target.py
+          python3 .ci/patch_v71_fast_detail_load.py
+          python3 .ci/patch_v72_runtime_guard.py
+          python3 .ci/patch_v73_instant_detail.py
+          python3 .ci/patch_v74_hourly_fast.py
+          python3 .ci/patch_v75_back_navigation.py
+          python3 .ci/patch_v76_hourly_progressive.py
+          python3 .ci/patch_v77_detail_no_spinner.py
+          python3 .ci/patch_v78_detail_sync.py
+          python3 .ci/patch_v79_detail_price_frame.py
+          python3 .ci/patch_v81_icon_detail.py
+          python3 .ci/patch_v82_detail_price_and_tabs.py
+          python3 .ci/patch_v83_quote_refresh.py
+          python3 .ci/patch_v84_single_stock_results.py
+          python3 .ci/patch_v85_stable_single_stock.py
+          python3 .ci/patch_v86_unified_chart_detail.py
+          python3 .ci/patch_v87_fx_quote_fallback.py
+          python3 .ci/patch_v88_detail_controls_paper_portfolio.py
+          python3 .ci/patch_v89_paper_portfolio_metrics.py
+          python3 .ci/patch_v90_portfolio_pnl_charts.py
+          python3 .ci/patch_v91_portfolio_backup_restore.py
+          python3 .ci/patch_v92_runtime_detail_portfolio.py
+          python3 .ci/patch_v93_hourly_fake_portfolio_ui.py
+      - name: Apply v94 cross market radar selector
+        run: python3 .ci/patch_v94_cross_market_scan_selector.py
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
