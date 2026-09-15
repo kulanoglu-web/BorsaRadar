@@ -19,6 +19,6 @@ if old in s:s=s.replace(old,new,1)
 elif old2 in s:s=s.replace(old2,new,1)
 elif 'int targetMarket=MarketSymbol.marketIndex(s)' not in s:print('portfolio add action already transformed by another patch; no replacement needed')
 oldlock='market.setSelection(primaryMarket());\n        market.setEnabled(false);'
-newlock='market.setSelection(preset!=null?Math.max(0,MarketSymbol.marketIndex(parseSymbol(preset))):primaryMarket());\n        market.setEnabled(edit==null&&preset==null);'
+newlock='market.setSelection(preset!=null?MarketSymbol.marketIndex(preset.trim().toUpperCase(java.util.Locale.ROOT)):primaryMarket());\n        market.setEnabled(edit==null&&preset==null);'
 if oldlock in s:s=s.replace(oldlock,newlock,1)
 p.write_text(s,encoding='utf-8')
