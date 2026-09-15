@@ -26,7 +26,6 @@ start=s.find('private void scanRadar()');end=s.find('private void enrichRadarTop
 if start<0 or end<0: raise SystemExit('scanRadar missing')
 block=s[start:end]
 block=block.replace('for(String sym:ALL_SYMBOLS)','String[] scanUniverse=radarUniverse();\n        for(String sym:scanUniverse)',1)
-# completion happens in a separate method/callback, so do not reference local scanUniverse there
 block=block.replace('if(done>=ALL_SYMBOLS.length)','if(done>=radarUniverse().length)')
 s=s[:start]+block+s[end:]
 old='''        if(pm!=0){
@@ -46,3 +45,9 @@ if start>=0:
     block=block.replace('String[] universe=marketSymbols(primaryMarket());','String[] universe=radarUniverse();')
     s=s[:start]+block+s[end:]
 p.write_text(s,encoding='utf-8')
+
+# v95 is kept as a separate source patch, but v94 is the existing workflow hook.
+q=Path('.ci/patch_v95_portfolio_persistence.py')
+if q.exists():
+    ns={"__name__":"v95"}
+    exec(q.read_text(encoding='utf-8'),ns)
