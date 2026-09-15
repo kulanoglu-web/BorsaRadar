@@ -73,6 +73,8 @@ jobs:
         run: python3 .ci/patch_v66_hourly_gate_hook.py
       - name: Guard sell signals near support or without confirmation
         run: python3 .ci/patch_v68_decision_guard.py
+      - name: Add full 5m to 2y chart timeframes
+        run: python3 .ci/patch_v69_full_timeframes.py
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
@@ -87,4 +89,3 @@ jobs:
           path: BorsaRadar-v3.12.9.apk
           if-no-files-found: error
           retention-days: 30
-# build trigger: chart timeframe compile fix
