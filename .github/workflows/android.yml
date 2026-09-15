@@ -81,6 +81,8 @@ jobs:
         run: python3 .ci/patch_v71_fast_detail_load.py
       - name: Guard detail UI runtime failures
         run: python3 .ci/patch_v72_runtime_guard.py
+      - name: Make first stock detail instant and robust
+        run: python3 .ci/patch_v73_instant_detail.py
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
