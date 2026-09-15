@@ -5,8 +5,8 @@ s=p.read_text(encoding='utf-8')
 anchor='    private void renderStockDetail(String symbol,FullAnalysisEngine.Result a,List<MarketDataService.Candle> chart,String frame) {'
 helpers='''    private LinearLayout collapsible(String title, android.view.View body, boolean open){
         LinearLayout box=card(); Button h=button((open?"▾ ":"▸ ")+title,Color.rgb(49,55,63)); h.setGravity(Gravity.LEFT|Gravity.CENTER_VERTICAL); box.addView(h);
-        body.setVisibility(open?View.VISIBLE:View.GONE); box.addView(body);
-        final boolean[] state={open}; h.setOnClickListener(v->{state[0]=!state[0]; body.setVisibility(state[0]?View.VISIBLE:View.GONE); h.setText((state[0]?"▾ ":"▸ ")+title);}); return box;
+        body.setVisibility(open?android.view.View.VISIBLE:android.view.View.GONE); box.addView(body);
+        final boolean[] state={open}; h.setOnClickListener(v->{state[0]=!state[0]; body.setVisibility(state[0]?android.view.View.VISIBLE:android.view.View.GONE); h.setText((state[0]?"▾ ":"▸ ")+title);}); return box;
     }
     private void addPaperPosition(String symbol,double price,int qty){
         if(!Double.isFinite(price)||price<=0||qty<=0) return;
@@ -34,6 +34,5 @@ insert='''        LinearLayout riskBody=new LinearLayout(this); riskBody.setOrie
         content.addView(collapsible("🧪 Portföy / Fake Portföy",pfBody,false)); spacer(7);
 '''
 s=s[:nav]+insert+s[nav:]
-# Timeframe implementation is owned by v69/v86; only require its loader to remain present.
 if 'loadFullChartFrame' not in s: raise SystemExit('chart frame loader missing')
 p.write_text(s,encoding='utf-8')
