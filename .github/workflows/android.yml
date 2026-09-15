@@ -87,3 +87,4 @@ jobs:
           path: BorsaRadar-v3.12.9.apk
           if-no-files-found: error
           retention-days: 30
+# build trigger: chart timeframe compile fix
