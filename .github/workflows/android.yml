@@ -99,6 +99,8 @@ jobs:
         run: python3 .ci/patch_v81_icon_detail.py
       - name: Fix visible detail price and labels
         run: python3 .ci/patch_v82_detail_price_and_tabs.py
+      - name: Refresh quote after chart data arrives
+        run: python3 .ci/patch_v83_quote_refresh.py
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
