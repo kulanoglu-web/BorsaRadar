@@ -1,0 +1,1 @@
+v110: guarded no-save portfolio market switching with rollback on runtime failure.
