@@ -1,0 +1,1 @@
+v117: radar market buttons switch immediately to isolated market results; explicit scan uses selected market; real portfolio additions such as NVDA persist and display in their actual market bucket.
