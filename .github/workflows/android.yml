@@ -72,7 +72,7 @@ jobs:
           python3 .ci/patch_v91_portfolio_backup_restore.py
           python3 .ci/patch_v92_runtime_detail_portfolio.py
           python3 .ci/patch_v93_hourly_fake_portfolio_ui.py
-      - name: Apply v94 through v121 production patches
+      - name: Apply v94 through v123 production patches
         run: python3 .ci/patch_v94_cross_market_scan_selector.py
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
