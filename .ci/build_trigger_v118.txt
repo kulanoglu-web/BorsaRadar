@@ -1,0 +1,1 @@
+v118: focus only on Radar screen separation. BIST/Germany/USA/All must show their own title, state, results and scan context immediately when selected.
