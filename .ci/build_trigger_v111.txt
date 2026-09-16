@@ -1,0 +1,1 @@
+v111: restore stable startup portfolio rendering, defer new selector, guard persisted portfolio/cache reads during onCreate.
