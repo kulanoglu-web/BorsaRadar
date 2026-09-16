@@ -1,0 +1,88 @@
+name: Build BorsaRadar v123 Production APK
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+          cache-disabled: true
+      - name: Apply app patches
+        run: |
+          python3 .ci/patch_v31.py
+          python3 .ci/patch_v37.py
+          python3 .ci/patch_v38.py
+          python3 .ci/patch_v41_market.py
+          python3 .ci/patch_v41_ui.py
+          python3 .ci/patch_v42_autocomplete_fix.py
+          python3 .ci/patch_v48_full_analysis.py
+          python3 .ci/patch_v49_buildfix.py
+          python3 .ci/patch_v50_two_stage_radar.py
+          python3 .ci/patch_v52_multi_technical_radar.py
+          python3 .ci/patch_v51_portfolio_decisions.py
+          python3 .ci/patch_v53_euro_display.py
+          python3 .ci/verify_preserved_technical_set.py
+          python3 .ci/patch_v41_version.py
+          python3 .ci/patch_v54_exchange_profiles.py
+          python3 .ci/patch_v55_profit_strategy.py
+          python3 .ci/patch_v56_inspired_dark_ui.py
+          python3 .ci/patch_v57_fix_dark_nav.py
+          python3 .ci/patch_v57_trade_detail.py
+          python3 .ci/patch_v59_continuous_radar.py
+          python3 .ci/patch_v60_detail_priority.py
+          python3 .ci/patch_v62_fast_detail_preview.py
+          python3 .ci/patch_v63_scan_retry_errors.py
+          python3 .ci/patch_v64_parallel_scan.py
+          python3 .ci/patch_v65_hourly_tab.py
+          python3 .ci/patch_v66_hourly_gate_hook.py
+          python3 .ci/patch_v68_decision_guard.py
+          python3 .ci/patch_v69_full_timeframes.py
+          python3 .ci/patch_v70_short_target.py
+          python3 .ci/patch_v71_fast_detail_load.py
+          python3 .ci/patch_v72_runtime_guard.py
+          python3 .ci/patch_v73_instant_detail.py
+          python3 .ci/patch_v74_hourly_fast.py
+          python3 .ci/patch_v75_back_navigation.py
+          python3 .ci/patch_v76_hourly_progressive.py
+          python3 .ci/patch_v77_detail_no_spinner.py
+          python3 .ci/patch_v78_detail_sync.py
+          python3 .ci/patch_v79_detail_price_frame.py
+          python3 .ci/patch_v81_icon_detail.py
+          python3 .ci/patch_v82_detail_price_and_tabs.py
+          python3 .ci/patch_v83_quote_refresh.py
+          python3 .ci/patch_v84_single_stock_results.py
+          python3 .ci/patch_v85_stable_single_stock.py
+          python3 .ci/patch_v86_unified_chart_detail.py
+          python3 .ci/patch_v87_fx_quote_fallback.py
+          python3 .ci/patch_v88_detail_controls_paper_portfolio.py
+          python3 .ci/patch_v89_paper_portfolio_metrics.py
+          python3 .ci/patch_v90_portfolio_pnl_charts.py
+          python3 .ci/patch_v91_portfolio_backup_restore.py
+          python3 .ci/patch_v92_runtime_detail_portfolio.py
+          python3 .ci/patch_v93_hourly_fake_portfolio_ui.py
+          python3 .ci/patch_v94_cross_market_scan_selector.py
+          python3 .ci/patch_v47_release_build.py
+      - name: Restore signing key
+        run: base64 -d .ci/borsaradar-final.keystore.b64 > .ci/borsaradar-final.keystore
+      - name: Build signed release APK
+        run: gradle --no-daemon clean assembleRelease
+      - name: Prepare APK
+        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v123.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BorsaRadar-v123-APK
+          path: BorsaRadar-v123.apk
+          if-no-files-found: error
+          retention-days: 30
