@@ -32,6 +32,6 @@ if start>=0:
     block=s[start:end].replace('marketSymbols(primaryMarket())','radarUniverse()').replace('String[] universe=marketSymbols(primaryMarket());','String[] universe=radarUniverse();')
     s=s[:start]+block+s[end:]
 p.write_text(s,encoding='utf-8')
-for name in ['patch_v95_portfolio_persistence.py','patch_v96_portfolio_add_fix.py','patch_v97_radar_market_state.py','patch_v98_chart_trade_levels.py','patch_v99_portfolio_market_routing.py','patch_v100_hourly_scan_speed.py','patch_v101_single_stock_no_freeze.py','patch_v104_radar_detail_state_portfolio.py']:
+for name in ['patch_v95_portfolio_persistence.py','patch_v96_portfolio_add_fix.py','patch_v97_radar_market_state.py','patch_v98_chart_trade_levels.py','patch_v99_portfolio_market_routing.py','patch_v100_hourly_scan_speed.py','patch_v101_single_stock_no_freeze.py','patch_v104_radar_detail_state_portfolio.py','patch_v105_portfolio_qty_unified_detail.py']:
     q=Path('.ci')/name
     if q.exists(): exec(q.read_text(encoding='utf-8'),{'__name__':name})
