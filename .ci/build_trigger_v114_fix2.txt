@@ -1,0 +1,1 @@
+v114-fix2: use actual RadarItem result type for isolated BIST/Germany/USA/All radar snapshots.
