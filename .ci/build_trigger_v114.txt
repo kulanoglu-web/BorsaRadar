@@ -1,0 +1,1 @@
+v114: isolate BIST/Germany/USA/All radar result snapshots; market switching never shows another market's results and never auto-scans.
