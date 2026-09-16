@@ -1,0 +1,1 @@
+v103: single-stock fetches 3mo once, 6mo only if provider returns fewer than 30 candles; preserves no-freeze cache/lock fixes.
