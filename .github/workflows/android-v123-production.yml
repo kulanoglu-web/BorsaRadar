@@ -1,4 +1,4 @@
-name: Build BorsaRadar v127 Production APK
+name: Build BorsaRadar v131 Verified Production APK
 on:
   push:
     branches: [ main ]
@@ -19,7 +19,7 @@ jobs:
         with:
           gradle-version: '8.11.1'
           cache-disabled: true
-      - name: Apply app patches through v127
+      - name: Apply app patches through v130
         run: |
           python3 .ci/patch_v31.py
           python3 .ci/patch_v37.py
@@ -74,15 +74,48 @@ jobs:
           python3 .ci/patch_v93_hourly_fake_portfolio_ui.py
           python3 .ci/patch_v94_cross_market_scan_selector.py
           python3 .ci/patch_v47_release_build.py
+      - name: Verify final Radar source after all patches
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java')
+          s=p.read_text(encoding='utf-8')
+          def method(name):
+              a=s.find(name)
+              if a<0: raise SystemExit('MISSING '+name)
+              b=s.find('\n    private ',a+len(name))
+              if b<0:b=len(s)
+              return s[a:b]
+          sh=method('private void shell(String page)')
+          sr=method('private void showRadar()')
+          sel=method('private LinearLayout radarMarketSelector(final boolean hourly)')
+          print('===== FINAL shell() =====')
+          print(sh)
+          print('===== FINAL showRadar() =====')
+          print(sr)
+          print('===== FINAL selector =====')
+          print(sel)
+          checks={
+            'shell radarPage':'radarPage' in sh,
+            'shell radar code':'radarCodeFor(displayMarket)' in sh,
+            'shell radar title':'radarTitleFor(displayMarket)' in sh,
+            'selector persists main':'putInt("radar_market_main",pick)' in sel,
+            'showRadar reads selected':'radarMarketChoiceMain' in sr,
+            'showRadar dynamic title':'radarTitleFor(' in sr,
+          }
+          print('===== CHECKS =====')
+          for k,v in checks.items(): print(k, v)
+          if not all(checks.values()): raise SystemExit('Radar source verification FAILED')
+          PY
       - name: Restore signing key
         run: base64 -d .ci/borsaradar-final.keystore.b64 > .ci/borsaradar-final.keystore
       - name: Build signed release APK
         run: gradle --no-daemon clean assembleRelease
       - name: Prepare APK
-        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v127.apk
+        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v131.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v127-APK
-          path: BorsaRadar-v127.apk
+          name: BorsaRadar-v131-APK
+          path: BorsaRadar-v131.apk
           if-no-files-found: error
           retention-days: 30
