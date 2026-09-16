@@ -1,0 +1,1 @@
+v119: stabilize Radar first. A scan owns one immutable market/universe; market buttons are locked during the active scan so switching cannot corrupt counters/results or cause a second-scan crash.
