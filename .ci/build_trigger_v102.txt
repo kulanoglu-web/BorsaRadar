@@ -1,0 +1,1 @@
+v102 production build: single-stock reuses first candle fetch, releases loading lock on failure, bounds cache.
