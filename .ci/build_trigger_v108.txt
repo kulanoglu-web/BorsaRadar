@@ -1,0 +1,1 @@
+v108: BIST/Almanya/ABD portfolio tabs now explicitly save current profile, switch primary/active profile, load target holdings, clear stale signals and repaint.
