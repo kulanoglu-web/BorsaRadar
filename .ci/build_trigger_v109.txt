@@ -1,0 +1,1 @@
+v109: portfolio market switching crash fix; do not rewrite current portfolio during profile switch; load target profile safely.
