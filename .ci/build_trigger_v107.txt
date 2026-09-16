@@ -1,0 +1,1 @@
+v107 production: release stale single-stock loading lock, use cached candles on detail re-entry, avoid repeated network wait; includes portfolio and radar market fixes.
