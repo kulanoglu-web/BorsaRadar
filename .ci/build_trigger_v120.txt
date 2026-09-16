@@ -1,0 +1,1 @@
+v120: final compile-scope guard after v119; preserve immutable scan ownership and prevent cross-market scan mixing.
