@@ -21,6 +21,7 @@ jobs:
           cache-disabled: true
       - name: Apply app patches through v130
         run: |
+          echo "v131 verified build trigger 2026-09-16"
           python3 .ci/patch_v31.py
           python3 .ci/patch_v37.py
           python3 .ci/patch_v38.py
@@ -89,22 +90,12 @@ jobs:
           sh=method('private void shell(String page)')
           sr=method('private void showRadar()')
           sel=method('private LinearLayout radarMarketSelector(final boolean hourly)')
-          print('===== FINAL shell() =====')
-          print(sh)
-          print('===== FINAL showRadar() =====')
-          print(sr)
-          print('===== FINAL selector =====')
-          print(sel)
-          checks={
-            'shell radarPage':'radarPage' in sh,
-            'shell radar code':'radarCodeFor(displayMarket)' in sh,
-            'shell radar title':'radarTitleFor(displayMarket)' in sh,
-            'selector persists main':'putInt("radar_market_main",pick)' in sel,
-            'showRadar reads selected':'radarMarketChoiceMain' in sr,
-            'showRadar dynamic title':'radarTitleFor(' in sr,
-          }
+          print('===== FINAL shell() ====='); print(sh)
+          print('===== FINAL showRadar() ====='); print(sr)
+          print('===== FINAL selector ====='); print(sel)
+          checks={'shell radarPage':'radarPage' in sh,'shell radar code':'radarCodeFor(displayMarket)' in sh,'shell radar title':'radarTitleFor(displayMarket)' in sh,'selector persists main':'putInt("radar_market_main",pick)' in sel,'showRadar reads selected':'radarMarketChoiceMain' in sr,'showRadar dynamic title':'radarTitleFor(' in sr}
           print('===== CHECKS =====')
-          for k,v in checks.items(): print(k, v)
+          for k,v in checks.items(): print(k,v)
           if not all(checks.values()): raise SystemExit('Radar source verification FAILED')
           PY
       - name: Restore signing key
