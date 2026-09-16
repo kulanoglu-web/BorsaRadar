@@ -1,0 +1,1 @@
+v105: fix BIST real portfolio persistence, fake portfolio quantity dialog, and unify fast-detail title/flow.
