@@ -1,0 +1,1 @@
+v119-fix: immutable radar scan universe stays method-scoped; lock market selector during active scan; prevent mixed/restarted scans.
