@@ -1,0 +1,1 @@
+v104 production: BIST/foreign portfolio action on fast detail, preserve radar scan while opening detail, keep progressive radar state.
