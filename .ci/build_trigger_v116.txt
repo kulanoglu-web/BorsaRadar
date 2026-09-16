@@ -1,0 +1,1 @@
+v116: fix NullPointerException in showPortfolio during BIST/Germany/USA exchange-profile switching; guarantee shell/content before selector addView.
