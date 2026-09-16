@@ -1,0 +1,1 @@
+v115: restore safe BIST/Germany/USA portfolio switching UI after v111 startup recovery; preserve v114 radar market isolation.
