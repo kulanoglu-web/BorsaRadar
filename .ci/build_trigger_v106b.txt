@@ -1,0 +1,1 @@
+v106b production: remove incompatible radar state field references; keep synchronized BIST/Almanya/ABD/Tümü screen switching and v105 portfolio fixes.
