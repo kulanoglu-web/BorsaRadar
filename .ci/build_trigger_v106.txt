@@ -1,0 +1,1 @@
+v106: BIST/Almanya/ABD/Tümü selector updates header, lower radar content and starts the matching market scan; includes v105 portfolio fixes.
