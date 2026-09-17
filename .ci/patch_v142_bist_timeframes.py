@@ -9,10 +9,16 @@ if legacy in s:
 elif canonical not in s:
     raise SystemExit('v142 unknown timeframe RANGE layout')
 p.write_text(s,encoding='utf-8')
-# Ensure the controller still consumes the selected index and does not silently force one-day data.
+
+# Controller may either aggregate 60m candles for the legacy 4h implementation,
+# or use the newer 15m transport plus visible-period trimming. Both are valid.
 p=Path('app/src/main/java/com/kulanoglu/borsaradar/DetailedChartController.java')
 c=p.read_text(encoding='utf-8')
-checks={'selected index':'ChartTimeframes.INTERVAL[i],range=ChartTimeframes.RANGE[i]' in c,'fetch selected':'fetchSeries(symbol,range,interval,180)' in c,'4h aggregate':'aggregateHours(d,4)' in c}
+checks={
+ 'selected index':'ChartTimeframes.INTERVAL[i],range=ChartTimeframes.RANGE[i]' in c,
+ 'fetch selected':'fetchSeries(symbol,range,interval,180)' in c,
+ 'visible period enforced':('maxVisiblePoints(i)' in c or 'aggregateHours(d,4)' in c)
+}
 for k,v in checks.items(): print('v142',k,v)
 if not all(checks.values()): raise SystemExit('v142 controller verification FAILED')
-print('v142 canonical timeframe ranges preserved')
+print('v142 canonical timeframe controller preserved')
