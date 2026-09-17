@@ -11,11 +11,10 @@ new='tb.setOnClickListener(v->{getSharedPreferences(PREFS,Context.MODE_PRIVATE).
 if old in q:q=q.replace(old,new,1)
 elif 'tb.setEnabled(false)' not in q:raise SystemExit('fast timeframe listener anchor missing')
 s=s[:a]+q+s[b:]
-# Replace the complete deep loader body by method boundaries; do not depend on formatting left by older patches.
+# Replace ONLY loadFullChartFrame. The next member can return String/etc., so stop at any next private member, not only private void.
 a=s.find('private void loadFullChartFrame(String symbol,FullAnalysisEngine.Result a,int index)')
 if a<0: raise SystemExit('deep timeframe loader missing')
-line=s.rfind('    ',0,a)
-b=s.find('\n    private void ',a+20)
+b=s.find('\n    private ',a+20)
 if b<0:b=len(s)
 new_method='''private void loadFullChartFrame(String symbol,FullAnalysisEngine.Result a,int index){
         final int idx=Math.max(0,Math.min(index,ChartTimeframes.LABELS.length-1));
@@ -28,7 +27,7 @@ new_method='''private void loadFullChartFrame(String symbol,FullAnalysisEngine.R
 s=s[:a]+new_method+s[b:]
 p.write_text(s,encoding='utf-8')
 s=p.read_text(encoding='utf-8')
-a=s.find('private void loadFullChartFrame(String symbol,FullAnalysisEngine.Result a,int index)');b=s.find('\n    private void ',a+20);deep=s[a:b if b>=0 else len(s)]
-checks={'no shell blank':'shell(' not in deep,'fetch preserved':'DetailedChartController.fetch' in deep,'error toast':'Grafik verisi alınamadı' in deep,'timeframes preserved':'ChartTimeframes.LABELS' in deep}
+a=s.find('private void loadFullChartFrame(String symbol,FullAnalysisEngine.Result a,int index)');b=s.find('\n    private ',a+20);deep=s[a:b if b>=0 else len(s)]
+checks={'no shell blank':'shell(' not in deep,'fetch preserved':'DetailedChartController.fetch' in deep,'error toast':'Grafik verisi alınamadı' in deep,'timeframes preserved':'ChartTimeframes.LABELS' in deep,'adjacent preserved':'adjacentSymbol(' in s}
 for k,v in checks.items():print('v140',k,v)
 if not all(checks.values()):raise SystemExit('v140 verification FAILED')
