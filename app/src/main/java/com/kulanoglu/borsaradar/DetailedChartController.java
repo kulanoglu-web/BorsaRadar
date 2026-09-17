@@ -5,7 +5,8 @@ public final class DetailedChartController {
   int i=Math.max(0,Math.min(index,ChartTimeframes.LABELS.length-1));
   String interval=ChartTimeframes.INTERVAL[i],range=ChartTimeframes.RANGE[i];
   List<MarketDataService.Candle>d=MarketDataService.fetchSeries(symbol,range,interval,180);
-  // The Yahoo range is only the transport window. Enforce the period selected by the user.
+  // The Yahoo range is only the transport window. Enforce short visible periods explicitly.
+  // Longer ranges (3m-2y) are already constrained by RANGE and must not be cut to 180 points.
   int maxPoints=maxVisiblePoints(i);
   if(maxPoints>0 && d.size()>maxPoints)d=new ArrayList<>(d.subList(d.size()-maxPoints,d.size()));
   return d;
@@ -20,7 +21,7 @@ public final class DetailedChartController {
    case 5:return 96;     // 1 işlem günü, 5m candles (upper bound)
    case 6:return 80;     // 1 hafta, 30m candles (upper bound)
    case 7:return 180;    // 1 ay, hourly; provider/session count varies
-   default:return 180;   // long ranges already constrained by RANGE
+   default:return 0;     // 3 ay-2 yıl: RANGE tam görünür dönemi belirler
   }
  }
  public static String label(int index){int i=Math.max(0,Math.min(index,ChartTimeframes.LABELS.length-1));return ChartTimeframes.LABELS[i];}
