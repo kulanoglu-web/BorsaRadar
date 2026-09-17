@@ -2,8 +2,9 @@ from pathlib import Path
 import re
 p=Path('app/build.gradle')
 s=p.read_text(encoding='utf-8')
-s=re.sub(r'versionCode\s+\d+','versionCode 40',s)
-s=re.sub(r"versionName\s+['\"][^'\"]+['\"]","versionName '3.9.0'",s)
+# v145: every production APK must have a higher Android versionCode so it installs over the previous build.
+s=re.sub(r'versionCode\s+\d+','versionCode 145',s)
+s=re.sub(r"versionName\s+['\"][^'\"]+['\"]","versionName '3.14.5'",s)
 p.write_text(s,encoding='utf-8')
 
 for name in ['patch_v43_eur_info.py','patch_v44_decision_fix.py','patch_v45_terms_acceptance.py','patch_v46_terms_checkbox.py','patch_v48_international_mode.py','patch_v55_terms_fallback.py','patch_v49_persistent_short_scan.py','patch_v48_market_portfolios_speed.py']:
