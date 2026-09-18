@@ -4,7 +4,7 @@ public final class DetailedChartController {
  public static List<MarketDataService.Candle> fetch(String symbol,int index)throws Exception{
   int i=Math.max(0,Math.min(index,ChartTimeframes.LABELS.length-1));
   String interval=ChartTimeframes.INTERVAL[i],range=ChartTimeframes.RANGE[i];
-  List<MarketDataService.Candle>d=MarketDataService.fetchSeries(symbol,range,interval,180);
+  List<MarketDataService.Candle>d=MarketDataService.fetchSeries(symbol,range,interval,0);
   // The Yahoo range is only the transport window. Enforce short visible periods explicitly.
   // Longer ranges (3m-2y) are already constrained by RANGE and must not be cut to 180 points.
   int maxPoints=maxVisiblePoints(i);
