@@ -9,8 +9,8 @@ q=s[a:b]
 # persist index 8 before controls render, highlight the persisted index, and use
 # exactly the same index for Graf/Genel tab transitions.
 anchor='    private void renderFastTechnicalDetail(String symbol,List<MarketDataService.Candle> data){'
-if 'final int initialTf=8;' not in q:
-    q=q.replace(anchor,anchor+'\n        final int initialTf=8;\n        getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putInt("chart_tf",initialTf).apply();',1)
+if 'final int initialTf=getSharedPreferences(PREFS,Context.MODE_PRIVATE).getInt("chart_tf",8);' not in q:
+    q=q.replace(anchor,anchor+'\n        final int initialTf=8;\n        ',1)
 q=q.replace('Button tb=button(x,i==8?Color.rgb(25,105,210):Color.rgb(49,55,63));','Button tb=button(x,i==initialTf?Color.rgb(25,105,210):Color.rgb(49,55,63));')
 # Defensive compatibility if an older patch chain still leaves the old highlight.
 q=q.replace('Button tb=button(x,i==5?Color.rgb(25,105,210):Color.rgb(49,55,63));','Button tb=button(x,i==initialTf?Color.rgb(25,105,210):Color.rgb(49,55,63));')
@@ -22,8 +22,8 @@ p.write_text(s,encoding='utf-8')
 s=p.read_text(encoding='utf-8')
 a=s.find('private void renderFastTechnicalDetail');b=s.find('private void renderStockDetail',a);q=s[a:b]
 checks={
- 'initial state is 3m':'final int initialTf=8;' in q,
- 'state persisted':'putInt("chart_tf",initialTf)' in q,
+ 'initial state restored':'getInt("chart_tf",8)' in q,
+ 'state not overwritten':'putInt("chart_tf",initialTf)' not in q,
  'highlight uses state':'i==initialTf?Color.rgb(25,105,210)' in q,
  'tabs use same state':'getInt("chart_tf",initialTf)' in q,
  'no stale 1d highlight':'i==5?Color.rgb(25,105,210)' not in q,
