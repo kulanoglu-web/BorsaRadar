@@ -322,3 +322,20 @@ if 'analyzeStock(String symbol)' not in s: raise SystemExit('analysis entry poin
 if 'savePortfolio' not in s or 'loadPortfolio' not in s: raise SystemExit('portfolio persistence missing')
 p.write_text(s,encoding='utf-8')
 print('V18 source verification PASS')
+
+# V18 regression guards and bottom-navigation integrity
+# Earlier replacement source text may mention the unsafe form; only generated Java matters.
+generated=p.read_text(encoding='utf-8')
+if 'renderStockDetail(q,null,null)' in generated:
+    generated=generated.replace('renderStockDetail(q,null,null);','analyzeStock(q);')
+# Ensure five-tab nav is mounted after scroll content, not lost.
+if 'Button home=button("Ana Sayfa"' not in generated: raise SystemExit('V18 five-tab navigation missing')
+if 'private void showMarkets()' not in generated: raise SystemExit('V18 Markets method missing')
+if 'private void showStrategySelection()' not in generated: raise SystemExit('V18 Strategy method missing')
+if 'private void showMore()' not in generated: raise SystemExit('V18 More method missing')
+# Ensure core persistence remains.
+if 'loadPortfolio();' not in generated or 'savePortfolio' not in generated: raise SystemExit('portfolio persistence regression')
+# Never permit a null-analysis detail invocation.
+if 'renderStockDetail(q,null,null)' in generated: raise SystemExit('unsafe detail invocation')
+p.write_text(generated,encoding='utf-8')
+print('V18 runtime regression guards PASS')
