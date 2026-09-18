@@ -22,7 +22,7 @@ home=r'''    private void showHome() {
         Button fast=button("Hızlı Tarama",RED), shortB=button("Kısa Vade",Color.rgb(25,105,210)), div=button("Temettü",GREEN), lng=button("Uzun Vade",AMBER);
         modes.addView(fast,new LinearLayout.LayoutParams(0,dp(66),1));modes.addView(shortB,new LinearLayout.LayoutParams(0,dp(66),1));modes.addView(div,new LinearLayout.LayoutParams(0,dp(66),1));modes.addView(lng,new LinearLayout.LayoutParams(0,dp(66),1));content.addView(modes);
         fast.setOnClickListener(v->showRadar());shortB.setOnClickListener(v->showBaskets());div.setOnClickListener(v->showBaskets());lng.setOnClickListener(v->showBaskets());
-        spacer(12); content.addView(bold("Günün Öne Çıkanları",18,Color.WHITE));
+        spacer(12); content.addView(bold("Günün Öne Çıkanları",18,NAVY));
         LinearLayout highlights=new LinearLayout(this);
         String[] hs={"En Çok\nYükselen","Hacim\nLiderleri","Fırsat\nHisseleri","Teknik\nSinyal"};
         for(String h:hs){Button b=button(h,NAVY2);highlights.addView(b,new LinearLayout.LayoutParams(0,dp(64),1));}
