@@ -15,6 +15,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.Space;
@@ -73,6 +74,7 @@ public class MainActivity extends Activity {
     private final Map<String, CatalystContextEngine.Result> holdingContexts = new HashMap<>();
     private final List<RadarItem> radarResults = Collections.synchronizedList(new ArrayList<>());
     private volatile boolean scanRunning=false;
+    private int detailTimeframe=5; // default: 1 gün
     private final AtomicInteger scanDone=new AtomicInteger(0), scanFailed=new AtomicInteger(0);
 
     @Override public void onCreate(Bundle b) {
@@ -215,14 +217,27 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this).setTitle("Tek hisse analiz").setView(s).setPositiveButton("Analiz et",(d,w)->{String sym=parseSymbol(s.getText().toString().trim().toUpperCase(Locale.ROOT));if(sym.length()>=2)analyzeStock(sym);}).setNegativeButton("İptal",null).show();
     }
 
-    private void analyzeStock(String symbol) {
-        shell(symbol+" • analiz"); ProgressBar p=new ProgressBar(this);content.addView(p);content.addView(txt("Teknik veri + haber/katalizör bağlamı alınıyor…",15,NAVY));
-        io.execute(()->{try{List<MarketDataService.Candle>d=MarketDataService.fetchDaily(symbol,"1mo");ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);CatalystContextEngine.Result cx=CatalystContextEngine.analyze(symbol,r.score);List<MarketDataService.Candle>chart=d.subList(Math.max(0,d.size()-10),d.size());main.post(()->renderStockDetail(symbol,r,cx,chart));}catch(Exception e){main.post(()->{shell(symbol+" • analiz");content.addView(txt("Veri alınamadı: "+e.getMessage(),15,RED));});}});
+    private void analyzeStock(String symbol) { analyzeStock(symbol,detailTimeframe); }
+
+    private void analyzeStock(String symbol,int timeframe) {
+        detailTimeframe=ChartTimeframes.clamp(timeframe);
+        shell(symbol+" • analiz"); ProgressBar p=new ProgressBar(this);content.addView(p);content.addView(txt("Teknik veri + grafik + haber/katalizör bağlamı alınıyor…",15,NAVY));
+        io.execute(()->{try{
+            List<MarketDataService.Candle> base=MarketDataService.fetchDaily(symbol,"6mo");
+            ShortPulseEngine.Result r=ShortPulseEngine.analyze(base);
+            CatalystContextEngine.Result cx=CatalystContextEngine.analyze(symbol,r.score);
+            List<MarketDataService.Candle> chart=DetailedChartController.fetch(symbol,detailTimeframe);
+            main.post(()->renderStockDetail(symbol,r,cx,chart));
+        }catch(Exception e){main.post(()->{shell(symbol+" • analiz");content.addView(txt("Veri alınamadı: "+e.getMessage(),15,RED));});}});
     }
 
     private void renderStockDetail(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx,List<MarketDataService.Candle> chart) {
-        shell(symbol+" • Son 10 işlem günü"); LinearLayout q=card();q.addView(bold(symbol,22,NAVY));q.addView(bold(money(r.price,symbol),25,r.changePct>=0?GREEN:RED));q.addView(txt("Son gün %"+fmt(r.changePct)+"  •  ATR% "+fmt(r.atrPct)+"  •  RelVol x"+fmt(r.relativeVolume),14,Color.DKGRAY));content.addView(q);spacer(7);
-        content.addView(signalBanner(r));spacer(7);content.addView(contextBanner(cx));spacer(7);content.addView(new PriceChartView(this,chart,"SON 10 İŞLEM GÜNÜ"),new LinearLayout.LayoutParams(-1,dp(300)));spacer(7);
+        shell(symbol+" • "+ChartTimeframes.label(detailTimeframe)); LinearLayout q=card();q.addView(bold(symbol,22,NAVY));q.addView(bold(money(r.price,symbol),25,r.changePct>=0?GREEN:RED));q.addView(txt("Son gün %"+fmt(r.changePct)+"  •  ATR% "+fmt(r.atrPct)+"  •  RelVol x"+fmt(r.relativeVolume),14,Color.DKGRAY));content.addView(q);spacer(7);
+        content.addView(signalBanner(r));spacer(7);content.addView(contextBanner(cx));spacer(7);
+        HorizontalScrollView tfScroll=new HorizontalScrollView(this); LinearLayout tfRow=new LinearLayout(this); tfRow.setOrientation(LinearLayout.HORIZONTAL);
+        for(int i=0;i<ChartTimeframes.LABELS.length;i++){final int idx=i;Button b=button(ChartTimeframes.LABELS[i],i==detailTimeframe?GREEN:NAVY2);b.setOnClickListener(v->analyzeStock(symbol,idx));tfRow.addView(b,new LinearLayout.LayoutParams(dp(82),-2));}
+        tfScroll.addView(tfRow);content.addView(tfScroll);spacer(5);
+        content.addView(new PriceChartView(this,chart,ChartTimeframes.label(detailTimeframe).toUpperCase(Locale.ROOT)),new LinearLayout.LayoutParams(-1,dp(340)));spacer(7);
         LinearLayout info=card();info.addView(bold("Teknik görünüm",17,NAVY));info.addView(txt(r.explanation,14,Color.DKGRAY));info.addView(txt("Momentum: "+r.momentumText+"  •  Para/hacim: "+r.flowText+"  •  Trend: "+r.trendText,13,Color.DKGRAY));info.addView(txt("Hedef: "+r.horizonText+"  •  Teknik güven %"+(int)r.confidence+"  •  Stop ref. "+money(r.stopReference,symbol),13,NAVY2));content.addView(info);
         LinearLayout news=card();news.addView(bold("Bilgi akışı",17,NAVY));news.addView(txt("Haber skoru: "+fmt(cx.newsScore)+"/8  •  "+cx.dataStatus,14,Color.DKGRAY));news.addView(txt(cx.note,14,cx.technicalConflict?PURPLE:Color.DKGRAY));news.addView(txt("Kapsama: "+cx.coverage,12,Color.GRAY));content.addView(news);spacer(7);
         Button add=button("Portföye Ekle",GREEN);content.addView(add);add.setOnClickListener(v->portfolioDialog(null,symbol));
