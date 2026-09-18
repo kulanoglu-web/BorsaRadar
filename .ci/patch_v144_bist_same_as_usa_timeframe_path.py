@@ -4,9 +4,9 @@ from pathlib import Path
 p=Path('app/src/main/java/com/kulanoglu/borsaradar/DetailedChartController.java')
 s=p.read_text(encoding='utf-8')
 checks={
- 'selected fetch path':'MarketDataService.fetchSeries(symbol,range,interval,180)' in s,
+ 'selected fetch path':'MarketDataService.fetchSeries(symbol,range,interval,0)' in s,
  'BIST transport fallback':'normalized.endsWith(".IS")' in s,
- 'selected interval preserved':'fallback,interval,180' in s,
+ 'selected interval preserved':'fallback,interval,0' in s,
  'visible timeframe preserved':'maxVisiblePoints(i)' in s
 }
 for k,v in checks.items():print('v144',k,v)
