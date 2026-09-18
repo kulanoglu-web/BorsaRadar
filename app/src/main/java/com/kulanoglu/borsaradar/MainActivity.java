@@ -75,6 +75,7 @@ public class MainActivity extends Activity {
     private final List<RadarItem> radarResults = Collections.synchronizedList(new ArrayList<>());
     private volatile boolean scanRunning=false;
     private int detailTimeframe=5; // default: 1 gün
+    private String detailSymbol="";
     private final AtomicInteger scanDone=new AtomicInteger(0), scanFailed=new AtomicInteger(0);
 
     @Override public void onCreate(Bundle b) {
@@ -220,11 +221,14 @@ public class MainActivity extends Activity {
     private void analyzeStock(String symbol) { analyzeStock(symbol,detailTimeframe); }
 
     private void analyzeStock(String symbol,int timeframe) {
+        if(symbol==null||symbol.trim().length()<2){Toast.makeText(this,"Geçerli hisse seç",Toast.LENGTH_SHORT).show();return;}
+        symbol=parseSymbol(symbol.toUpperCase(Locale.ROOT)); detailSymbol=symbol;
         detailTimeframe=ChartTimeframes.clamp(timeframe);
         shell(symbol+" • analiz"); ProgressBar p=new ProgressBar(this);content.addView(p);content.addView(txt("Teknik veri + grafik + haber/katalizör bağlamı alınıyor…",15,NAVY));
         io.execute(()->{try{
             List<MarketDataService.Candle> base=MarketDataService.fetchDaily(symbol,"6mo");
             ShortPulseEngine.Result r=ShortPulseEngine.analyze(base);
+            MarketDataService.Spot spot=MarketDataService.latestSpot(symbol);
             CatalystContextEngine.Result cx=CatalystContextEngine.analyze(symbol,r.score);
             List<MarketDataService.Candle> chart=DetailedChartController.fetch(symbol,detailTimeframe);
             main.post(()->renderStockDetail(symbol,r,cx,chart));
@@ -232,15 +236,15 @@ public class MainActivity extends Activity {
     }
 
     private void renderStockDetail(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx,List<MarketDataService.Candle> chart) {
-        shell(symbol+" • "+ChartTimeframes.label(detailTimeframe)); LinearLayout q=card();q.addView(bold(symbol,22,NAVY));q.addView(bold(money(r.price,symbol),25,r.changePct>=0?GREEN:RED));q.addView(txt("Son gün %"+fmt(r.changePct)+"  •  ATR% "+fmt(r.atrPct)+"  •  RelVol x"+fmt(r.relativeVolume),14,Color.DKGRAY));content.addView(q);spacer(7);
+        shell(symbol+" • "+ChartTimeframes.label(detailTimeframe)); LinearLayout q=card();q.addView(bold(symbol,22,NAVY)); MarketDataService.Spot live=MarketDataService.latestSpot(symbol); double shownPrice=live!=null&&live.price>0?live.price:r.price; q.addView(bold(money(shownPrice,symbol),25,r.changePct>=0?GREEN:RED)); if(live!=null)q.addView(txt("Fiyat kaynağı: "+live.source,11,Color.GRAY));q.addView(txt("Son gün %"+fmt(r.changePct)+"  •  ATR% "+fmt(r.atrPct)+"  •  RelVol x"+fmt(r.relativeVolume),14,Color.DKGRAY));content.addView(q);spacer(7);
         content.addView(signalBanner(r));spacer(7);content.addView(contextBanner(cx));spacer(7);
         HorizontalScrollView tfScroll=new HorizontalScrollView(this); LinearLayout tfRow=new LinearLayout(this); tfRow.setOrientation(LinearLayout.HORIZONTAL);
         for(int i=0;i<ChartTimeframes.LABELS.length;i++){final int idx=i;Button b=button(ChartTimeframes.LABELS[i],i==detailTimeframe?GREEN:NAVY2);b.setOnClickListener(v->analyzeStock(symbol,idx));tfRow.addView(b,new LinearLayout.LayoutParams(dp(82),-2));}
         tfScroll.addView(tfRow);content.addView(tfScroll);spacer(5);
-        content.addView(new PriceChartView(this,chart,ChartTimeframes.label(detailTimeframe).toUpperCase(Locale.ROOT)),new LinearLayout.LayoutParams(-1,dp(340)));spacer(7);
+        if(chart==null||chart.size()<2){content.addView(txt("Bu zaman diliminde grafik verisi yetersiz.",14,RED));}else{content.addView(new PriceChartView(this,chart,ChartTimeframes.label(detailTimeframe).toUpperCase(Locale.ROOT)),new LinearLayout.LayoutParams(-1,dp(340)));}spacer(7);
         LinearLayout info=card();info.addView(bold("Teknik görünüm",17,NAVY));info.addView(txt(r.explanation,14,Color.DKGRAY));info.addView(txt("Momentum: "+r.momentumText+"  •  Para/hacim: "+r.flowText+"  •  Trend: "+r.trendText,13,Color.DKGRAY));info.addView(txt("Hedef: "+r.horizonText+"  •  Teknik güven %"+(int)r.confidence+"  •  Stop ref. "+money(r.stopReference,symbol),13,NAVY2));content.addView(info);
         LinearLayout news=card();news.addView(bold("Bilgi akışı",17,NAVY));news.addView(txt("Haber skoru: "+fmt(cx.newsScore)+"/8  •  "+cx.dataStatus,14,Color.DKGRAY));news.addView(txt(cx.note,14,cx.technicalConflict?PURPLE:Color.DKGRAY));news.addView(txt("Kapsama: "+cx.coverage,12,Color.GRAY));content.addView(news);spacer(7);
-        Button add=button("Portföye Ekle",GREEN);content.addView(add);add.setOnClickListener(v->portfolioDialog(null,symbol));
+        LinearLayout actions=new LinearLayout(this); Button add=button("Portföye Ekle",GREEN), refreshDetail=button("Yenile",NAVY2); actions.addView(add,new LinearLayout.LayoutParams(0,-2,1)); actions.addView(refreshDetail,new LinearLayout.LayoutParams(0,-2,1)); content.addView(actions); add.setOnClickListener(v->portfolioDialog(null,symbol)); refreshDetail.setOnClickListener(v->analyzeStock(symbol,detailTimeframe));
     }
 
     private void showBaskets() {
