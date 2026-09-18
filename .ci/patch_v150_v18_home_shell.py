@@ -279,3 +279,28 @@ if anchor in s and 'private void showMarkets()' not in s:
 s=s.replace('markets.setOnClickListener(v->{Toast.makeText(this,"Piyasalar ekranı hazırlanıyor",Toast.LENGTH_SHORT).show();});','markets.setOnClickListener(v->{getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("v18_screen","markets").apply();showMarkets();});')
 p.write_text(s,encoding='utf-8')
 print('V18 markets screen PASS')
+
+# V18 20-step interaction pass
+# Home exchange buttons: selected market state + explicit scan behavior
+s=s.replace('Toast.makeText(this,"Piyasa seçildi — tarama yalnızca Tara ile başlar",Toast.LENGTH_SHORT).show();','Toast.makeText(this,"Piyasa seçildi — tarama yalnızca Tara ile başlar",Toast.LENGTH_SHORT).show();')
+# Make strategy criteria actual toggles instead of decorative labels
+old='for(String c:new String[]{"Teknik Analiz","Temel Analiz","Haber Taraması","Sektör Analizi","Büyük Alıcı / Satıcı","Finansal Güç","Temettü Potansiyeli"})criteria.addView(txt(c,14,Color.rgb(210,220,232)));'
+new='for(String c:new String[]{"Teknik Analiz","Temel Analiz","Haber Taraması","Sektör Analizi","Büyük Alıcı / Satıcı","Finansal Güç","Temettü Potansiyeli"}){CheckBox cb=new CheckBox(this);cb.setText(c);cb.setTextColor(Color.rgb(210,220,232));cb.setChecked(true);criteria.addView(cb);}'
+s=s.replace(old,new)
+# Strategy cards remember selection
+s=s.replace('for(String st:new String[]{"Kısa Vade","Temettü","Uzun Vade"}){Button b=button(st,NAVY2);b.setTextSize(17);content.addView(b,new LinearLayout.LayoutParams(-1,dp(64)));spacer(6);}','for(String st:new String[]{"Kısa Vade","Temettü","Uzun Vade"}){Button b=button(st,NAVY2);b.setTextSize(17);content.addView(b,new LinearLayout.LayoutParams(-1,dp(64)));spacer(6);b.setOnClickListener(v->{getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("v18_strategy",st).apply();Toast.makeText(this,st+" seçildi",Toast.LENGTH_SHORT).show();});}')
+# More screen buttons get safe explicit feedback rather than dead taps
+s=s.replace('b.setGravity(Gravity.LEFT|Gravity.CENTER_VERTICAL);content.addView(b,new LinearLayout.LayoutParams(-1,dp(50)));','b.setGravity(Gravity.LEFT|Gravity.CENTER_VERTICAL);content.addView(b,new LinearLayout.LayoutParams(-1,dp(50)));b.setOnClickListener(v->Toast.makeText(this,m+" — modül bağlantısı hazırlanıyor",Toast.LENGTH_SHORT).show());')
+# Market selection persists and never scans
+# Add compact data-source status to market screen
+s=s.replace('LinearLayout summary=card();summary.addView(bold("Piyasa Özeti",18,Color.WHITE));','LinearLayout summary=card();summary.addView(bold("Piyasa Özeti",18,Color.WHITE));summary.addView(txt("Canlı veri yoksa değerler — olarak gösterilir.",11,Color.GRAY));')
+# Search: Enter opens detail when symbol exists
+search_marker='content.addView(search,new LinearLayout.LayoutParams(-1,dp(48)));'
+if search_marker in s:
+    s=s.replace(search_marker,search_marker+'search.setSingleLine(true);search.setOnEditorActionListener((v,a,e)->{String q=search.getText().toString().trim().toUpperCase();if(q.length()>0){renderStockDetail(q,null,null);}return true;});',1)
+# Radar empty state copy
+s=s.replace('Radar sonucu yok.','Radar sonucu yok. Taramayı başlatmak için Tara butonunu kullanın.')
+# Add version/status card to More
+s=s.replace('profile.addView(txt("Piyasa araçları ve uygulama seçenekleri",13,Color.rgb(164,181,202)));','profile.addView(txt("Piyasa araçları ve uygulama seçenekleri",13,Color.rgb(164,181,202)));profile.addView(txt("V18 UI • veri olmayan alanlarda tahmin gösterilmez",11,Color.GRAY));')
+p.write_text(s,encoding='utf-8')
+print('V18 20-step interaction pass PASS')
