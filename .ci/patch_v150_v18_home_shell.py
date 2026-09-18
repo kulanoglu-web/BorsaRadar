@@ -105,3 +105,20 @@ s=s.replace('LinearLayout info=card();info.addView(bold("Teknik görünüm",17,N
 s=s.replace('LinearLayout news=card();news.addView(bold("Bilgi akışı",17,NAVY));','LinearLayout news=card();news.addView(bold("Bilgi akışı",17,Color.WHITE));')
 p.write_text(s,encoding='utf-8')
 print('v150 V18 stock general PASS')
+
+# V18 chart screen: relabel existing production detail controls without touching v149 loader
+s=s.replace('new String[]{"Genel","Grafik","Haber","KAP","Finansal","Teknik"}','new String[]{"Genel","Grafik","Haber","KAP","Finansal","Teknik"}')
+# Add compact V18 indicator selector immediately before existing chart where recognizable
+chart_anchor='content.addView(new PriceChartView(this,'
+if chart_anchor in s and '"RSI","MACD","Stoch","CCI","BB"' not in s:
+    pos=s.find(chart_anchor)
+    line_start=s.rfind('\n',0,pos)+1
+    indicator='LinearLayout indicators=new LinearLayout(this);indicators.setOrientation(LinearLayout.HORIZONTAL);for(String ind:new String[]{"RSI","MACD","Stoch","CCI","BB"}){Button ib=button(ind,NAVY2);ib.setTextSize(11);indicators.addView(ib,new LinearLayout.LayoutParams(0,-2,1));}content.addView(indicators);spacer(6);\n        '
+    s=s[:line_start]+s[line_start:].replace(chart_anchor,indicator+chart_anchor,1)
+# Ensure V18 timeframe labels requested by reference are present as a secondary compact row on stock detail
+detail_marker='LinearLayout tabs=new LinearLayout(this);tabs.setOrientation(LinearLayout.HORIZONTAL);'
+if detail_marker in s and '"1G","1H","1A","3A","6A","1Y","2Y"' not in s:
+    tf='LinearLayout chartPeriods=new LinearLayout(this);chartPeriods.setOrientation(LinearLayout.HORIZONTAL);for(String tf:new String[]{"1G","1H","1A","3A","6A","1Y","2Y"}){Button t=button(tf,NAVY2);t.setTextSize(10);chartPeriods.addView(t,new LinearLayout.LayoutParams(0,-2,1));}content.addView(chartPeriods);spacer(6);\n        '
+    s=s.replace(detail_marker,tf+detail_marker,1)
+p.write_text(s,encoding='utf-8')
+print('v150 V18 chart controls PASS')
