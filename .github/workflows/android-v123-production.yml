@@ -114,7 +114,6 @@ jobs:
           python3 .ci/patch_v137_detail_design_step1.py
           python3 .ci/patch_v138_detail_tabs_functional.py
           python3 .ci/patch_v140_timeframe_no_blank.py
-          python3 .ci/patch_v142_bist_timeframes.py
           python3 .ci/patch_v143_bist_intraday_fallback.py
           python3 .ci/patch_v144_bist_same_as_usa_timeframe_path.py
           python3 .ci/patch_v146_bist_yahoo_symbol_encoding.py
