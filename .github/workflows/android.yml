@@ -1,4 +1,4 @@
-name: Build BorsaRadar 3.12.9 APK
+name: Build BorsaRadar V18 APK
 on:
   workflow_dispatch:
   pull_request:
@@ -74,7 +74,7 @@ jobs:
           python3 .ci/patch_v91_portfolio_backup_restore.py
           python3 .ci/patch_v92_runtime_detail_portfolio.py
           python3 .ci/patch_v93_hourly_fake_portfolio_ui.py
-      - name: Apply v94 through v123 production patches
+      - name: Apply v94 through v150 production patches
         run: python3 .ci/patch_v94_cross_market_scan_selector.py
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
@@ -83,10 +83,10 @@ jobs:
       - name: Build signed release APK
         run: gradle --no-daemon clean assembleRelease
       - name: Prepare APK
-        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.12.9.apk
+        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-V18.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v3.12.9-APK
-          path: BorsaRadar-v3.12.9.apk
+          name: BorsaRadar-V18-APK
+          path: BorsaRadar-V18.apk
           if-no-files-found: error
           retention-days: 30
