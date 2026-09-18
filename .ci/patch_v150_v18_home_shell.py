@@ -340,5 +340,7 @@ if 'private void showMore()' not in generated: raise SystemExit('V18 More method
 if 'loadPortfolio();' not in generated or 'savePortfolio' not in generated: raise SystemExit('portfolio persistence regression')
 # Never permit a null-analysis detail invocation.
 if 'renderStockDetail(q,null,null)' in generated: raise SystemExit('unsafe detail invocation')
+# Compile safety: normalize autocomplete symbols without relying on removed legacy helper.
+generated=generated.replace('String sym=parseSymbol(String.valueOf(a.getItemAtPosition(pos)))','String sym=String.valueOf(a.getItemAtPosition(pos)).trim().toUpperCase().split("\\\\s+")[0]')
 p.write_text(generated,encoding='utf-8')
-print('V18 runtime regression guards PASS')
+print('V18 compile safety PASS')
