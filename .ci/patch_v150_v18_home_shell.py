@@ -48,3 +48,12 @@ if old not in s: raise SystemExit('old nav missing')
 s=s.replace(old,new,1)
 p.write_text(s,encoding='utf-8')
 print('v150 V18 home shell PASS')
+
+# V18 dark theme after legacy patches
+s=s.replace('private static final int BG = Color.rgb(244, 247, 251);','private static final int BG = Color.rgb(5, 14, 27);')
+s=s.replace('private static final int NAVY2 = Color.rgb(17, 50, 82);','private static final int NAVY2 = Color.rgb(16, 31, 52);')
+s=s.replace('c.setBackgroundColor(Color.WHITE);','c.setBackgroundColor(Color.rgb(13,26,45));')
+s=s.replace('marketCard.addView(bold("Piyasa Özeti",18,NAVY));','marketCard.addView(bold("Piyasa Özeti",18,Color.WHITE));')
+s=s.replace('content.addView(bold("Günün Öne Çıkanları",18,NAVY));','content.addView(bold("Günün Öne Çıkanları",18,Color.WHITE));')
+p.write_text(s,encoding='utf-8')
+print('v150 V18 dark theme PASS')
