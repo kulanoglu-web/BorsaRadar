@@ -97,6 +97,7 @@ jobs:
       - name: Verify signed APK
         run: |
           test -s app/build/outputs/apk/release/app-release.apk
+          unzip -t app/build/outputs/apk/release/app-release.apk >/dev/null
           ls -lh app/build/outputs/apk/release/app-release.apk
       - name: Prepare APK
         run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-V18.apk
