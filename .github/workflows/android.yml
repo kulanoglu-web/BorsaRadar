@@ -2,7 +2,7 @@ name: Build BorsaRadar 3.12.9 APK
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ main, v18-strategy-engine ]
 permissions:
   contents: read
 jobs:
