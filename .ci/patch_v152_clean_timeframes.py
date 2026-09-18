@@ -9,7 +9,7 @@ q=s[a:b]
 start=q.find('for(int i=0;i<ChartTimeframes.LABELS.length;i++)')
 end=q.find('        content.addView(quickTf1)',start)
 if start<0 or end<0: raise SystemExit('timeframe block missing')
-new='''final int selectedTf=getSharedPreferences(PREFS,Context.MODE_PRIVATE).getInt("chart_tf",8);
+new='''final int selectedTf=-1;
         for(int i=0;i<ChartTimeframes.LABELS.length;i++){
             final int idx=i;
             Button tf=button(ChartTimeframes.LABELS[i],i==selectedTf?Color.rgb(25,105,210):Color.rgb(49,55,63));
@@ -24,15 +24,11 @@ anchor='    private void renderStockDetail(String symbol,FullAnalysisEngine.Resu
 helper='''    private void openChartTimeframe(String symbol,int index){
         final int idx=ChartTimeframes.clamp(index);
         final String frame=ChartTimeframes.label(idx);
-        getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putInt("chart_tf",idx).commit();
         io.execute(()->{
             try{
                 final java.util.List<MarketDataService.Candle> chart=DetailedChartController.fetch(symbol,idx);
-                java.util.List<MarketDataService.Candle> analysis=chart;
-                if(chart.size()<40){
-                    try{java.util.List<MarketDataService.Candle> x=MarketDataService.fetchSeries(symbol,"3mo","1d",0);if(x!=null&&x.size()>=20)analysis=x;}catch(Exception ignored){}
-                }
-                final FullAnalysisEngine.Result result=FullAnalysisEngine.analyze(symbol,analysis);
+                java.util.List<MarketDataService.Candle> analysis=chart; // selected frame only
+                                final FullAnalysisEngine.Result result=FullAnalysisEngine.analyze(symbol,analysis);
                 main.post(()->renderStockDetail(symbol,result,chart,frame));
             }catch(Exception e){
                 final String m=e.getMessage()==null?e.getClass().getSimpleName():e.getMessage();
