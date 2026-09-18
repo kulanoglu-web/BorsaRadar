@@ -376,6 +376,9 @@ if 'showHome();' not in generated[oc:oc_end+20]: raise SystemExit('V18 startup n
 p.write_text(generated,encoding='utf-8')
 print('V18 final runtime shell takeover PASS')
 
+# Compile safety: v150 shell takeover removes legacy page-state helper; refresh radar directly.
+generated=generated.replace('if(radarPageVisible()) showRadar();','showRadar();')
+generated=generated.replace('if (radarPageVisible()) showRadar();','showRadar();')
 # Compile safety: normalize autocomplete symbols without relying on removed legacy helper.
 generated=generated.replace('String sym=parseSymbol(String.valueOf(a.getItemAtPosition(pos)))','String sym=String.valueOf(a.getItemAtPosition(pos)).trim().toUpperCase().split("\\\\s+")[0]')
 p.write_text(generated,encoding='utf-8')
