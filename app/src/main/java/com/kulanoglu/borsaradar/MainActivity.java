@@ -226,20 +226,30 @@ public class MainActivity extends Activity {
         detailTimeframe=ChartTimeframes.clamp(timeframe);
         final String selectedSymbol=symbol;
         final int selectedTimeframe=detailTimeframe;
-        shell(selectedSymbol+" • analiz"); ProgressBar p=new ProgressBar(this);content.addView(p);content.addView(txt("Teknik veri + grafik + haber/katalizör bağlamı alınıyor…",15,NAVY));
+        shell(selectedSymbol+" • analiz");
+        content.addView(txt("Fiyat ve teknik görünüm yükleniyor…",15,NAVY));
         io.execute(()->{
             try{
-                // Detay ekranını grafik/haber yüzünden bloke etme: önce günlük teknik veriyi getir.
+                // Hızlı ilk çizim: yalnızca kısa günlük seri. Haber ve seçili grafik bekletmez.
                 List<MarketDataService.Candle> base=MarketDataService.fetchDaily(selectedSymbol,"1mo");
                 ShortPulseEngine.Result r=ShortPulseEngine.analyze(base);
-                CatalystContextEngine.Result cx;
-                try{cx=CatalystContextEngine.analyze(selectedSymbol,r.score);}catch(Exception ignored){cx=null;}
-                List<MarketDataService.Candle> chart;
-                try{chart=DetailedChartController.fetch(selectedSymbol,selectedTimeframe);}
-                catch(Exception ignored){chart=base;}
-                final CatalystContextEngine.Result safeCx=cx;
-                final List<MarketDataService.Candle> safeChart=chart;
-                main.post(()->renderStockDetail(selectedSymbol,r,safeCx,safeChart));
+                main.post(()->renderStockDetail(selectedSymbol,r,null,base));
+
+                // Ağır verileri ekran açıldıktan sonra arka planda tamamla.
+                io.execute(()->{
+                    try{
+                        CatalystContextEngine.Result cx;
+                        try{cx=CatalystContextEngine.analyze(selectedSymbol,r.score);}catch(Exception ignored){cx=null;}
+                        List<MarketDataService.Candle> chart;
+                        try{chart=DetailedChartController.fetch(selectedSymbol,selectedTimeframe);}catch(Exception ignored){chart=base;}
+                        final CatalystContextEngine.Result safeCx=cx;
+                        final List<MarketDataService.Candle> safeChart=chart;
+                        main.post(()->{
+                            if(selectedSymbol.equals(detailSymbol) && selectedTimeframe==detailTimeframe)
+                                renderStockDetail(selectedSymbol,r,safeCx,safeChart);
+                        });
+                    }catch(Exception ignored){}
+                });
             }catch(Exception e){
                 main.post(()->{shell(selectedSymbol+" • analiz");content.addView(txt("Veri alınamadı: "+e.getMessage(),15,RED));});
             }
