@@ -146,3 +146,48 @@ if financial_marker in s and '"Özet","Gelir Tablosu","Bilanço","Nakit Akışı
     s=s.replace(financial_marker,financial+financial_marker,1)
 p.write_text(s,encoding='utf-8')
 print('v150 V18 financial screen PASS')
+
+# V18 UI 7-11 and navigation pass
+# 7 Technical Analysis
+tech_anchor='LinearLayout financial=card();'
+if tech_anchor in s and 'Genel Teknik Görünüm' not in s:
+    tech='''LinearLayout technical=card();technical.addView(bold("Teknik Analiz",18,Color.WHITE));String[] techRows={"RSI","MACD","Stochastic","CCI","EMA20 / EMA50 / EMA200","Bollinger","ATR","SuperTrend","Fibonacci"};for(String tr:techRows)technical.addView(txt(tr+"                         —",13,Color.rgb(164,181,202)));technical.addView(bold("Genel Teknik Görünüm",15,Color.WHITE));technical.addView(txt("Kısa Vade  •  Orta Vade  •  Uzun Vade",12,Color.rgb(164,181,202)));content.addView(technical);spacer(8);
+        '''
+    s=s.replace(tech_anchor,tech+tech_anchor,1)
+# 8 Target & Risk
+if tech_anchor in s and 'Hedef Fiyat & Risk' not in s:
+    risk='''LinearLayout risk=card();risk.addView(bold("Hedef Fiyat & Risk",18,Color.WHITE));for(String rr:new String[]{"Kısa Vade Hedef","Orta Vade Hedef","Uzun Vade Hedef","Destek","Direnç","Stop Loss","Getiri / Risk"})risk.addView(txt(rr+"                         —",13,Color.rgb(164,181,202)));content.addView(risk);spacer(8);
+        '''
+    s=s.replace(tech_anchor,risk+tech_anchor,1)
+# 9 Portfolio heading / analysis action
+s=s.replace('shell("Portföyüm");','shell("Portföy");',1)
+s=s.replace('Button add=button("+ Hisse Ekle",GREEN), refresh=button("Tümünü Güncelle",NAVY2);','Button add=button("+ Hisse Ekle",GREEN), refresh=button("Portföy Analiz",NAVY2);',1)
+# 10 Strategy screen method
+portfolio_anchor='    private void showPortfolio() {'
+if portfolio_anchor in s and 'private void showStrategySelection()' not in s:
+    method='''    private void showStrategySelection() {
+        shell("Strateji Seçimi");
+        for(String st:new String[]{"Kısa Vade","Temettü","Uzun Vade"}){Button b=button(st,NAVY2);b.setTextSize(17);content.addView(b,new LinearLayout.LayoutParams(-1,dp(64)));spacer(6);}
+        LinearLayout criteria=card();criteria.addView(bold("Tarama Kriterleri",18,Color.WHITE));for(String c:new String[]{"☑ Teknik Analiz","☑ Temel Analiz","☑ Haber Taraması","☑ Sektör Analizi","☑ Büyük Alıcı / Satıcı","☑ Finansal Güç","☑ Temettü Potansiyeli"})criteria.addView(txt(c,14,Color.rgb(210,220,232)));content.addView(criteria);spacer(8);Button start=button("Taramayı Başlat",GREEN);content.addView(start,new LinearLayout.LayoutParams(-1,dp(54)));start.setOnClickListener(v->showRadar());
+    }
+
+'''
+    s=s.replace(portfolio_anchor,method+portfolio_anchor,1)
+# 11 More screen
+if portfolio_anchor in s and 'private void showMore()' not in s:
+    more='''    private void showMore() {
+        shell("Diğer");
+        LinearLayout profile=card();profile.addView(bold("BorsaRadar",19,Color.WHITE));profile.addView(txt("Piyasa araçları ve uygulama seçenekleri",13,Color.rgb(164,181,202)));content.addView(profile);spacer(8);
+        for(String m:new String[]{"Piyasa Takvimi","Sektörler","Favorilerim","Alarmlar","Hisse Karşılaştırma","Döviz / Altın / Emtia","Ekonomik Veriler","Ayarlar","Yardım & Destek","Hakkında","Çıkış Yap"}){Button b=button(m,NAVY2);b.setGravity(Gravity.LEFT|Gravity.CENTER_VERTICAL);content.addView(b,new LinearLayout.LayoutParams(-1,dp(50)));}
+    }
+
+'''
+    s=s.replace(portfolio_anchor,more+portfolio_anchor,1)
+# navigation corrections
+s=s.replace('markets.setOnClickListener(v->showRadar());radar.setOnClickListener(v->showRadar());portfolio.setOnClickListener(v->showPortfolio());more.setOnClickListener(v->showBaskets());','markets.setOnClickListener(v->showStrategySelection());radar.setOnClickListener(v->showRadar());portfolio.setOnClickListener(v->showPortfolio());more.setOnClickListener(v->showMore());')
+# Home strategy cards route to strategy selection instead of old baskets
+s=s.replace('shortB.setOnClickListener(v->showBaskets());div.setOnClickListener(v->showBaskets());lng.setOnClickListener(v->showBaskets());','shortB.setOnClickListener(v->showStrategySelection());div.setOnClickListener(v->showStrategySelection());lng.setOnClickListener(v->showStrategySelection());')
+# Dark text consistency in legacy detail cards
+s=s.replace('Color.DKGRAY','Color.rgb(164,181,202)')
+p.write_text(s,encoding='utf-8')
+print('v150 V18 UI 7-11 + navigation PASS')
