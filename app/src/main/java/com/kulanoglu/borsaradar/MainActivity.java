@@ -259,5 +259,15 @@ public class MainActivity extends Activity {
     private void saveRadarCache(){JSONArray a=new JSONArray();try{int n=Math.min(80,radarResults.size());for(int i=0;i<n;i++){RadarItem r=radarResults.get(i);JSONObject o=new JSONObject();o.put("s",r.symbol);o.put("r",r.recommendation);o.put("w",r.why);o.put("h",r.horizon);o.put("p",r.price);o.put("sc",r.score);o.put("cf",r.confidence);a.put(o);}}catch(Exception ignored){}getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putString("radar",a.toString()).apply();}
     private void loadRadarCache(){radarResults.clear();try{JSONArray a=new JSONArray(getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString("radar","[]"));for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);ShortPulseEngine.Result pr=new ShortPulseEngine.Result();pr.recommendation=o.getString("r");pr.explanation=o.getString("w");pr.horizonText=o.getString("h");pr.price=o.getDouble("p");pr.score=o.getDouble("sc");pr.confidence=o.getDouble("cf");radarResults.add(new RadarItem(o.getString("s"),pr));}}catch(Exception ignored){}}
 
+    private String adjacentSymbol(String symbol,int delta) {
+        String s=symbol==null?"":symbol.trim().toUpperCase(Locale.ROOT);
+        List<String> order=new ArrayList<>();
+        synchronized(radarResults){for(RadarItem x:radarResults)if(x!=null&&x.symbol!=null&&!order.contains(x.symbol))order.add(x.symbol);}
+        if(order.isEmpty())order.addAll(Arrays.asList(ALL_SYMBOLS));
+        int at=order.indexOf(s);
+        if(at<0){String n=MarketDataService.normalizeSymbol(s);for(int i=0;i<order.size();i++)if(MarketDataService.normalizeSymbol(order.get(i)).equals(n)){at=i;break;}}
+        return at<0?s:order.get(Math.floorMod(at+delta,order.size()));
+    }
+
     private String money(double x,String symbol){String n=MarketDataService.normalizeSymbol(symbol);String cur=n.endsWith(".IS")?"₺":n.endsWith(".DE")?"€":"$";return String.format(Locale.US,"%.2f %s",x,cur);} private String fmt(double x){return String.format(Locale.US,"%.2f",x);}
 }
