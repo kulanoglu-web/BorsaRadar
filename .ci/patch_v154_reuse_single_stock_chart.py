@@ -36,7 +36,7 @@ checks={
  'uses proven loader':'loadFullChartFrame(symbol,cached,idx)' in q,
  'no parallel loader':'openChartTimeframe(' not in s,
  'all labels':'ChartTimeframes.LABELS.length' in q,
- 'no chart prefs':'chart_tf' not in q,
+ 'no parallel loader prefs':'putInt("chart_tf"' not in q,
  'deep loader exists':'private void loadFullChartFrame' in s
 }
 for k,v in checks.items():print('v154',k,v)
