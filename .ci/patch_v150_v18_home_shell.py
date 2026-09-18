@@ -89,3 +89,19 @@ new_loop='''for(int i=0;i<n;i++){RadarItem r=items.get(i);int col=r.recommendati
 if old_loop in s:s=s.replace(old_loop,new_loop,1)
 p.write_text(s,encoding='utf-8')
 print('v150 V18 radar table PASS')
+
+# V18 Stock Detail / General visual pass
+detail_old='''        shell(symbol+" • Son 10 işlem günü"); LinearLayout q=card();q.addView(bold(symbol,22,NAVY));q.addView(bold(money(r.price,symbol),25,r.changePct>=0?GREEN:RED));q.addView(txt("Son gün %"+fmt(r.changePct)+"  •  ATR% "+fmt(r.atrPct)+"  •  RelVol x"+fmt(r.relativeVolume),14,Color.DKGRAY));content.addView(q);spacer(7);
+        content.addView(signalBanner(r));spacer(7);content.addView(contextBanner(cx));spacer(7);content.addView(new PriceChartView(this,chart,"SON 10 İŞLEM GÜNÜ"),new LinearLayout.LayoutParams(-1,dp(300)));spacer(7);'''
+detail_new='''        shell("Hisse Detayı");
+        LinearLayout q=card();q.addView(bold(symbol,24,Color.WHITE));q.addView(bold(money(r.price,symbol),27,r.changePct>=0?GREEN:RED));q.addView(txt((r.changePct>=0?"+":"")+fmt(r.changePct)+"%  •  ATR% "+fmt(r.atrPct)+"  •  RelVol x"+fmt(r.relativeVolume),14,Color.rgb(164,181,202)));content.addView(q);spacer(7);
+        LinearLayout tabs=new LinearLayout(this);tabs.setOrientation(LinearLayout.HORIZONTAL);String[] tabNames={"Genel","Grafik","Haber","KAP","Finansal"};for(String t:tabNames){Button b=button(t,t.equals("Genel")?Color.rgb(25,105,210):NAVY2);tabs.addView(b,new LinearLayout.LayoutParams(0,-2,1));if(t.equals("Grafik"))b.setOnClickListener(v->analyzeStock(symbol));}content.addView(tabs);spacer(8);
+        LinearLayout action=new LinearLayout(this);Button buy=button("AL",GREEN),hold=button("TUT",AMBER),sell=button("SAT",RED);action.addView(buy,new LinearLayout.LayoutParams(0,dp(48),1));action.addView(hold,new LinearLayout.LayoutParams(0,dp(48),1));action.addView(sell,new LinearLayout.LayoutParams(0,dp(48),1));content.addView(action);spacer(8);
+        LinearLayout quick=card();quick.addView(bold("Hızlı Bilgiler",17,Color.WHITE));quick.addView(txt("Teknik skor  "+fmt(r.score)+"     Güven  %"+(int)r.confidence,14,Color.rgb(164,181,202)));quick.addView(txt("Momentum  "+r.momentumText+"     Trend  "+r.trendText,13,Color.rgb(164,181,202)));quick.addView(txt("Stop referansı  "+money(r.stopReference,symbol)+"     Hedef süre  "+r.horizonText,13,Color.rgb(164,181,202)));content.addView(quick);spacer(7);
+        content.addView(signalBanner(r));spacer(7);content.addView(contextBanner(cx));spacer(7);'''
+if detail_old in s:s=s.replace(detail_old,detail_new,1)
+# keep chart off General; chart tab will be wired as dedicated screen next pass
+s=s.replace('LinearLayout info=card();info.addView(bold("Teknik görünüm",17,NAVY));','LinearLayout info=card();info.addView(bold("Teknik görünüm",17,Color.WHITE));')
+s=s.replace('LinearLayout news=card();news.addView(bold("Bilgi akışı",17,NAVY));','LinearLayout news=card();news.addView(bold("Bilgi akışı",17,Color.WHITE));')
+p.write_text(s,encoding='utf-8')
+print('v150 V18 stock general PASS')
