@@ -258,7 +258,7 @@ public class MainActivity extends Activity {
 
     private void renderStockDetail(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx,List<MarketDataService.Candle> chart) {
         shell(symbol+" • "+ChartTimeframes.label(detailTimeframe)); LinearLayout q=card();q.addView(bold(symbol,22,NAVY)); MarketDataService.Spot live=MarketDataService.latestSpot(symbol); double shownPrice=live!=null&&live.price>0?live.price:r.price; q.addView(bold(money(shownPrice,symbol),25,r.changePct>=0?GREEN:RED)); if(live!=null)q.addView(txt("Fiyat kaynağı: "+live.source,11,Color.GRAY));q.addView(txt("Son gün %"+fmt(r.changePct)+"  •  ATR% "+fmt(r.atrPct)+"  •  RelVol x"+fmt(r.relativeVolume),14,Color.DKGRAY));content.addView(q);spacer(7);
-        content.addView(signalBanner(r));spacer(7);content.addView(contextBanner(cx));spacer(7);
+        content.addView(signalBanner(r));spacer(7); if(cx!=null){content.addView(contextBanner(cx));spacer(7);}
         HorizontalScrollView tfScroll=new HorizontalScrollView(this); LinearLayout tfRow=new LinearLayout(this); tfRow.setOrientation(LinearLayout.HORIZONTAL);
         for(int i=0;i<ChartTimeframes.LABELS.length;i++){final int idx=i;Button b=button(ChartTimeframes.LABELS[i],i==detailTimeframe?GREEN:NAVY2);b.setOnClickListener(v->analyzeStock(symbol,idx));tfRow.addView(b,new LinearLayout.LayoutParams(dp(82),-2));}
         tfScroll.addView(tfRow);content.addView(tfScroll);spacer(5);
