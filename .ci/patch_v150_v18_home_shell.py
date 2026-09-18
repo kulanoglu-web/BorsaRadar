@@ -137,3 +137,12 @@ if needle in s:
     s=s.replace(needle,repl,1)
 p.write_text(s,encoding='utf-8')
 print('v150 V18 news KAP PASS')
+
+# V18 Financial Data screen shell; placeholders only where no verified feed is available
+financial_marker='Button add=button("Portföye Ekle",GREEN);content.addView(add);'
+if financial_marker in s and '"Özet","Gelir Tablosu","Bilanço","Nakit Akışı"' not in s:
+    financial='''LinearLayout financial=card();financial.addView(bold("Finansal Veriler",18,Color.WHITE));LinearLayout finTabs=new LinearLayout(this);finTabs.setOrientation(LinearLayout.HORIZONTAL);for(String ft:new String[]{"Özet","Gelir Tablosu","Bilanço","Nakit Akışı"}){Button fb=button(ft,ft.equals("Özet")?Color.rgb(25,105,210):NAVY2);fb.setTextSize(10);finTabs.addView(fb,new LinearLayout.LayoutParams(0,-2,1));}financial.addView(finTabs);financial.addView(txt("F/K                 —",13,Color.rgb(164,181,202)));financial.addView(txt("PD/DD               —",13,Color.rgb(164,181,202)));financial.addView(txt("FD/FAVÖK            —",13,Color.rgb(164,181,202)));financial.addView(txt("Hisse Başına Kâr    —",13,Color.rgb(164,181,202)));financial.addView(txt("Temettü Verimi      —",13,Color.rgb(164,181,202)));financial.addView(txt("Özsermaye Kârlılığı —",13,Color.rgb(164,181,202)));financial.addView(txt("Net Kâr             —",13,Color.rgb(164,181,202)));financial.addView(txt("Ciro                —",13,Color.rgb(164,181,202)));financial.addView(txt("Doğrulanmış finansal veri kaynağı bağlandığında değerler otomatik gösterilecek.",11,Color.GRAY));content.addView(financial);spacer(8);
+        '''
+    s=s.replace(financial_marker,financial+financial_marker,1)
+p.write_text(s,encoding='utf-8')
+print('v150 V18 financial screen PASS')
