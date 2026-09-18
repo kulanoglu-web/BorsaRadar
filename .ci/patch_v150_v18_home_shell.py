@@ -246,3 +246,20 @@ s=s.replace('bold("En güçlü adaylar",18,NAVY)','bold("En güçlü adaylar",18
 
 p.write_text(s,encoding='utf-8')
 print('V18 UI 7-11 navigation stability PASS')
+
+# V18 usability/stability pass: make added controls honest and actionable
+# Exchange chips: explicit navigation only, never auto-scan
+s=s.replace('content.addView(exchanges);','content.addView(exchanges);for(int i=0;i<exchanges.getChildCount();i++){final int mi=i;exchanges.getChildAt(i).setOnClickListener(v->{getSharedPreferences(PREFS,MODE_PRIVATE).edit().putInt("v18_market",mi).apply();Toast.makeText(this,"Piyasa seçildi — tarama yalnızca Tara ile başlar",Toast.LENGTH_SHORT).show();});}',1)
+# Strategy criteria are labels, not fake checked checkboxes
+s=s.replace('new String[]{"☑ Teknik Analiz","☑ Temel Analiz","☑ Haber Taraması","☑ Sektör Analizi","☑ Büyük Alıcı / Satıcı","☑ Finansal Güç","☑ Temettü Potansiyeli"}','new String[]{"Teknik Analiz","Temel Analiz","Haber Taraması","Sektör Analizi","Büyük Alıcı / Satıcı","Finansal Güç","Temettü Potansiyeli"}')
+# Financial and technical placeholders clearly unavailable rather than invented
+s=s.replace('technical.addView(txt(tr+"                         —",13','technical.addView(txt(tr+"                         Veri bekleniyor",13')
+s=s.replace('risk.addView(txt(rr+"                         —",13','risk.addView(txt(rr+"                         Veri bekleniyor",13')
+# Add persistent last-screen intent for core navigation
+s=s.replace('home.setOnClickListener(v->showHome());','home.setOnClickListener(v->{getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("v18_screen","home").apply();showHome();});')
+s=s.replace('radar.setOnClickListener(v->showRadar());','radar.setOnClickListener(v->{getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("v18_screen","radar").apply();showRadar();});')
+s=s.replace('portfolio.setOnClickListener(v->showPortfolio());','portfolio.setOnClickListener(v->{getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("v18_screen","portfolio").apply();showPortfolio();});')
+# Do not misrepresent Markets as Strategy: rename nav target until dedicated markets screen is wired
+s=s.replace('markets.setOnClickListener(v->showStrategySelection());','markets.setOnClickListener(v->{Toast.makeText(this,"Piyasalar ekranı hazırlanıyor",Toast.LENGTH_SHORT).show();});')
+p.write_text(s,encoding='utf-8')
+print('v150 V18 usability pass PASS')
