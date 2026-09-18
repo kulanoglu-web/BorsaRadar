@@ -16,7 +16,7 @@ p=Path('app/src/main/java/com/kulanoglu/borsaradar/DetailedChartController.java'
 c=p.read_text(encoding='utf-8')
 checks={
  'selected index':'ChartTimeframes.INTERVAL[i],range=ChartTimeframes.RANGE[i]' in c,
- 'fetch selected':'fetchSeries(symbol,range,interval,180)' in c,
+ 'fetch selected':'fetchSeries(symbol,range,interval,0)' in c,
  'visible period enforced':('maxVisiblePoints(i)' in c or 'aggregateHours(d,4)' in c)
 }
 for k,v in checks.items(): print('v142',k,v)
