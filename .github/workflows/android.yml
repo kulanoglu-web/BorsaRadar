@@ -94,6 +94,10 @@ jobs:
         run: base64 -d .ci/borsaradar-final.keystore.b64 > .ci/borsaradar-final.keystore
       - name: Build signed release APK
         run: gradle --no-daemon clean assembleRelease
+      - name: Verify signed APK
+        run: |
+          test -s app/build/outputs/apk/release/app-release.apk
+          ls -lh app/build/outputs/apk/release/app-release.apk
       - name: Prepare APK
         run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-V18.apk
       - uses: actions/upload-artifact@v4
