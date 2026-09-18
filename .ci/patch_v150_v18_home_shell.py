@@ -313,3 +313,12 @@ s=s.replace('shell("Portföyüm");','shell("Portföy");')
 s=s.replace('summary.addView(txt(x+"                         —",14','summary.addView(txt(x+"                         Veri bekleniyor",14')
 p.write_text(s,encoding='utf-8')
 print('V18 stability cleanup PASS')
+
+# V18 generated-source verification
+required=['showHome()','showMarkets()','showStrategySelection()','showMore()','Radar Sonuçları','Finansal Veriler','Teknik Analiz','Hedef Fiyat & Risk','Ana Sayfa','Piyasalar','Portföy']
+missing=[x for x in required if x not in s]
+if missing: raise SystemExit('V18 source missing: '+', '.join(missing))
+if 'analyzeStock(String symbol)' not in s: raise SystemExit('analysis entry point missing')
+if 'savePortfolio' not in s or 'loadPortfolio' not in s: raise SystemExit('portfolio persistence missing')
+p.write_text(s,encoding='utf-8')
+print('V18 source verification PASS')
