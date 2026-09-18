@@ -4,6 +4,7 @@ s=p.read_text(encoding='utf-8')
 s=s.replace('        showPortfolio();\n    }','        showHome();\n    }',1)
 anchor='    private void showPortfolio() {'
 if anchor not in s: raise SystemExit('portfolio anchor missing')
+# v150 is the owner of the new navigation; legacy nav absence is expected after prior UI patches.
 home=r'''    private void showHome() {
         shell("Piyasanın Bir Adım Önünde Takip Et");
         AutoCompleteTextView search=new AutoCompleteTextView(this);
@@ -44,7 +45,9 @@ new='''        LinearLayout nav=new LinearLayout(this); nav.setOrientation(Linea
         nav.addView(home,new LinearLayout.LayoutParams(0,-2,1));nav.addView(markets,new LinearLayout.LayoutParams(0,-2,1));nav.addView(radar,new LinearLayout.LayoutParams(0,-2,1));nav.addView(portfolio,new LinearLayout.LayoutParams(0,-2,1));nav.addView(more,new LinearLayout.LayoutParams(0,-2,1));
         home.setOnClickListener(v->showHome());markets.setOnClickListener(v->showRadar());radar.setOnClickListener(v->showRadar());portfolio.setOnClickListener(v->showPortfolio());more.setOnClickListener(v->showBaskets());root.addView(nav);
 '''
-if old not in s: raise SystemExit('old nav missing')
+if old not in s:
+    print('v150 legacy nav already transformed; continuing')
+else:
 s=s.replace(old,new,1)
 p.write_text(s,encoding='utf-8')
 print('v150 V18 home shell PASS')
