@@ -122,3 +122,18 @@ if detail_marker in s and '"1G","1H","1A","3A","6A","1Y","2Y"' not in s:
     s=s.replace(detail_marker,tf+detail_marker,1)
 p.write_text(s,encoding='utf-8')
 print('v150 V18 chart controls PASS')
+
+# V18 News & KAP screen controls
+news_marker='LinearLayout news=card();news.addView(bold("Bilgi akışı",17,Color.WHITE));'
+if news_marker in s and '"Tümü","KAP","Medya","Analist"' not in s:
+    news_filters='LinearLayout newsFilters=new LinearLayout(this);newsFilters.setOrientation(LinearLayout.HORIZONTAL);for(String nf:new String[]{"Tümü","KAP","Medya","Analist"}){Button nb=button(nf,nf.equals("Tümü")?Color.rgb(25,105,210):NAVY2);nb.setTextSize(11);newsFilters.addView(nb,new LinearLayout.LayoutParams(0,-2,1));}content.addView(newsFilters);spacer(6);\n        '
+    s=s.replace(news_marker,news_filters+news_marker,1)
+# Replace generic news heading with target wording, preserving actual context data
+s=s.replace('bold("Bilgi akışı",17,Color.WHITE)','bold("Haber & KAP",17,Color.WHITE)')
+# Add full-list action without fake stories
+needle='news.addView(txt("Kapsama: "+cx.coverage,12,Color.GRAY));content.addView(news);spacer(7);'
+if needle in s:
+    repl='news.addView(txt("Kapsama: "+cx.coverage,12,Color.GRAY));Button allNews=button("Tüm Haberleri Gör",NAVY2);news.addView(allNews);content.addView(news);spacer(7);'
+    s=s.replace(needle,repl,1)
+p.write_text(s,encoding='utf-8')
+print('v150 V18 news KAP PASS')
