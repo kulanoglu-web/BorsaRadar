@@ -25,29 +25,27 @@ jobs:
           # Re-applying historical mutation patches creates duplicate Java blocks.
           python3 .ci/patch_v47_release_build.py
 
-      - name: Verify final Radar source after all patches
+      - name: Verify consolidated production source
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java')
-          s=p.read_text(encoding='utf-8')
-          def method(name):
-              a=s.find(name)
-              if a<0: raise SystemExit('MISSING '+name)
-              b=s.find('\n    private ',a+len(name))
-              if b<0:b=len(s)
-              return s[a:b]
-          sh=method('private void shell(String page)')
-          sr=method('private void showRadar()')
-          sel=method('private LinearLayout radarMarketSelector(final boolean hourly)')
-          print('===== FINAL shell() ====='); print(sh)
-          print('===== FINAL showRadar() ====='); print(sr)
-          print('===== FINAL selector ====='); print(sel)
-          checks={'shell radarPage':'radarPage' in sh,'shell radar code':'radarCodeFor(displayMarket)' in sh,'shell radar title':'radarTitleFor(displayMarket)' in sh,'selector persists main':'putInt("radar_market_main",pick)' in sel,'showRadar reads selected':'radarMarketChoiceMain' in sr,'showRadar dynamic title':'radarTitleFor(' in sr}
-          print('===== CHECKS =====')
+          s=Path('app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java').read_text(encoding='utf-8')
+          d=Path('app/src/main/java/com/kulanoglu/borsaradar/DetailedChartController.java').read_text(encoding='utf-8')
+          t=Path('app/src/main/java/com/kulanoglu/borsaradar/ChartTimeframes.java').read_text(encoding='utf-8')
+          checks={
+            'radar manual scan':'Tüm BIST' in s and 'scanRadar()' in s,
+            'radar cache':'saveRadarCache()' in s and 'loadRadarCache()' in s,
+            'portfolio persistence':'savePortfolio()' in s and 'loadPortfolio()' in s,
+            'unified detail':'renderStockDetail(' in s and 'detailTimeframe' in s,
+            'live spot':'latestSpot(symbol)' in s,
+            'adjacent navigation':'adjacentSymbol(' in s,
+            'chart controller':'DetailedChartController.fetch' in s and 'fetchSeries' in d,
+            'timeframes':'2 yıl' in t and '5 dk' in t,
+          }
           for k,v in checks.items(): print(k,v)
-          if not all(checks.values()): raise SystemExit('Radar source verification FAILED')
+          if not all(checks.values()): raise SystemExit('Production source verification FAILED')
           PY
+
       - name: Restore signing key
         run: base64 -d .ci/borsaradar-final.keystore.b64 > .ci/borsaradar-final.keystore
       - name: Build signed release APK
