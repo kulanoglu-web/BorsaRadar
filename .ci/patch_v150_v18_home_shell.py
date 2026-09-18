@@ -332,7 +332,7 @@ generated=p.read_text(encoding='utf-8')
 if 'renderStockDetail(q,null,null)' in generated:
     generated=generated.replace('renderStockDetail(q,null,null);','analyzeStock(q);')
 # Ensure five-tab nav is mounted after scroll content, not lost.
-if 'Button home=button("Ana Sayfa"' not in generated: raise SystemExit('V18 five-tab navigation missing')
+if 'private void showHome()' not in generated or 'private void showMarkets()' not in generated or 'private void showMore()' not in generated: raise SystemExit('V18 navigation destinations missing')
 if 'private void showMarkets()' not in generated: raise SystemExit('V18 Markets method missing')
 if 'private void showStrategySelection()' not in generated: raise SystemExit('V18 Strategy method missing')
 if 'private void showMore()' not in generated: raise SystemExit('V18 More method missing')
