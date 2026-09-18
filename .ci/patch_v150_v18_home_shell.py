@@ -57,3 +57,13 @@ s=s.replace('marketCard.addView(bold("Piyasa Özeti",18,NAVY));','marketCard.add
 s=s.replace('content.addView(bold("Günün Öne Çıkanları",18,NAVY));','content.addView(bold("Günün Öne Çıkanları",18,Color.WHITE));')
 p.write_text(s,encoding='utf-8')
 print('v150 V18 dark theme PASS')
+
+# V18 home spacing / density pass
+s=s.replace('content.setPadding(dp(10),dp(8),dp(10),dp(14))','content.setPadding(dp(12),dp(10),dp(12),dp(16))')
+s=s.replace('head.setOrientation(LinearLayout.VERTICAL); head.setPadding(dp(16),dp(12),dp(16),dp(10));','head.setOrientation(LinearLayout.VERTICAL); head.setPadding(dp(16),dp(16),dp(16),dp(12));')
+s=s.replace('brand=bold("BORSA RADAR",23,Color.WHITE)','brand=bold("BorsaRadar",24,Color.WHITE)')
+s=s.replace('search.setHint("Hisse ara (ör. THYAO, NVDA, SAP)...");','search.setHint("Hisse, şirket veya kod ara..."); search.setTextColor(Color.WHITE); search.setHintTextColor(Color.rgb(126,148,174)); search.setBackgroundColor(Color.rgb(13,26,45)); search.setPadding(dp(14),0,dp(14),0);')
+s=s.replace('modes.addView(fast,new LinearLayout.LayoutParams(0,dp(66),1));modes.addView(shortB,new LinearLayout.LayoutParams(0,dp(66),1));modes.addView(div,new LinearLayout.LayoutParams(0,dp(66),1));modes.addView(lng,new LinearLayout.LayoutParams(0,dp(66),1));','modes.addView(fast,new LinearLayout.LayoutParams(0,dp(72),1));modes.addView(shortB,new LinearLayout.LayoutParams(0,dp(72),1));modes.addView(div,new LinearLayout.LayoutParams(0,dp(72),1));modes.addView(lng,new LinearLayout.LayoutParams(0,dp(72),1));')
+s=s.replace('highlights.addView(b,new LinearLayout.LayoutParams(0,dp(64),1));','highlights.addView(b,new LinearLayout.LayoutParams(0,dp(72),1));')
+p.write_text(s,encoding='utf-8')
+print('v150 V18 home density PASS')
