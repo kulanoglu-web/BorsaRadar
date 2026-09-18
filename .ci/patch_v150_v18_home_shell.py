@@ -263,3 +263,19 @@ s=s.replace('portfolio.setOnClickListener(v->showPortfolio());','portfolio.setOn
 s=s.replace('markets.setOnClickListener(v->showStrategySelection());','markets.setOnClickListener(v->{Toast.makeText(this,"Piyasalar ekranı hazırlanıyor",Toast.LENGTH_SHORT).show();});')
 p.write_text(s,encoding='utf-8')
 print('v150 V18 usability pass PASS')
+
+# Dedicated V18 Markets screen
+anchor='    private void showStrategySelection() {'
+if anchor in s and 'private void showMarkets()' not in s:
+    method='''    private void showMarkets() {
+        shell("Piyasalar");
+        LinearLayout pick=card();pick.addView(bold("Piyasa Seçimi",18,Color.WHITE));LinearLayout row=new LinearLayout(this);row.setOrientation(LinearLayout.HORIZONTAL);for(String x:new String[]{"BIST","Almanya","ABD","Tümü"}){Button b=button(x,NAVY2);row.addView(b,new LinearLayout.LayoutParams(0,dp(44),1));b.setOnClickListener(v->{getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("v18_market_name",x).apply();Toast.makeText(this,x+" seçildi",Toast.LENGTH_SHORT).show();});}pick.addView(row);content.addView(pick);spacer(8);
+        LinearLayout summary=card();summary.addView(bold("Piyasa Özeti",18,Color.WHITE));for(String x:new String[]{"BIST 100","DAX","S&P 500","NASDAQ"})summary.addView(txt(x+"                         —",14,Color.rgb(164,181,202)));content.addView(summary);spacer(8);
+        Button scan=button("Radar Taramasına Git",GREEN);scan.setOnClickListener(v->showRadar());content.addView(scan,new LinearLayout.LayoutParams(-1,dp(52)));
+    }
+
+'''
+    s=s.replace(anchor,method+anchor,1)
+s=s.replace('markets.setOnClickListener(v->{Toast.makeText(this,"Piyasalar ekranı hazırlanıyor",Toast.LENGTH_SHORT).show();});','markets.setOnClickListener(v->{getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("v18_screen","markets").apply();showMarkets();});')
+p.write_text(s,encoding='utf-8')
+print('V18 markets screen PASS')
