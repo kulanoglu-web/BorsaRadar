@@ -304,3 +304,12 @@ s=s.replace('Radar sonucu yok.','Radar sonucu yok. Taramayı başlatmak için Ta
 s=s.replace('profile.addView(txt("Piyasa araçları ve uygulama seçenekleri",13,Color.rgb(164,181,202)));','profile.addView(txt("Piyasa araçları ve uygulama seçenekleri",13,Color.rgb(164,181,202)));profile.addView(txt("V18 UI • veri olmayan alanlarda tahmin gösterilmez",11,Color.GRAY));')
 p.write_text(s,encoding='utf-8')
 print('V18 20-step interaction pass PASS')
+
+# V18 stability cleanup
+s=s.replace('renderStockDetail(q,null,null);','analyzeStock(q);')
+s=s.replace('more.setOnClickListener(v->showBaskets());','more.setOnClickListener(v->showMore());')
+s=s.replace('markets.setOnClickListener(v->showRadar());','markets.setOnClickListener(v->showMarkets());')
+s=s.replace('shell("Portföyüm");','shell("Portföy");')
+s=s.replace('summary.addView(txt(x+"                         —",14','summary.addView(txt(x+"                         Veri bekleniyor",14')
+p.write_text(s,encoding='utf-8')
+print('V18 stability cleanup PASS')
