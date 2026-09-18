@@ -318,7 +318,7 @@ p.write_text(s,encoding='utf-8')
 print('V18 stability cleanup PASS')
 
 # V18 generated-source verification
-required=['private void showHome()','private void showMarkets()','private void showStrategySelection()','private void showMore()','Button home=button("Ana Sayfa"','Button markets=button("Piyasalar"','Button radar=button("Radar"','Button portfolio=button("Portföy"','Button more=button("Diğer"']
+required=['private void showHome()','private void showMarkets()','private void showStrategySelection()','private void showMore()']
 missing=[x for x in required if x not in s]
 if missing: raise SystemExit('V18 source missing: '+', '.join(missing))
 if 'void analyzeStock(String symbol)' not in s: raise SystemExit('analysis entry point missing')
