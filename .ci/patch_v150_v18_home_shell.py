@@ -67,3 +67,25 @@ s=s.replace('modes.addView(fast,new LinearLayout.LayoutParams(0,dp(66),1));modes
 s=s.replace('highlights.addView(b,new LinearLayout.LayoutParams(0,dp(64),1));','highlights.addView(b,new LinearLayout.LayoutParams(0,dp(72),1));')
 p.write_text(s,encoding='utf-8')
 print('v150 V18 home density PASS')
+
+# V18 Radar Results visual pass
+radar_old='''    private void renderRadarList(List<RadarItem> items,int max) {
+        items.sort((a,b)->Double.compare(b.score,a.score)); content.addView(bold("En güçlü adaylar",18,NAVY)); int n=Math.min(max,items.size());'''
+radar_new='''    private void renderRadarList(List<RadarItem> items,int max) {
+        items.sort((a,b)->Double.compare(b.score,a.score));
+        content.addView(bold("Radar Sonuçları",20,Color.WHITE));
+        LinearLayout filters=new LinearLayout(this); filters.setOrientation(LinearLayout.HORIZONTAL);
+        for(String f:new String[]{"Tümü","AL Sinyali","İzle","SAT"}){Button b=button(f,f.equals("Tümü")?Color.rgb(25,105,210):NAVY2);filters.addView(b,new LinearLayout.LayoutParams(0,-2,1));}
+        content.addView(filters); spacer(6);
+        LinearLayout selectors=new LinearLayout(this);selectors.setOrientation(LinearLayout.HORIZONTAL);
+        for(String f:new String[]{"BIST100","Tüm Sektörler","Teknik + Temel"}){Button b=button(f,NAVY2);selectors.addView(b,new LinearLayout.LayoutParams(0,-2,1));}
+        content.addView(selectors);spacer(8);
+        LinearLayout header=new LinearLayout(this);header.setOrientation(LinearLayout.HORIZONTAL);header.setBackgroundColor(Color.rgb(13,26,45));
+        String[] cols={"Kod","Son Fiyat","Skor","Sinyal"};for(String col:cols){TextView t=bold(col,12,Color.rgb(164,181,202));header.addView(t,new LinearLayout.LayoutParams(0,-2,1));}content.addView(header);
+        int n=Math.min(max,items.size());'''
+if radar_old in s:s=s.replace(radar_old,radar_new,1)
+old_loop='''for(int i=0;i<n;i++){RadarItem r=items.get(i);LinearLayout c=card();int col=r.recommendation.contains("SAT")||r.recommendation.contains("RİSK")?RED:r.recommendation.contains("AL")?GREEN:AMBER;c.addView(bold((i+1)+". "+r.symbol+"   "+r.recommendation,18,col));c.addView(txt("Fiyat "+money(r.price,r.symbol)+"  •  Pulse "+fmt(r.score)+"  •  Güven %"+(int)r.confidence+"  •  "+r.horizon,13,Color.DKGRAY));c.addView(txt(r.why,12,Color.GRAY));Button d=button("Grafik / Detay + Haber",NAVY2);c.addView(d);d.setOnClickListener(v->analyzeStock(r.symbol));content.addView(c);spacer(6);}'''
+new_loop='''for(int i=0;i<n;i++){RadarItem r=items.get(i);int col=r.recommendation.contains("SAT")||r.recommendation.contains("RİSK")?RED:r.recommendation.contains("AL")?GREEN:AMBER;LinearLayout row=new LinearLayout(this);row.setOrientation(LinearLayout.HORIZONTAL);row.setGravity(Gravity.CENTER_VERTICAL);row.setBackgroundColor(i%2==0?Color.rgb(10,22,39):Color.rgb(13,27,47));TextView code=bold(r.symbol,14,Color.WHITE),price=txt(money(r.price,r.symbol),13,Color.WHITE),score=txt(fmt(r.score),13,Color.rgb(164,181,202));Button sig=button(r.recommendation,col);row.addView(code,new LinearLayout.LayoutParams(0,dp(52),1));row.addView(price,new LinearLayout.LayoutParams(0,dp(52),1));row.addView(score,new LinearLayout.LayoutParams(0,dp(52),1));row.addView(sig,new LinearLayout.LayoutParams(0,dp(46),1));row.setOnClickListener(v->analyzeStock(r.symbol));sig.setOnClickListener(v->analyzeStock(r.symbol));content.addView(row);}'''
+if old_loop in s:s=s.replace(old_loop,new_loop,1)
+p.write_text(s,encoding='utf-8')
+print('v150 V18 radar table PASS')
