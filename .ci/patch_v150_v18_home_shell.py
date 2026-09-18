@@ -48,7 +48,7 @@ new='''        LinearLayout nav=new LinearLayout(this); nav.setOrientation(Linea
 if old not in s:
     print('v150 legacy nav already transformed; continuing')
 else:
-s=s.replace(old,new,1)
+    s=s.replace(old,new,1)
 p.write_text(s,encoding='utf-8')
 print('v150 V18 home shell PASS')
 
