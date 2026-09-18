@@ -74,6 +74,59 @@ jobs:
           python3 .ci/patch_v92_runtime_detail_portfolio.py
           python3 .ci/patch_v93_hourly_fake_portfolio_ui.py
           python3 .ci/patch_v94_cross_market_scan_selector.py
+          python3 .ci/patch_v95_portfolio_persistence.py
+          python3 .ci/patch_v96_portfolio_add_fix.py
+          python3 .ci/patch_v97_radar_market_state.py
+          python3 .ci/patch_v98_chart_trade_levels.py
+          python3 .ci/patch_v99_portfolio_market_routing.py
+          python3 .ci/patch_v100_hourly_scan_speed.py
+          python3 .ci/patch_v101_single_stock_no_freeze.py
+          python3 .ci/patch_v104_radar_detail_state_portfolio.py
+          python3 .ci/patch_v105_portfolio_qty_unified_detail.py
+          python3 .ci/patch_v106_radar_market_sync.py
+          python3 .ci/patch_v107_detail_unlock.py
+          python3 .ci/patch_v108_portfolio_switch.py
+          python3 .ci/patch_v110_portfolio_safe_switch.py
+          python3 .ci/patch_v111_startup_recovery.py
+          python3 .ci/patch_v112_single_stock_portfolio_fix.py
+          python3 .ci/patch_v113_manual_scan_switch.py
+          python3 .ci/patch_v114_market_result_isolation.py
+          python3 .ci/patch_v115_portfolio_selector_restore.py
+          python3 .ci/patch_v116_portfolio_shell_guard.py
+          python3 .ci/patch_v117_market_and_portfolio_state.py
+          python3 .ci/patch_v118_radar_screen_separation.py
+          python3 .ci/patch_v119_radar_scan_lock.py
+          python3 .ci/patch_v120_compile_scope_guard.py
+          python3 .ci/patch_v122_radar_selected_market_render.py
+          python3 .ci/patch_v123_radar_unlock.py
+          python3 .ci/patch_v124_radar_completion_state.py
+          python3 .ci/patch_v125_restore_radar_finish.py
+          python3 .ci/patch_v126_radar_header_selected_market.py
+          python3 .ci/patch_v127_selector_single_source.py
+          python3 .ci/patch_v128_force_selected_market_labels.py
+          python3 .ci/patch_v129_rebuild_radar_header_block.py
+          python3 .ci/patch_v130_shell_radar_market.py
+          python3 .ci/patch_v132_radar_market_state_fix.py
+          python3 .ci/patch_v133_radar_render_context.py
+          python3 .ci/patch_v134_radar_text_above_scan.py
+          python3 .ci/patch_v135_radar_card_selected_market.py
+          python3 .ci/patch_v136_restore_four_market_selector.py
+          python3 .ci/patch_v137_detail_design_step1.py
+          python3 .ci/patch_v138_detail_tabs_functional.py
+          python3 .ci/patch_v139_hourly_results_restore.py
+          python3 .ci/patch_v140_timeframe_no_blank.py
+          python3 .ci/patch_v141_detail_back_previous.py
+          python3 .ci/patch_v142_bist_timeframes.py
+          python3 .ci/patch_v143_bist_intraday_fallback.py
+          python3 .ci/patch_v144_bist_same_as_usa_timeframe_path.py
+          python3 .ci/patch_v146_bist_yahoo_symbol_encoding.py
+          python3 .ci/patch_v147_chart_selection_truth.py
+          python3 .ci/patch_v147_detail_initial_timeframe_selection.py
+          python3 .ci/patch_v148_timeframe_single_source.py
+          python3 .ci/patch_v149_timeframe_click_reliable.py
+          python3 .ci/patch_v150_intraday_analysis_context.py
+          python3 .ci/patch_v152_clean_timeframes.py
+          python3 .ci/patch_v154_reuse_single_stock_chart.py
           python3 .ci/patch_v47_release_build.py
       - name: Verify final Radar source after all patches
         run: |
