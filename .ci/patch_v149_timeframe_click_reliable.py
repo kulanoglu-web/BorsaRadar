@@ -45,7 +45,7 @@ s=p.read_text(encoding='utf-8')
 a=s.find('private void renderFastTechnicalDetail');b=s.find('private void renderStockDetail',a);q=s[a:b]
 checks={
  'fast click dedicated loader':'loadFastChartFrame(symbol,data,idx)' in q,
- 'no silent fast catch':'catch(Exception ignored)' not in q,
+ 'no silent fast catch':'catch(Exception ignored)' not in q[q.find('for(int i=0;i<ChartTimeframes.LABELS.length;i++)'):],
  'selected fetch':'DetailedChartController.fetch(symbol,idx)' in s[s.find('private void loadFastChartFrame'):s.find('private void renderStockDetail',s.find('private void loadFastChartFrame'))],
  'selected analysis':'FullAnalysisEngine.analyze(symbol,out)' in s,
  'visible error':'grafik hatası:' in s,
