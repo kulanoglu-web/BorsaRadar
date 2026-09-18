@@ -224,15 +224,17 @@ public class MainActivity extends Activity {
         if(symbol==null||symbol.trim().length()<2){Toast.makeText(this,"Geçerli hisse seç",Toast.LENGTH_SHORT).show();return;}
         symbol=parseSymbol(symbol.toUpperCase(Locale.ROOT)); detailSymbol=symbol;
         detailTimeframe=ChartTimeframes.clamp(timeframe);
-        shell(symbol+" • analiz"); ProgressBar p=new ProgressBar(this);content.addView(p);content.addView(txt("Teknik veri + grafik + haber/katalizör bağlamı alınıyor…",15,NAVY));
+        final String selectedSymbol=symbol;
+        final int selectedTimeframe=detailTimeframe;
+        shell(selectedSymbol+" • analiz"); ProgressBar p=new ProgressBar(this);content.addView(p);content.addView(txt("Teknik veri + grafik + haber/katalizör bağlamı alınıyor…",15,NAVY));
         io.execute(()->{try{
-            List<MarketDataService.Candle> base=MarketDataService.fetchDaily(symbol,"6mo");
+            List<MarketDataService.Candle> base=MarketDataService.fetchDaily(selectedSymbol,"6mo");
             ShortPulseEngine.Result r=ShortPulseEngine.analyze(base);
-            MarketDataService.Spot spot=MarketDataService.latestSpot(symbol);
-            CatalystContextEngine.Result cx=CatalystContextEngine.analyze(symbol,r.score);
-            List<MarketDataService.Candle> chart=DetailedChartController.fetch(symbol,detailTimeframe);
-            main.post(()->renderStockDetail(symbol,r,cx,chart));
-        }catch(Exception e){main.post(()->{shell(symbol+" • analiz");content.addView(txt("Veri alınamadı: "+e.getMessage(),15,RED));});}});
+            MarketDataService.Spot spot=MarketDataService.latestSpot(selectedSymbol);
+            CatalystContextEngine.Result cx=CatalystContextEngine.analyze(selectedSymbol,r.score);
+            List<MarketDataService.Candle> chart=DetailedChartController.fetch(selectedSymbol,selectedTimeframe);
+            main.post(()->renderStockDetail(selectedSymbol,r,cx,chart));
+        }catch(Exception e){main.post(()->{shell(selectedSymbol+" • analiz");content.addView(txt("Veri alınamadı: "+e.getMessage(),15,RED));});}});
     }
 
     private void renderStockDetail(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx,List<MarketDataService.Candle> chart) {
