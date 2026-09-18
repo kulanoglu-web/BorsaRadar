@@ -340,6 +340,31 @@ if 'private void showMore()' not in generated: raise SystemExit('V18 More method
 if 'loadPortfolio();' not in generated or 'savePortfolio' not in generated: raise SystemExit('portfolio persistence regression')
 # Never permit a null-analysis detail invocation.
 if 'renderStockDetail(q,null,null)' in generated: raise SystemExit('unsafe detail invocation')
+# V18 runtime takeover: late patches may recreate legacy shell; replace the FINAL generated shell.
+import re
+shell_pattern=r'    private void shell\(String page\) \{.*?\n    \}\n\n    private void '
+m=re.search(shell_pattern,generated,re.S)
+if not m: raise SystemExit('final shell method not found')
+new_shell='''    private void shell(String page) {
+        LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(BG);
+        LinearLayout head=new LinearLayout(this); head.setOrientation(LinearLayout.VERTICAL); head.setPadding(dp(16),dp(12),dp(16),dp(8)); head.setBackgroundColor(Color.rgb(7,18,33));
+        TextView brand=bold("BorsaRadar",22,Color.WHITE); brand.setPadding(0,0,0,0); head.addView(brand);
+        TextView sub=txt(page,12,Color.rgb(164,181,202)); sub.setPadding(0,2,0,0); head.addView(sub); root.addView(head);
+        ScrollView sv=new ScrollView(this); content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(10),dp(8),dp(10),dp(14)); sv.addView(content); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
+        LinearLayout nav=new LinearLayout(this); nav.setOrientation(LinearLayout.HORIZONTAL); nav.setBackgroundColor(Color.rgb(7,18,33));
+        Button home=button("Ana Sayfa",NAVY2), markets=button("Piyasalar",NAVY2), radar=button("Radar",Color.rgb(25,105,210)), portfolio=button("Portföy",NAVY2), more=button("Diğer",NAVY2);
+        nav.addView(home,new LinearLayout.LayoutParams(0,dp(58),1)); nav.addView(markets,new LinearLayout.LayoutParams(0,dp(58),1)); nav.addView(radar,new LinearLayout.LayoutParams(0,dp(58),1)); nav.addView(portfolio,new LinearLayout.LayoutParams(0,dp(58),1)); nav.addView(more,new LinearLayout.LayoutParams(0,dp(58),1));
+        home.setOnClickListener(v->showHome()); markets.setOnClickListener(v->showMarkets()); radar.setOnClickListener(v->showRadar()); portfolio.setOnClickListener(v->showPortfolio()); more.setOnClickListener(v->showMore()); root.addView(nav); setContentView(root);
+    }
+
+    private void '''
+generated=generated[:m.start()]+new_shell+generated[m.end():]
+generated=generated.replace('loadRadarCache();\\n        showPortfolio();','loadRadarCache();\\n        showHome();',1)
+if 'Button home=button("Ana Sayfa"' not in generated: raise SystemExit('final V18 bottom navigation not installed')
+if 'showHome();' not in generated: raise SystemExit('V18 startup not installed')
+p.write_text(generated,encoding='utf-8')
+print('V18 final runtime shell takeover PASS')
+
 # Compile safety: normalize autocomplete symbols without relying on removed legacy helper.
 generated=generated.replace('String sym=parseSymbol(String.valueOf(a.getItemAtPosition(pos)))','String sym=String.valueOf(a.getItemAtPosition(pos)).trim().toUpperCase().split("\\\\s+")[0]')
 p.write_text(generated,encoding='utf-8')
