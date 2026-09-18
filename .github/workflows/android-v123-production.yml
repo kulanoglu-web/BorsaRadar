@@ -114,16 +114,6 @@ jobs:
           python3 .ci/patch_v137_detail_design_step1.py
           python3 .ci/patch_v138_detail_tabs_functional.py
           python3 .ci/patch_v140_timeframe_no_blank.py
-          python3 .ci/patch_v143_bist_intraday_fallback.py
-          python3 .ci/patch_v144_bist_same_as_usa_timeframe_path.py
-          python3 .ci/patch_v146_bist_yahoo_symbol_encoding.py
-          python3 .ci/patch_v147_chart_selection_truth.py
-          python3 .ci/patch_v147_detail_initial_timeframe_selection.py
-          python3 .ci/patch_v148_timeframe_single_source.py
-          python3 .ci/patch_v149_timeframe_click_reliable.py
-          python3 .ci/patch_v150_intraday_analysis_context.py
-          python3 .ci/patch_v152_clean_timeframes.py
-          python3 .ci/patch_v154_reuse_single_stock_chart.py
           python3 .ci/patch_v47_release_build.py
       - name: Verify final Radar source after all patches
         run: |
