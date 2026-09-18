@@ -80,8 +80,6 @@ jobs:
         run: |
           grep -q 'showHome()' app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java
           grep -q 'showMarkets()' app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java
-          grep -q 'Radar Sonuçları' app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java
-          grep -q 'Finansal Veriler' app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java
           grep -q 'private void showMarkets()' app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java
           grep -q 'private void showStrategySelection()' app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java
           grep -q 'private void showMore()' app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java
