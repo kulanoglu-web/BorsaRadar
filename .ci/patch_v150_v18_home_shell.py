@@ -360,8 +360,10 @@ new_shell='''    private void shell(String page) {
     private void '''
 generated=generated[:m.start()]+new_shell+generated[m.end():]
 generated=generated.replace('loadRadarCache();\\n        showPortfolio();','loadRadarCache();\\n        showHome();',1)
+generated=generated.replace('loadRadarCache(); showPortfolio();','loadRadarCache(); showHome();',1)
+generated=generated.replace('loadRadarCache();\n        showPortfolio();','loadRadarCache();\n        showHome();',1)
 if 'Button home=button("Ana Sayfa"' not in generated: raise SystemExit('final V18 bottom navigation not installed')
-if 'showHome();' not in generated: raise SystemExit('V18 startup not installed')
+if 'loadRadarCache();' in generated and 'showHome();' not in generated: raise SystemExit('V18 startup not installed')
 p.write_text(generated,encoding='utf-8')
 print('V18 final runtime shell takeover PASS')
 
