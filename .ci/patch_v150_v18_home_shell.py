@@ -191,3 +191,58 @@ s=s.replace('shortB.setOnClickListener(v->showBaskets());div.setOnClickListener(
 s=s.replace('Color.DKGRAY','Color.rgb(164,181,202)')
 p.write_text(s,encoding='utf-8')
 print('v150 V18 UI 7-11 + navigation PASS')
+
+# V18 UI 7-11 + navigation/stability pass
+
+# 7/11 Technical Analysis panel
+tech_anchor='LinearLayout financial=card();'
+if tech_anchor in s and 'Genel Teknik Görünüm' not in s:
+    tech='''LinearLayout technical=card();technical.addView(bold("Teknik Analiz",18,Color.WHITE));String[][] ti={{"RSI","Momentum"},{"MACD","Trend"},{"Stochastic","Momentum"},{"CCI","Momentum"},{"EMA20 / 50 / 200","Trend"},{"Bollinger","Volatilite"},{"ATR","Risk"},{"SuperTrend","Trend"},{"Fibonacci","Seviye"}};for(String[] x:ti){technical.addView(txt(x[0]+"   •   "+x[1],13,Color.rgb(164,181,202)));}technical.addView(bold("Genel Teknik Görünüm",16,Color.WHITE));technical.addView(txt("Sinyal ve güven değerleri mevcut analiz motorundan hesaplanır.",12,Color.GRAY));content.addView(technical);spacer(8);
+        '''
+    s=s.replace(tech_anchor,tech+tech_anchor,1)
+
+# 8/11 Target Price & Risk
+risk_anchor='Button add=button("Portföye Ekle",GREEN);content.addView(add);'
+if risk_anchor in s and 'Hedef Fiyat & Risk' not in s:
+    risk='''LinearLayout risk=card();risk.addView(bold("Hedef Fiyat & Risk",18,Color.WHITE));risk.addView(txt("Kısa Vade Hedefi     —",13,Color.rgb(164,181,202)));risk.addView(txt("Orta Vade Hedefi     —",13,Color.rgb(164,181,202)));risk.addView(txt("Uzun Vade Hedefi     —",13,Color.rgb(164,181,202)));risk.addView(txt("Destek / Direnç      —",13,Color.rgb(164,181,202)));risk.addView(txt("Stop Referansı       "+money(r.stopReference,symbol),13,Color.rgb(164,181,202)));risk.addView(txt("Getiri / Risk        —",13,Color.rgb(164,181,202)));content.addView(risk);spacer(8);
+        '''
+    s=s.replace(risk_anchor,risk+risk_anchor,1)
+
+# 9/11 Portfolio visual header
+port_anchor='shell("Portföyüm");'
+if port_anchor in s and 'Toplam Portföy' not in s:
+    s=s.replace(port_anchor,port_anchor+''' LinearLayout summary=card();summary.addView(bold("Toplam Portföy",18,Color.WHITE));summary.addView(txt("Güncel değer ve günlük değişim, fiyatlar yenilendiğinde hesaplanır.",12,Color.rgb(164,181,202)));content.addView(summary);spacer(8);''',1)
+
+# 10/11 Strategy Selection screen
+basket_anchor='shell("100.000 TL • 3 Sepet");'
+if basket_anchor in s and 'Strateji Seçimi' not in s:
+    s=s.replace(basket_anchor,'''shell("Strateji Seçimi"); LinearLayout strategy=card();strategy.addView(bold("Strateji Seçimi",20,Color.WHITE));LinearLayout strategyButtons=new LinearLayout(this);for(String st:new String[]{"Kısa Vade","Temettü","Uzun Vade"}){Button sb=button(st,NAVY2);strategyButtons.addView(sb,new LinearLayout.LayoutParams(0,dp(64),1));}strategy.addView(strategyButtons);for(String criterion:new String[]{"✓ Teknik Analiz","✓ Temel Analiz","✓ Haber Taraması","✓ Sektör Analizi","✓ Büyük Alıcı / Satıcı","✓ Finansal Güç","✓ Temettü Potansiyeli"})strategy.addView(txt(criterion,14,Color.rgb(190,205,224)));Button startScan=button("Taramayı Başlat",GREEN);strategy.addView(startScan);startScan.setOnClickListener(v->showRadar());content.addView(strategy);spacer(8);''',1)
+
+# 11/11 More screen
+portfolio_method='    private void showPortfolio() {'
+if portfolio_method in s and 'private void showMore()' not in s:
+    more='''    private void showMore() {
+        shell("Diğer"); LinearLayout profile=card();profile.addView(bold("BorsaRadar",20,Color.WHITE));profile.addView(txt("Piyasa araçları ve uygulama seçenekleri",13,Color.rgb(164,181,202)));content.addView(profile);spacer(8);
+        for(String item:new String[]{"Piyasa Takvimi","Sektörler","Favorilerim","Alarmlar","Hisse Karşılaştırma","Döviz / Altın / Emtia","Ekonomik Veriler","Ayarlar","Yardım & Destek","Hakkında","Çıkış Yap"}){Button b=button(item,NAVY2);content.addView(b,new LinearLayout.LayoutParams(-1,dp(50)));spacer(4);}
+    }
+
+'''
+    s=s.replace(portfolio_method,more+portfolio_method,1)
+
+# Navigation: More must open More, Piyasalar remains non-scanning market view via radar screen
+s=s.replace('more.setOnClickListener(v->showBaskets())','more.setOnClickListener(v->showMore())')
+
+# Bottom-nav visual placement: move nav from above content to below scroll view
+old='home.setOnClickListener(v->showHome());markets.setOnClickListener(v->showRadar());radar.setOnClickListener(v->showRadar());portfolio.setOnClickListener(v->showPortfolio());more.setOnClickListener(v->showMore());root.addView(nav);'
+new='home.setOnClickListener(v->showHome());markets.setOnClickListener(v->showRadar());radar.setOnClickListener(v->showRadar());portfolio.setOnClickListener(v->showPortfolio());more.setOnClickListener(v->showMore());'
+s=s.replace(old,new)
+foot='TextView foot=txt("BorsaRadar • teknik + haber/katalizör bağlamı",11,Color.rgb(100,110,124)); foot.setGravity(Gravity.CENTER); root.addView(foot); setContentView(root);'
+if foot in s:s=s.replace(foot,'root.addView(nav); setContentView(root);')
+
+# Dark-card text cleanup for key legacy sections
+s=s.replace('bold("Portföy boş",19,NAVY)','bold("Portföy boş",19,Color.WHITE)')
+s=s.replace('bold("Tüm hisseler • hafif tarama",19,NAVY)','bold("Radar Taraması",19,Color.WHITE)')
+s=s.replace('bold("En güçlü adaylar",18,NAVY)','bold("En güçlü adaylar",18,Color.WHITE)')
+
+p.write_text(s,encoding='utf-8')
+print('V18 UI 7-11 navigation stability PASS')
