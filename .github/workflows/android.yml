@@ -86,6 +86,8 @@ jobs:
           grep -q 'private void showStrategySelection()' app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java
           grep -q 'private void showMore()' app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java
           ! grep -q 'renderStockDetail(q,null,null)' app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java
+      - name: Compile Java before signing
+        run: gradle --no-daemon :app:compileReleaseJavaWithJavac
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
