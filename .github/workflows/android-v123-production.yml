@@ -19,102 +19,12 @@ jobs:
         with:
           gradle-version: '8.11.1'
           cache-disabled: true
-      - name: Apply app patches through v155
+      - name: Prepare current production source
         run: |
-          echo "v153 production build"
-          python3 .ci/patch_v31.py
-          python3 .ci/patch_v37.py
-          python3 .ci/patch_v38.py
-          python3 .ci/patch_v41_market.py
-          python3 .ci/patch_v41_ui.py
-          python3 .ci/patch_v42_autocomplete_fix.py
-          python3 .ci/patch_v48_full_analysis.py
-          python3 .ci/patch_v49_buildfix.py
-          python3 .ci/patch_v50_two_stage_radar.py
-          python3 .ci/patch_v52_multi_technical_radar.py
-          python3 .ci/patch_v51_portfolio_decisions.py
-          python3 .ci/patch_v53_euro_display.py
-          python3 .ci/verify_preserved_technical_set.py
-          python3 .ci/patch_v41_version.py
-          python3 .ci/patch_v54_exchange_profiles.py
-          python3 .ci/patch_v55_profit_strategy.py
-          python3 .ci/patch_v56_inspired_dark_ui.py
-          python3 .ci/patch_v57_fix_dark_nav.py
-          python3 .ci/patch_v57_trade_detail.py
-          python3 .ci/patch_v59_continuous_radar.py
-          python3 .ci/patch_v60_detail_priority.py
-          python3 .ci/patch_v62_fast_detail_preview.py
-          python3 .ci/patch_v63_scan_retry_errors.py
-          python3 .ci/patch_v64_parallel_scan.py
-          python3 .ci/patch_v65_hourly_tab.py
-          python3 .ci/patch_v66_hourly_gate_hook.py
-          python3 .ci/patch_v68_decision_guard.py
-          python3 .ci/patch_v69_full_timeframes.py
-          python3 .ci/patch_v70_short_target.py
-          python3 .ci/patch_v71_fast_detail_load.py
-          python3 .ci/patch_v72_runtime_guard.py
-          python3 .ci/patch_v73_instant_detail.py
-          python3 .ci/patch_v74_hourly_fast.py
-          python3 .ci/patch_v75_back_navigation.py
-          python3 .ci/patch_v76_hourly_progressive.py
-          python3 .ci/patch_v77_detail_no_spinner.py
-          python3 .ci/patch_v78_detail_sync.py
-          python3 .ci/patch_v79_detail_price_frame.py
-          python3 .ci/patch_v81_icon_detail.py
-          python3 .ci/patch_v82_detail_price_and_tabs.py
-          python3 .ci/patch_v83_quote_refresh.py
-          python3 .ci/patch_v84_single_stock_results.py
-          python3 .ci/patch_v85_stable_single_stock.py
-          python3 .ci/patch_v86_unified_chart_detail.py
-          python3 .ci/patch_v87_fx_quote_fallback.py
-          python3 .ci/patch_v88_detail_controls_paper_portfolio.py
-          python3 .ci/patch_v89_paper_portfolio_metrics.py
-          python3 .ci/patch_v90_portfolio_pnl_charts.py
-          python3 .ci/patch_v91_portfolio_backup_restore.py
-          python3 .ci/patch_v92_runtime_detail_portfolio.py
-          python3 .ci/patch_v93_hourly_fake_portfolio_ui.py
-          python3 .ci/patch_v94_cross_market_scan_selector.py
-          python3 .ci/patch_v95_portfolio_persistence.py
-          python3 .ci/patch_v96_portfolio_add_fix.py
-          python3 .ci/patch_v97_radar_market_state.py
-          python3 .ci/patch_v98_chart_trade_levels.py
-          python3 .ci/patch_v99_portfolio_market_routing.py
-          python3 .ci/patch_v100_hourly_scan_speed.py
-          python3 .ci/patch_v101_single_stock_no_freeze.py
-          python3 .ci/patch_v104_radar_detail_state_portfolio.py
-          python3 .ci/patch_v105_portfolio_qty_unified_detail.py
-          python3 .ci/patch_v106_radar_market_sync.py
-          python3 .ci/patch_v107_detail_unlock.py
-          python3 .ci/patch_v108_portfolio_switch.py
-          python3 .ci/patch_v110_portfolio_safe_switch.py
-          python3 .ci/patch_v111_startup_recovery.py
-          python3 .ci/patch_v112_single_stock_portfolio_fix.py
-          python3 .ci/patch_v113_manual_scan_switch.py
-          python3 .ci/patch_v114_market_result_isolation.py
-          python3 .ci/patch_v115_portfolio_selector_restore.py
-          python3 .ci/patch_v116_portfolio_shell_guard.py
-          python3 .ci/patch_v117_market_and_portfolio_state.py
-          python3 .ci/patch_v118_radar_screen_separation.py
-          python3 .ci/patch_v119_radar_scan_lock.py
-          python3 .ci/patch_v120_compile_scope_guard.py
-          python3 .ci/patch_v122_radar_selected_market_render.py
-          python3 .ci/patch_v123_radar_unlock.py
-          python3 .ci/patch_v124_radar_completion_state.py
-          python3 .ci/patch_v125_restore_radar_finish.py
-          python3 .ci/patch_v126_radar_header_selected_market.py
-          python3 .ci/patch_v127_selector_single_source.py
-          python3 .ci/patch_v128_force_selected_market_labels.py
-          python3 .ci/patch_v129_rebuild_radar_header_block.py
-          python3 .ci/patch_v130_shell_radar_market.py
-          python3 .ci/patch_v132_radar_market_state_fix.py
-          python3 .ci/patch_v133_radar_render_context.py
-          python3 .ci/patch_v134_radar_text_above_scan.py
-          python3 .ci/patch_v135_radar_card_selected_market.py
-          python3 .ci/patch_v136_restore_four_market_selector.py
-          python3 .ci/patch_v137_detail_design_step1.py
-          python3 .ci/patch_v138_detail_tabs_functional.py
-          python3 .ci/patch_v140_timeframe_no_blank.py
+          # Main branch already contains the consolidated UI/radar/chart fixes.
+          # Re-applying historical mutation patches creates duplicate Java blocks.
           python3 .ci/patch_v47_release_build.py
+
       - name: Verify final Radar source after all patches
         run: |
           python3 - <<'PY'
