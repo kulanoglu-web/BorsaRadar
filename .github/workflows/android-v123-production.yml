@@ -107,6 +107,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: BorsaRadar-v149-APK
-          path: BorsaRadar-v131.apk
+          path: BorsaRadar-v149.apk
           if-no-files-found: error
           retention-days: 30
