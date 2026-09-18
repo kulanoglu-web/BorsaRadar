@@ -362,8 +362,17 @@ generated=generated[:m.start()]+new_shell+generated[m.end():]
 generated=generated.replace('loadRadarCache();\\n        showPortfolio();','loadRadarCache();\\n        showHome();',1)
 generated=generated.replace('loadRadarCache(); showPortfolio();','loadRadarCache(); showHome();',1)
 generated=generated.replace('loadRadarCache();\n        showPortfolio();','loadRadarCache();\n        showHome();',1)
+# Replace startup structurally inside onCreate, independent of whitespace/extra patch statements.
+oc=generated.find('@Override public void onCreate(Bundle b)')
+if oc<0: raise SystemExit('onCreate missing')
+oc_end=generated.find('\n    }',oc)
+if oc_end<0: raise SystemExit('onCreate end missing')
+oncreate=generated[oc:oc_end]
+oncreate=oncreate.replace('showPortfolio();','showHome();')
+generated=generated[:oc]+oncreate+generated[oc_end:]
+
 if 'Button home=button("Ana Sayfa"' not in generated: raise SystemExit('final V18 bottom navigation not installed')
-if 'loadRadarCache();' in generated and 'showHome();' not in generated: raise SystemExit('V18 startup not installed')
+if 'showHome();' not in generated[oc:oc_end+20]: raise SystemExit('V18 startup not installed')
 p.write_text(generated,encoding='utf-8')
 print('V18 final runtime shell takeover PASS')
 
