@@ -29,4 +29,4 @@ q=q.replace(old,new,1)
 s=s[:a]+q+s[b:]
 p.write_text(s,encoding='utf-8')
 print('v150 selected chart kept', 'renderStockDetail(symbol,aa,out,frame)' in q)
-print('v150 analysis context fallback', 'fetchSeries(symbol,"3mo","1d",180)' in q)
+print('v150 analysis context fallback', 'fetchSeries(symbol,"3mo","1d",0)' in q)
