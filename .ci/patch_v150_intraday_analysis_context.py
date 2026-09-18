@@ -18,7 +18,7 @@ new='''final java.util.List<MarketDataService.Candle> out=DetailedChartControlle
                 java.util.List<MarketDataService.Candle> analysisData=out;
                 if(out.size()<40){
                     try{
-                        java.util.List<MarketDataService.Candle> ctx=MarketDataService.fetchSeries(symbol,"3mo","1d",180);
+                        java.util.List<MarketDataService.Candle> ctx=MarketDataService.fetchSeries(symbol,"3mo","1d",0);
                         if(ctx!=null && ctx.size()>=20)analysisData=ctx;
                     }catch(Exception ignored){}
                 }
