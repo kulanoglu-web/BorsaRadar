@@ -76,6 +76,12 @@ jobs:
           python3 .ci/patch_v93_hourly_fake_portfolio_ui.py
       - name: Apply v94 through v150 production patches
         run: python3 .ci/patch_v94_cross_market_scan_selector.py
+      - name: Verify V18 generated source
+        run: |
+          grep -q 'showHome()' app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java
+          grep -q 'showMarkets()' app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java
+          grep -q 'Radar Sonuçları' app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java
+          grep -q 'Finansal Veriler' app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
