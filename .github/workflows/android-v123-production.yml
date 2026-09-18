@@ -1,4 +1,4 @@
-name: Build BorsaRadar v154 Production APK
+name: Build BorsaRadar v155 Production APK
 on:
   push:
     branches: [ main ]
@@ -19,9 +19,9 @@ jobs:
         with:
           gradle-version: '8.11.1'
           cache-disabled: true
-      - name: Apply app patches through v154
+      - name: Apply app patches through v155
         run: |
-          echo "v154 production build"
+          echo "v155 production build"
           python3 .ci/patch_v31.py
           python3 .ci/patch_v37.py
           python3 .ci/patch_v38.py
@@ -103,10 +103,10 @@ jobs:
       - name: Build signed release APK
         run: gradle --no-daemon clean assembleRelease
       - name: Prepare APK
-        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v154.apk
+        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v155.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v154-APK
-          path: BorsaRadar-v154.apk
+          name: BorsaRadar-v155-APK
+          path: BorsaRadar-v155.apk
           if-no-files-found: error
           retention-days: 30
