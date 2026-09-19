@@ -219,7 +219,7 @@ public class MainActivity extends Activity {
         final List<Holding> snapshot=new ArrayList<>(holdings);
         shell("Portföy güncelleniyor");
         ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);bar.setMax(snapshot.size());content.addView(bar);
-        TextView st=txt("0/"+snapshot.size(),15,NAVY);content.addView(st);
+        TextView st=txt("0/"+snapshot.size()+" • teknik veriler",15,NAVY);content.addView(st);content.addView(txt("Haber/katalizör verileri teknik yenilemeyi bekletmez.",12,Color.GRAY));
         final java.util.concurrent.atomic.AtomicInteger done=new java.util.concurrent.atomic.AtomicInteger(0);
         for(Holding h:snapshot)io.execute(()->{
             try{
@@ -231,7 +231,7 @@ public class MainActivity extends Activity {
             }catch(Exception ignored){}
             int finished=done.incrementAndGet();
             main.post(()->{
-                bar.setProgress(finished);st.setText(finished+"/"+snapshot.size());
+                bar.setProgress(finished);st.setText(finished+"/"+snapshot.size()+" • teknik veriler");
                 if(finished>=snapshot.size()){
                     portfolioRefreshing=false;
                     getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putLong("portfolio_ts",System.currentTimeMillis()).apply();
