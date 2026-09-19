@@ -162,7 +162,7 @@ public class MainActivity extends Activity {
 
     private TextView signalBanner(ShortPulseEngine.Result s) {
         int color=s.recommendation.contains("SAT")||s.recommendation.contains("RİSK")||s.recommendation.contains("KOVALAMA")?RED:s.recommendation.contains("AL")?GREEN:AMBER;
-        TextView v=bold(s.recommendation+"  •  Pulse "+fmt(s.score),20,Color.WHITE); v.setGravity(Gravity.CENTER); v.setBackgroundColor(color); v.setPadding(dp(12),dp(12),dp(12),dp(12)); return v;
+        String confidence=s.confidence>=75?"Yüksek güven":s.confidence>=55?"Orta güven":"Düşük güven"; TextView v=bold(s.recommendation+"  •  Pulse "+fmt(s.score)+"\n"+confidence+"  •  "+s.horizonText,18,Color.WHITE); v.setGravity(Gravity.CENTER); v.setBackgroundColor(color); v.setPadding(dp(12),dp(10),dp(12),dp(10)); return v;
     }
 
     private TextView contextBanner(CatalystContextEngine.Result c) {
