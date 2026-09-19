@@ -264,10 +264,11 @@ public class MainActivity extends Activity {
                 // Ağır verileri ekran açıldıktan sonra arka planda tamamla.
                 io.execute(()->{
                     try{
-                        CatalystContextEngine.Result cx;
-                        try{cx=CatalystContextEngine.analyze(selectedSymbol,r.score);}catch(Exception ignored){cx=null;}
+                        CatalystContextEngine.Result cx=selectedSymbol.equals(detailSymbol)?detailContext:null;
+                        if(cx==null)try{cx=CatalystContextEngine.analyze(selectedSymbol,r.score);}catch(Exception ignored){cx=null;}
                         List<MarketDataService.Candle> chart;
-                        try{chart=DetailedChartController.fetch(selectedSymbol,selectedTimeframe);}catch(Exception ignored){chart=base;}
+                        chart=DetailedChartController.cached(selectedSymbol,selectedTimeframe);
+                        if(chart==null||chart.size()<2)try{chart=DetailedChartController.fetch(selectedSymbol,selectedTimeframe);}catch(Exception ignored){chart=base;}
                         final CatalystContextEngine.Result safeCx=cx;
                         final List<MarketDataService.Candle> safeChart=chart;
                         if(selectedSymbol.equals(detailSymbol))detailContext=safeCx;
