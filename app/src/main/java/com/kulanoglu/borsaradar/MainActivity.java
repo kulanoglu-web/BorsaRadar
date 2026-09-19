@@ -237,7 +237,7 @@ public class MainActivity extends Activity {
                 sorted.sort((x,y)->Double.compare(y.score,x.score));
                 synchronized(radarResults){radarResults.clear();radarResults.addAll(sorted);}
                 scanRunning=false; saveRadarCache(); getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putLong("radar_ts",System.currentTimeMillis()).apply(); main.post(this::showRadar);
-            }else if(done%25==0)main.post(this::showRadar);
+            }else if(done%50==0)main.post(this::showRadar);
         });
     }
 
