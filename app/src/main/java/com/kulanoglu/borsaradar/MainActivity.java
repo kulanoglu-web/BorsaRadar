@@ -73,6 +73,7 @@ public class MainActivity extends Activity {
     private final Map<String, ShortPulseEngine.Result> holdingSignals = new HashMap<>();
     private final Map<String, CatalystContextEngine.Result> holdingContexts = new HashMap<>();
     private final List<RadarItem> radarResults = Collections.synchronizedList(new ArrayList<>());
+    private final List<RadarItem> scanBuffer = Collections.synchronizedList(new ArrayList<>());
     private volatile boolean scanRunning=false;
     private int detailTimeframe=5; // default: 1 gün
     private String detailSymbol="";
@@ -206,8 +207,24 @@ public class MainActivity extends Activity {
     }
 
     private void scanRadar() {
-        if(scanRunning)return; scanRunning=true;scanDone.set(0);scanFailed.set(0);radarResults.clear();showRadar();
-        for(String sym:ALL_SYMBOLS)io.execute(()->{try{List<MarketDataService.Candle>d=MarketDataService.fetchDaily(sym,"1mo");ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);radarResults.add(new RadarItem(sym,r));}catch(Exception e){scanFailed.incrementAndGet();}int done=scanDone.incrementAndGet();if(done>=ALL_SYMBOLS.length){scanRunning=false;List<RadarItem>sorted=new ArrayList<>(radarResults);sorted.sort((a,b)->Double.compare(b.score,a.score));radarResults.clear();radarResults.addAll(sorted);saveRadarCache();main.post(this::showRadar);}else if(done%25==0)main.post(this::showRadar);});
+        if(scanRunning)return;
+        scanRunning=true; scanDone.set(0); scanFailed.set(0); scanBuffer.clear();
+        showRadar();
+        for(String sym:ALL_SYMBOLS)io.execute(()->{
+            try{
+                List<MarketDataService.Candle>d=MarketDataService.fetchDaily(sym,"1mo");
+                ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);
+                scanBuffer.add(new RadarItem(sym,r));
+            }catch(Exception e){scanFailed.incrementAndGet();}
+            int done=scanDone.incrementAndGet();
+            if(done>=ALL_SYMBOLS.length){
+                List<RadarItem> sorted;
+                synchronized(scanBuffer){sorted=new ArrayList<>(scanBuffer);}
+                sorted.sort((x,y)->Double.compare(y.score,x.score));
+                synchronized(radarResults){radarResults.clear();radarResults.addAll(sorted);}
+                scanRunning=false; saveRadarCache(); main.post(this::showRadar);
+            }else if(done%25==0)main.post(this::showRadar);
+        });
     }
 
     private void renderRadarList(List<RadarItem> items,int max) {
@@ -317,7 +334,7 @@ public class MainActivity extends Activity {
                 if(s.equals(symbol))continue;
                 try{
                     List<MarketDataService.Candle> cached=MarketDataService.cachedSeries(s,"1mo","1d");
-                    if(cached==null||cached.size()<10)MarketDataService.fetchDaily(s,"1mo");
+                    if(cached==null||cached.size()<15)MarketDataService.fetchDaily(s,"1mo");
                     if(!symbol.equals(detailSymbol)||tfIndex!=detailTimeframe)return;
                     List<MarketDataService.Candle> tf=DetailedChartController.cached(s,tfIndex);
                     if(tf==null||tf.size()<2)DetailedChartController.fetch(s,tfIndex);
