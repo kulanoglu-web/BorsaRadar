@@ -54,7 +54,7 @@ public final class MarketDataService {
             boolean stooqFirst=false;
             if(stooqFirst){try{raw=fetchStooqDaily(symbol,range);source="Stooq";}catch(Exception e){last=e;}}
             if(raw==null){try{raw=fetchYahoo(symbol,range,interval);source="Yahoo";}catch(Exception e){last=e;}}
-            if(raw==null && daily){try{raw=fetchStooqDaily(symbol,range);source="Stooq";}catch(Exception e){last=e;}}
+            if(raw==null && daily && !symbol.endsWith(".IS")){try{raw=fetchStooqDaily(symbol,range);source="Stooq";}catch(Exception e){last=e;}}
             if(raw==null){if(cached!=null){raw=new ArrayList<>(cached.data);source=cached.source+"/cache";}else throw last==null?new Exception("Veri alınamadı: "+symbol):last;}
             else CACHE.put(key,new Cache(now,raw,source));
         }
