@@ -72,6 +72,7 @@ public class MainActivity extends Activity {
     private final List<Holding> holdings = new ArrayList<>();
     private final Map<String, ShortPulseEngine.Result> holdingSignals = new HashMap<>();
     private final Map<String, CatalystContextEngine.Result> holdingContexts = new HashMap<>();
+    private volatile boolean portfolioRefreshing=false;
     private final List<RadarItem> radarResults = Collections.synchronizedList(new ArrayList<>());
     private final List<RadarItem> scanBuffer = Collections.synchronizedList(new ArrayList<>());
     private volatile boolean scanRunning=false;
@@ -143,7 +144,7 @@ public class MainActivity extends Activity {
         shell("Portföyüm");
         LinearLayout actions=new LinearLayout(this); Button add=button("+ Hisse Ekle",GREEN), refresh=button("Tümünü Güncelle",NAVY2);
         actions.addView(add,new LinearLayout.LayoutParams(0,-2,1)); actions.addView(refresh,new LinearLayout.LayoutParams(0,-2,1)); content.addView(actions);
-        add.setOnClickListener(v->portfolioDialog(null,null)); refresh.setOnClickListener(v->refreshPortfolio()); spacer(8);
+        add.setOnClickListener(v->portfolioDialog(null,null)); refresh.setEnabled(!portfolioRefreshing); refresh.setText(portfolioRefreshing?"Güncelleniyor…":"Tümünü Güncelle"); refresh.setOnClickListener(v->refreshPortfolio()); spacer(8); long pts=getSharedPreferences(PREFS,Context.MODE_PRIVATE).getLong("portfolio_ts",0); if(pts>0)content.addView(txt("Son portföy güncellemesi: "+new java.text.SimpleDateFormat("dd.MM HH:mm",Locale.getDefault()).format(new java.util.Date(pts)),12,Color.GRAY));
         if(holdings.isEmpty()) { LinearLayout c=card(); c.addView(bold("Portföy boş",19,NAVY)); c.addView(txt("Hisse ekleyince maliyet, güncel fiyat, teknik görünüm ve haber/katalizör bağlamı burada görünür.",14,Color.DKGRAY)); content.addView(c); return; }
         for(Holding h:new ArrayList<>(holdings)) renderHolding(h);
     }
@@ -175,11 +176,11 @@ public class MainActivity extends Activity {
     }
 
     private void refreshPortfolio() {
-        if(holdings.isEmpty()){Toast.makeText(this,"Önce hisse ekle",Toast.LENGTH_SHORT).show();return;}
+        if(holdings.isEmpty()){Toast.makeText(this,"Önce hisse ekle",Toast.LENGTH_SHORT).show();return;} if(portfolioRefreshing)return; portfolioRefreshing=true;
         shell("Portföy güncelleniyor"); ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal); bar.setMax(holdings.size()); content.addView(bar); TextView st=txt("0/"+holdings.size(),15,NAVY); content.addView(st); final int[] done={0};
         for(Holding h:new ArrayList<>(holdings)) io.execute(()->{
             try { List<MarketDataService.Candle> d=MarketDataService.fetchDaily(h.symbol,"1mo"); ShortPulseEngine.Result s=ShortPulseEngine.analyze(d); holdingSignals.put(h.symbol,s); holdingContexts.put(h.symbol,CatalystContextEngine.analyze(h.symbol,s.score)); } catch(Exception ignored){}
-            main.post(()->{done[0]++;bar.setProgress(done[0]);st.setText(done[0]+"/"+holdings.size());if(done[0]>=holdings.size())showPortfolio();});
+            main.post(()->{done[0]++;bar.setProgress(done[0]);st.setText(done[0]+"/"+holdings.size());if(done[0]>=holdings.size()){portfolioRefreshing=false;getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putLong("portfolio_ts",System.currentTimeMillis()).apply();showPortfolio();}});
         });
     }
 
@@ -191,7 +192,7 @@ public class MainActivity extends Activity {
         EditText qty=new EditText(this); qty.setHint("Lot/Adet"); qty.setInputType(InputType.TYPE_CLASS_NUMBER); EditText cost=new EditText(this); cost.setHint("Alış fiyatı"); cost.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL);
         if(edit!=null){sym.setText(edit.symbol,false);qty.setText(String.valueOf(edit.qty));cost.setText(String.valueOf(edit.cost));} else if(preset!=null)sym.setText(preset,false); box.addView(sym);box.addView(qty);box.addView(cost);
         new AlertDialog.Builder(this).setTitle(edit==null?"Portföye ekle":"Pozisyonu düzenle").setView(box).setPositiveButton("Kaydet",(d,w)->{
-            try{String raw=sym.getText().toString().trim().toUpperCase(Locale.ROOT); String s=parseSymbol(raw); if(s.length()<2)throw new Exception(); int q=Integer.parseInt(qty.getText().toString()); double c=Double.parseDouble(cost.getText().toString().replace(',','.')); if(q<=0||c<=0)throw new Exception(); if(edit==null)holdings.add(new Holding(s,q,c));else{edit.symbol=s;edit.qty=q;edit.cost=c;} savePortfolio();showPortfolio();}catch(Exception ex){Toast.makeText(this,"Hisse / adet / fiyatı kontrol et",Toast.LENGTH_LONG).show();}
+            try{String raw=sym.getText().toString().trim().toUpperCase(Locale.ROOT); String s=parseSymbol(raw); if(s.length()<2)throw new Exception(); int q=Integer.parseInt(qty.getText().toString()); double c=Double.parseDouble(cost.getText().toString().replace(',','.')); if(q<=0||c<=0)throw new Exception(); if(edit==null){Holding existing=null;for(Holding h:holdings)if(MarketDataService.normalizeSymbol(h.symbol).equals(MarketDataService.normalizeSymbol(s))){existing=h;break;}if(existing==null)holdings.add(new Holding(s,q,c));else{int total=existing.qty+q;existing.cost=(existing.cost*existing.qty+c*q)/total;existing.qty=total;}}else{edit.symbol=s;edit.qty=q;edit.cost=c;} savePortfolio();showPortfolio();}catch(Exception ex){Toast.makeText(this,"Hisse / adet / fiyatı kontrol et",Toast.LENGTH_LONG).show();}
         }).setNegativeButton("İptal",null).show();
     }
 
