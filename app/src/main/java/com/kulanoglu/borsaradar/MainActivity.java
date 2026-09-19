@@ -264,9 +264,7 @@ public class MainActivity extends Activity {
                 List<RadarItem> sorted;
                 synchronized(scanBuffer){sorted=new ArrayList<>(scanBuffer);}
                 sorted.sort((x,y)->Double.compare(y.score,x.score));
-                synchronized(radarResults){radarResults.clear();radarResults.addAll(sorted);}
-                scanRunning=false; saveRadarCache(); getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putLong("radar_ts",System.currentTimeMillis()).apply(); main.post(this::showRadar);
-            }else if(done%50==0)main.post(this::showRadar);
+                if(!sorted.isEmpty()){synchronized(radarResults){radarResults.clear();radarResults.addAll(sorted);}saveRadarCache();getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putLong("radar_ts",System.currentTimeMillis()).apply();}\n                scanRunning=false;main.post(()->{if(sorted.isEmpty())Toast.makeText(this,"Yeni tarama sonuç üretmedi; önceki radar sonuçları korundu.",Toast.LENGTH_LONG).show();showRadar();});\n            }else if(done%50==0)main.post(this::showRadar);
         });
     }
 
