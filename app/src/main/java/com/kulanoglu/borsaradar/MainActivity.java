@@ -188,7 +188,7 @@ public class MainActivity extends Activity {
     private void renderHolding(Holding h) {
         LinearLayout c=card(); c.addView(bold(h.symbol+"  •  "+h.qty+" lot",20,NAVY));c.addView(txt("Pozisyona dokun: grafik ve güncel tavsiye",11,Color.GRAY)); c.addView(txt("Ortalama maliyet  "+money(h.cost,h.symbol)+"  •  Maliyet toplamı "+money(h.cost*h.qty,h.symbol),14,Color.DKGRAY));
         ShortPulseEngine.Result s=holdingSignal(h.symbol);
-        if(s==null) c.addView(txt("Güncel değerlendirme için 'Tümünü Güncelle'ye bas.",13,Color.GRAY));
+        if(s==null){c.addView(txt("Güncel değerlendirme henüz yok.",13,Color.GRAY));Button one=button("Bu Hisseyi Güncelle",NAVY2);c.addView(one);one.setOnClickListener(v->warmPortfolioSignal(h.symbol));}
         else {
             MarketDataService.Spot live=MarketDataService.latestSpot(h.symbol); double current=live!=null&&live.price>0?live.price:s.price;
             double pnl=(current-h.cost)*h.qty, pct=h.cost>0?(current/h.cost-1)*100:0;
