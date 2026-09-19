@@ -232,19 +232,25 @@ public class MainActivity extends Activity {
         final String selectedSymbol=symbol;
         final int selectedTimeframe=detailTimeframe;
         shell(selectedSymbol+" • analiz");
-        if(sameSymbol && detailResult!=null){
-            List<MarketDataService.Candle> quickChart=DetailedChartController.cached(selectedSymbol,selectedTimeframe);
-            if(quickChart!=null&&quickChart.size()>=2)renderStockDetail(selectedSymbol,detailResult,detailContext,quickChart);
-        }
+        boolean instantRendered=false;
         List<MarketDataService.Candle> instantChart=DetailedChartController.cached(selectedSymbol,selectedTimeframe);
-        List<MarketDataService.Candle> instantAnalysis=MarketDataService.cachedSeries(selectedSymbol,"1mo","1d");
-        if(instantAnalysis!=null && instantAnalysis.size()>=15){
-            try{
-                ShortPulseEngine.Result cachedResult=ShortPulseEngine.analyze(instantAnalysis);
-                List<MarketDataService.Candle> shownChart=instantChart!=null&&instantChart.size()>=2?instantChart:instantAnalysis;
-                renderStockDetail(selectedSymbol,cachedResult,null,shownChart);
-            }catch(Exception ignored){content.addView(txt("Fiyat ve teknik görünüm yükleniyor…",15,NAVY));}
-        }else content.addView(txt("Fiyat ve teknik görünüm yükleniyor…",15,NAVY));
+        if(sameSymbol && detailResult!=null && instantChart!=null && instantChart.size()>=2){
+            renderStockDetail(selectedSymbol,detailResult,detailContext,instantChart);
+            instantRendered=true;
+        }
+        if(!instantRendered){
+            List<MarketDataService.Candle> instantAnalysis=MarketDataService.cachedSeries(selectedSymbol,"1mo","1d");
+            if(instantAnalysis!=null && instantAnalysis.size()>=15){
+                try{
+                    ShortPulseEngine.Result cachedResult=ShortPulseEngine.analyze(instantAnalysis);
+                    detailResult=cachedResult;
+                    List<MarketDataService.Candle> shownChart=instantChart!=null&&instantChart.size()>=2?instantChart:instantAnalysis;
+                    renderStockDetail(selectedSymbol,cachedResult,sameSymbol?detailContext:null,shownChart);
+                    instantRendered=true;
+                }catch(Exception ignored){}
+            }
+        }
+        if(!instantRendered)content.addView(txt("Fiyat ve teknik görünüm yükleniyor…",15,NAVY));
         io.execute(()->{
             try{
                 // Hızlı ilk çizim: yalnızca kısa günlük seri. Haber ve seçili grafik bekletmez.
