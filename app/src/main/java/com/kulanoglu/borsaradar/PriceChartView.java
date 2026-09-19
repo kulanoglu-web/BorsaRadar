@@ -6,7 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.view.View;
-import android.view.MotionEvent;
+import android.view.MotionEvent;\nimport android.view.ScaleGestureDetector;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -17,9 +17,9 @@ public final class PriceChartView extends View {
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
     private final String label;
     private int selectedIndex=-1;
-    private float touchX=-1;\n    private int visibleCount=0;\n    private int visibleEnd=-1;
+    private float touchX=-1;\n    private int visibleCount=0;\n    private int visibleEnd=-1;\n    private final ScaleGestureDetector scaleDetector;
     public PriceChartView(Context c,List<MarketDataService.Candle>d){this(c,d,"1 GÜN");}
-    public PriceChartView(Context c,List<MarketDataService.Candle>d,String l){super(c);data=d;label=l;setMinimumHeight(dp(350));setBackgroundColor(Color.rgb(9,30,54));setPadding(dp(12),dp(18),dp(12),dp(18));}
+    public PriceChartView(Context c,List<MarketDataService.Candle>d,String l){super(c);data=d;label=l;visibleCount=d==null?0:d.size();visibleEnd=d==null?-1:d.size()-1;scaleDetector=new ScaleGestureDetector(c,new ScaleGestureDetector.SimpleOnScaleGestureListener(){@Override public boolean onScale(ScaleGestureDetector detector){if(data==null||data.size()<2)return false;int next=Math.round(visibleCount/detector.getScaleFactor());visibleCount=Math.max(8,Math.min(data.size(),next));visibleEnd=data.size()-1;selectedIndex=-1;invalidate();return true;}});setMinimumHeight(dp(350));setBackgroundColor(Color.rgb(9,30,54));setPadding(dp(12),dp(18),dp(12),dp(18));}
     private int dp(int v){return Math.round(v*getResources().getDisplayMetrics().density);}
     @Override protected void onDraw(Canvas canvas){super.onDraw(canvas);if(data==null||data.size()<2)return;if(visibleEnd<0||visibleEnd>=data.size())visibleEnd=data.size()-1;if(visibleCount<=0)visibleCount=data.size();visibleCount=Math.max(2,Math.min(visibleCount,data.size()));int start=Math.max(0,visibleEnd-visibleCount+1),count=visibleEnd-start+1;String symbol=data.get(visibleEnd).symbol,cur=currencySymbol(symbol);float left=getPaddingLeft()+dp(3),right=getWidth()-getPaddingRight()-dp(55),top=getPaddingTop()+dp(30),priceBottom=getHeight()-getPaddingBottom()-dp(105),volTop=priceBottom+dp(12),volBottom=getHeight()-getPaddingBottom()-dp(48);double min=Double.MAX_VALUE,max=-Double.MAX_VALUE,maxVol=0;for(int i=start;i<data.size();i++){MarketDataService.Candle c=data.get(i);min=Math.min(min,c.low);max=Math.max(max,c.high);maxVol=Math.max(maxVol,c.volume);}if(max<=min)max=min+1;double rawSpan=max-min,padRange=Math.max(rawSpan*.06,Math.abs(max)*.001);min-=padRange;max+=padRange;
         paint.setStrokeWidth(dp(1));paint.setTextSize(dp(10));paint.setColor(Color.rgb(48,72,101));for(int i=0;i<=4;i++){float yy=top+(priceBottom-top)*i/4f;canvas.drawLine(left,yy,right,yy,paint);double raw=max-(max-min)*i/4.0;String pv=fmt(displayValue(raw,symbol))+" "+cur;paint.setColor(Color.rgb(190,207,226));canvas.drawText(pv,right+dp(5),yy+dp(4),paint);paint.setColor(Color.rgb(48,72,101));}
