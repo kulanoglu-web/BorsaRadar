@@ -67,7 +67,7 @@ public final class PriceChartView extends View {
         MarketDataService.Candle c=data.get(selectedIndex);float slot=(right-left)/Math.max(1,count);float x=left+slot*((selectedIndex-start)+.5f);float yy=y(c.close,min,max,top,priceBottom);
         paint.setColor(Color.argb(180,210,220,230));paint.setStrokeWidth(dp(1));canvas.drawLine(x,top,x,volBottom,paint);canvas.drawLine(left,yy,right,yy,paint);
         paint.setTextSize(dp(10));paint.setColor(Color.WHITE);
-        String info="A "+fmt(displayValue(c.open,symbol))+"  Y "+fmt(displayValue(c.high,symbol))+"  D "+fmt(displayValue(c.low,symbol))+"  K "+fmt(displayValue(c.close,symbol))+" "+cur+"  Hac "+compact(c.volume);
+        String info="A "+priceFmt(displayValue(c.open,symbol))+"  Y "+priceFmt(displayValue(c.high,symbol))+"  D "+priceFmt(displayValue(c.low,symbol))+"  K "+priceFmt(displayValue(c.close,symbol))+" "+cur+"  Hac "+compact(c.volume);
         float pad=dp(6),boxTop=top-dp(20),boxBottom=top-dp(3),boxRight=Math.min(right,left+paint.measureText(info)+pad*2);paint.setColor(Color.argb(220,18,42,68));canvas.drawRect(left,boxTop,boxRight,boxBottom,paint);paint.setColor(Color.WHITE);canvas.drawText(info,left+pad,top-dp(8),paint);
         SimpleDateFormat sdf=new SimpleDateFormat("dd.MM.yy HH:mm",Locale.getDefault());String dt=sdf.format(new Date(c.time*1000L));float tw=paint.measureText(dt);canvas.drawText(dt,Math.max(left,Math.min(x-tw/2,right-tw)),getHeight()-dp(25),paint);
     }
