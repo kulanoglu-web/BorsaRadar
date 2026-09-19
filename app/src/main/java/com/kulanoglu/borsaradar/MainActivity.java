@@ -180,7 +180,8 @@ public class MainActivity extends Activity {
         ShortPulseEngine.Result s=holdingSignals.get(h.symbol);
         if(s==null) c.addView(txt("Güncel değerlendirme için 'Tümünü Güncelle'ye bas.",13,Color.GRAY));
         else {
-            MarketDataService.Spot live=MarketDataService.latestSpot(h.symbol); double current=live!=null&&live.price>0?live.price:s.price;\n            double pnl=(current-h.cost)*h.qty, pct=h.cost>0?(current/h.cost-1)*100:0;
+            MarketDataService.Spot live=MarketDataService.latestSpot(h.symbol); double current=live!=null&&live.price>0?live.price:s.price;
+            double pnl=(current-h.cost)*h.qty, pct=h.cost>0?(current/h.cost-1)*100:0;
             c.addView(bold("Son  "+money(current,h.symbol)+"   P/L  "+money(pnl,h.symbol)+"  (%"+fmt(pct)+")",16,pnl>=0?GREEN:RED)); c.addView(txt("Pozisyon değeri  "+money(current*h.qty,h.symbol)+(live!=null?"  •  "+live.source:""),13,Color.DKGRAY)); c.addView(signalBanner(s)); c.addView(txt(s.explanation,13,Color.DKGRAY));
             CatalystContextEngine.Result cx=holdingContexts.get(h.symbol); if(cx!=null)c.addView(contextBanner(cx));
             c.addView(txt("Hedef süre: "+s.horizonText+"  •  Güven %"+(int)s.confidence+"  •  Stop ref. "+money(s.stopReference,h.symbol),13,NAVY2));
