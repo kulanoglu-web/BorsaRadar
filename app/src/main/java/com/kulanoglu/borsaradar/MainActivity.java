@@ -186,7 +186,7 @@ public class MainActivity extends Activity {
     }
 
     private void renderHolding(Holding h) {
-        LinearLayout c=card(); c.addView(bold(h.symbol+"  •  "+h.qty+" lot",20,NAVY));c.addView(txt("Pozisyona dokun: grafik ve güncel tavsiye",11,Color.GRAY)); c.addView(txt("Ortalama maliyet  "+money(h.cost,h.symbol),14,Color.DKGRAY));
+        LinearLayout c=card(); c.addView(bold(h.symbol+"  •  "+h.qty+" lot",20,NAVY));c.addView(txt("Pozisyona dokun: grafik ve güncel tavsiye",11,Color.GRAY)); c.addView(txt("Ortalama maliyet  "+money(h.cost,h.symbol)+"  •  Maliyet toplamı "+money(h.cost*h.qty,h.symbol),14,Color.DKGRAY));
         ShortPulseEngine.Result s=holdingSignal(h.symbol);
         if(s==null) c.addView(txt("Güncel değerlendirme için 'Tümünü Güncelle'ye bas.",13,Color.GRAY));
         else {
