@@ -293,6 +293,8 @@ public class MainActivity extends Activity {
                 try{
                     List<MarketDataService.Candle> cached=MarketDataService.cachedSeries(s,"1mo","1d");
                     if(cached==null||cached.size()<10)MarketDataService.fetchDaily(s,"1mo");
+                    List<MarketDataService.Candle> tf=DetailedChartController.cached(s,detailTimeframe);
+                    if(tf==null||tf.size()<2)DetailedChartController.fetch(s,detailTimeframe);
                 }catch(Exception ignored){}
             }
         });
