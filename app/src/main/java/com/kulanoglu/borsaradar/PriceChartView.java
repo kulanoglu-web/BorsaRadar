@@ -29,7 +29,7 @@ public final class PriceChartView extends View {
     private final ScaleGestureDetector scaleDetector;
     private boolean showEma=true,showBands=true,showVwap=true,showLevels=true;
     private boolean showVolume=true;
-    private boolean showChangeLine=true;
+    private boolean showChangeLine=false;
     private boolean showMomentum=false;
     private boolean showSignals=false;
     private boolean showTrendLine=true;
