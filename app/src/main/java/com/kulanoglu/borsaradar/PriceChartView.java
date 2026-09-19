@@ -20,8 +20,11 @@ public final class PriceChartView extends View {
     private int selectedIndex=-1;
     private float touchX=-1;
     private int visibleCount=0;
-    private int visibleEnd=-1;\n    private float downX=-1,lastX=-1;\n    private boolean panning=false;
+    private int visibleEnd=-1;
+    private float downX=-1,lastX=-1;
+    private boolean panning=false;
     private final ScaleGestureDetector scaleDetector;
+    private boolean showEma=true,showBands=true,showVwap=true,showLevels=true;
     public PriceChartView(Context c,List<MarketDataService.Candle>d){this(c,d,"1 GÜN");}
     public PriceChartView(Context c,List<MarketDataService.Candle>d,String l){super(c);data=d;label=l;visibleCount=d==null?0:d.size();visibleEnd=d==null?-1:d.size()-1;scaleDetector=new ScaleGestureDetector(c,new ScaleGestureDetector.SimpleOnScaleGestureListener(){@Override public boolean onScale(ScaleGestureDetector detector){if(data==null||data.size()<2)return false;int next=Math.round(visibleCount/detector.getScaleFactor());visibleCount=Math.max(8,Math.min(data.size(),next));visibleEnd=data.size()-1;selectedIndex=-1;invalidate();return true;}});setMinimumHeight(dp(350));setBackgroundColor(Color.rgb(9,30,54));setPadding(dp(12),dp(18),dp(12),dp(18));}
     private int dp(int v){return Math.round(v*getResources().getDisplayMetrics().density);}
