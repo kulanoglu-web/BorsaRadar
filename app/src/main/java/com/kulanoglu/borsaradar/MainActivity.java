@@ -151,15 +151,28 @@ public class MainActivity extends Activity {
     }
 
     private void renderPortfolioSummary(){
-        double value=0,knownCost=0;int priced=0,positive=0,negative=0;
+        double tlValue=0,tlCost=0,eurValue=0,eurCost=0,usdValue=0,usdCost=0;int priced=0,positive=0,negative=0;
         for(Holding h:new ArrayList<>(holdings)){
             ShortPulseEngine.Result s=holdingSignals.get(h.symbol);
-            if(s!=null&&s.price>0){value+=s.price*h.qty;knownCost+=h.cost*h.qty;priced++;if(s.price>=h.cost)positive++;else negative++;}
+            if(s==null||s.price<=0)continue;
+            String n=MarketDataService.normalizeSymbol(h.symbol);double v=s.price*h.qty,k=h.cost*h.qty;
+            if(n.endsWith(".IS")){tlValue+=v;tlCost+=k;}else if(n.endsWith(".DE")){eurValue+=v;eurCost+=k;}else{usdValue+=v;usdCost+=k;}
+            priced++;if(s.price>=h.cost)positive++;else negative++;
         }
         LinearLayout box=card();box.addView(bold("Portföy özeti",18,NAVY));
         if(priced==0)box.addView(txt("Güncel toplam değer için Tümünü Güncelle'ye bas.",13,Color.GRAY));
-        else{double pnl=value-knownCost,pct=knownCost>0?pnl/knownCost*100:0;box.addView(bold("Güncel "+fmt(value)+"  •  P/L "+(pnl>=0?"+":"")+fmt(pnl)+"  •  "+String.format(Locale.US,"%+.2f%%",pct),16,pnl>=0?GREEN:RED));box.addView(txt("Fiyatlanan "+priced+"/"+holdings.size()+"  •  Artıda "+positive+"  •  Ekside "+negative,12,Color.DKGRAY));}
+        else{
+            if(tlValue>0)addMarketSummary(box,"BIST",tlValue,tlCost,"₺");
+            if(eurValue>0)addMarketSummary(box,"Avrupa",eurValue,eurCost,"€");
+            if(usdValue>0){double rate=CurrencyService.usdToEur();if(Double.isFinite(rate))addMarketSummary(box,"ABD",usdValue*rate,usdCost*rate,"€");else addMarketSummary(box,"ABD",usdValue,usdCost,"$");}
+            box.addView(txt("Fiyatlanan "+priced+"/"+holdings.size()+"  •  Artıda "+positive+"  •  Ekside "+negative,12,Color.DKGRAY));
+        }
         content.addView(box);spacer(7);
+    }
+
+    private void addMarketSummary(LinearLayout box,String label,double value,double cost,String currency){
+        double pnl=value-cost,pct=cost>0?pnl/cost*100:0;
+        box.addView(bold(label+"  "+fmt(value)+" "+currency+"  •  P/L "+(pnl>=0?"+":"")+fmt(pnl)+" "+currency+"  •  "+String.format(Locale.US,"%+.2f%%",pct),15,pnl>=0?GREEN:RED));
     }
 
     private void renderHolding(Holding h) {
