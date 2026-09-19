@@ -212,11 +212,31 @@ public class MainActivity extends Activity {
     }
 
     private void refreshPortfolio() {
-        if(holdings.isEmpty()){Toast.makeText(this,"Önce hisse ekle",Toast.LENGTH_SHORT).show();return;} if(portfolioRefreshing)return; portfolioRefreshing=true;
-        shell("Portföy güncelleniyor"); ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal); bar.setMax(holdings.size()); content.addView(bar); TextView st=txt("0/"+holdings.size(),15,NAVY); content.addView(st); final int[] done={0};
-        for(Holding h:new ArrayList<>(holdings)) io.execute(()->{
-            try { String key=MarketDataService.normalizeSymbol(h.symbol);List<MarketDataService.Candle> d=MarketDataService.fetchDaily(key,"1mo"); ShortPulseEngine.Result s=ShortPulseEngine.analyze(d); holdingSignals.put(key,s);main.post(this::showPortfolio);io.execute(()->{try{CatalystContextEngine.Result cx=CatalystContextEngine.analyze(key,s.score);if(cx!=null)holdingContexts.put(key,cx);}catch(Exception ignored){}}); } catch(Exception ignored){}
-            main.post(()->{done[0]++;bar.setProgress(done[0]);st.setText(done[0]+"/"+holdings.size());if(done[0]>=holdings.size()){portfolioRefreshing=false;getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putLong("portfolio_ts",System.currentTimeMillis()).apply();showPortfolio();}});
+        if(holdings.isEmpty()){Toast.makeText(this,"Önce hisse ekle",Toast.LENGTH_SHORT).show();return;}
+        if(portfolioRefreshing)return;
+        portfolioRefreshing=true;
+        final List<Holding> snapshot=new ArrayList<>(holdings);
+        shell("Portföy güncelleniyor");
+        ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);bar.setMax(snapshot.size());content.addView(bar);
+        TextView st=txt("0/"+snapshot.size(),15,NAVY);content.addView(st);
+        final java.util.concurrent.atomic.AtomicInteger done=new java.util.concurrent.atomic.AtomicInteger(0);
+        for(Holding h:snapshot)io.execute(()->{
+            try{
+                String key=MarketDataService.normalizeSymbol(h.symbol);
+                List<MarketDataService.Candle>d=MarketDataService.fetchDaily(key,"1mo");
+                ShortPulseEngine.Result signal=ShortPulseEngine.analyze(d);
+                holdingSignals.put(key,signal);
+                io.execute(()->{try{CatalystContextEngine.Result cx=CatalystContextEngine.analyze(key,signal.score);if(cx!=null)holdingContexts.put(key,cx);}catch(Exception ignored){}});
+            }catch(Exception ignored){}
+            int finished=done.incrementAndGet();
+            main.post(()->{
+                bar.setProgress(finished);st.setText(finished+"/"+snapshot.size());
+                if(finished>=snapshot.size()){
+                    portfolioRefreshing=false;
+                    getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putLong("portfolio_ts",System.currentTimeMillis()).apply();
+                    showPortfolio();
+                }
+            });
         });
     }
 
