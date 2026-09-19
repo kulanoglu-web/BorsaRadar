@@ -135,9 +135,17 @@ public class MainActivity extends Activity {
         LinearLayout nav=new LinearLayout(this); nav.setOrientation(LinearLayout.HORIZONTAL);
         Button home=button("Ana Sayfa",NAVY2), markets=button("Piyasalar",PURPLE), r=button("Radar",GREEN), p=button("Portföy",NAVY2), more=button("Diğer",AMBER);
         nav.addView(home,new LinearLayout.LayoutParams(0,-2,1)); nav.addView(markets,new LinearLayout.LayoutParams(0,-2,1)); nav.addView(r,new LinearLayout.LayoutParams(0,-2,1)); nav.addView(p,new LinearLayout.LayoutParams(0,-2,1)); nav.addView(more,new LinearLayout.LayoutParams(0,-2,1));
-        home.setOnClickListener(v->showPortfolio()); markets.setOnClickListener(v->singleStockDialog()); r.setOnClickListener(v->showRadar()); p.setOnClickListener(v->showPortfolio()); more.setOnClickListener(v->showBaskets()); root.addView(nav);
+        home.setOnClickListener(v->showDashboard()); markets.setOnClickListener(v->singleStockDialog()); r.setOnClickListener(v->showRadar()); p.setOnClickListener(v->showPortfolio()); more.setOnClickListener(v->showBaskets()); root.addView(nav);
         ScrollView sv=new ScrollView(this); content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(10),dp(8),dp(10),dp(14)); sv.addView(content); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
         TextView foot=txt("BorsaRadar • teknik + haber/katalizör bağlamı",11,Color.rgb(100,110,124)); foot.setGravity(Gravity.CENTER); root.addView(foot); setContentView(root);
+    }
+
+    private void showDashboard() {
+        shell("Ana Sayfa");
+        LinearLayout hero=card();hero.addView(bold("Piyasa kontrol merkezi",20,NAVY));hero.addView(txt("Portföy, BIST radar ve 3 strateji tek akışta.",13,Color.DKGRAY));
+        LinearLayout row=new LinearLayout(this);Button radar=button(scanRunning?"Tarama sürüyor":"BIST Radarı",GREEN),portfolio=button("Portföyüm",NAVY2),baskets=button("3 Sepet",PURPLE);row.addView(radar,new LinearLayout.LayoutParams(0,-2,1));row.addView(portfolio,new LinearLayout.LayoutParams(0,-2,1));row.addView(baskets,new LinearLayout.LayoutParams(0,-2,1));hero.addView(row);radar.setOnClickListener(v->showRadar());portfolio.setOnClickListener(v->showPortfolio());baskets.setOnClickListener(v->showBaskets());content.addView(hero);spacer(7);
+        LinearLayout status=card();status.addView(bold("Durum",17,NAVY));status.addView(txt("Portföy: "+holdings.size()+" pozisyon  •  Radar: "+radarResults.size()+" sonuç"+(scanRunning?"  •  tarama sürüyor":""),13,Color.DKGRAY));long rt=getSharedPreferences(PREFS,Context.MODE_PRIVATE).getLong("radar_ts",0),pt=getSharedPreferences(PREFS,Context.MODE_PRIVATE).getLong("portfolio_ts",0);if(rt>0)status.addView(txt("Radar güncelleme: "+new java.text.SimpleDateFormat("dd.MM HH:mm",Locale.getDefault()).format(new java.util.Date(rt)),12,Color.GRAY));if(pt>0)status.addView(txt("Portföy güncelleme: "+new java.text.SimpleDateFormat("dd.MM HH:mm",Locale.getDefault()).format(new java.util.Date(pt)),12,Color.GRAY));content.addView(status);spacer(7);
+        Button stock=button("Tek Hisse Analizi",AMBER);content.addView(stock);stock.setOnClickListener(v->singleStockDialog());
     }
 
     private void showPortfolio() {
