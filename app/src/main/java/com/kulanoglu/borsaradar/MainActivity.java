@@ -286,15 +286,18 @@ public class MainActivity extends Activity {
     private void loadRadarCache(){radarResults.clear();try{JSONArray a=new JSONArray(getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString("radar","[]"));for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);ShortPulseEngine.Result pr=new ShortPulseEngine.Result();pr.recommendation=o.getString("r");pr.explanation=o.getString("w");pr.horizonText=o.getString("h");pr.price=o.getDouble("p");pr.score=o.getDouble("sc");pr.confidence=o.getDouble("cf");radarResults.add(new RadarItem(o.getString("s"),pr));}}catch(Exception ignored){}}
 
     private void prefetchAdjacent(String symbol) {
+        final int tfIndex=detailTimeframe;
         io.execute(()->{
             for(int d:new int[]{-1,1}){
+                if(!symbol.equals(detailSymbol)||tfIndex!=detailTimeframe)return;
                 String s=adjacentSymbol(symbol,d);
                 if(s.equals(symbol))continue;
                 try{
                     List<MarketDataService.Candle> cached=MarketDataService.cachedSeries(s,"1mo","1d");
                     if(cached==null||cached.size()<10)MarketDataService.fetchDaily(s,"1mo");
-                    List<MarketDataService.Candle> tf=DetailedChartController.cached(s,detailTimeframe);
-                    if(tf==null||tf.size()<2)DetailedChartController.fetch(s,detailTimeframe);
+                    if(!symbol.equals(detailSymbol)||tfIndex!=detailTimeframe)return;
+                    List<MarketDataService.Candle> tf=DetailedChartController.cached(s,tfIndex);
+                    if(tf==null||tf.size()<2)DetailedChartController.fetch(s,tfIndex);
                 }catch(Exception ignored){}
             }
         });
