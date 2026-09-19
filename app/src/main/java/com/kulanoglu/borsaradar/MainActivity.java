@@ -256,7 +256,7 @@ public class MainActivity extends Activity {
     private void warmPortfolioSignal(String symbol){
         final String s=MarketDataService.normalizeSymbol(symbol);
         List<MarketDataService.Candle> cached=MarketDataService.cachedSeries(s,"1mo","1d");
-        if(cached!=null&&cached.size()>=15)try{holdingSignals.put(s,ShortPulseEngine.analyze(cached));}catch(Exception ignored){}
+        if(cached!=null&&cached.size()>=15)try{holdingSignals.put(s,ShortPulseEngine.analyze(cached));main.post(()->{if(findHolding(s)!=null)showPortfolio();});}catch(Exception ignored){}
         io.execute(()->{try{List<MarketDataService.Candle>d=MarketDataService.fetchDaily(s,"1mo");ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);holdingSignals.put(s,r);CatalystContextEngine.Result cx=null;try{cx=CatalystContextEngine.analyze(s,r.score);}catch(Exception ignored){}if(cx!=null)holdingContexts.put(s,cx);main.post(()->{if(findHolding(s)!=null)showPortfolio();});}catch(Exception ignored){}});
     }
 
