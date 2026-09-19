@@ -6,7 +6,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.view.View;
-import android.view.MotionEvent;\nimport android.view.ScaleGestureDetector;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -17,7 +18,10 @@ public final class PriceChartView extends View {
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
     private final String label;
     private int selectedIndex=-1;
-    private float touchX=-1;\n    private int visibleCount=0;\n    private int visibleEnd=-1;\n    private final ScaleGestureDetector scaleDetector;
+    private float touchX=-1;
+    private int visibleCount=0;
+    private int visibleEnd=-1;
+    private final ScaleGestureDetector scaleDetector;
     public PriceChartView(Context c,List<MarketDataService.Candle>d){this(c,d,"1 GÜN");}
     public PriceChartView(Context c,List<MarketDataService.Candle>d,String l){super(c);data=d;label=l;visibleCount=d==null?0:d.size();visibleEnd=d==null?-1:d.size()-1;scaleDetector=new ScaleGestureDetector(c,new ScaleGestureDetector.SimpleOnScaleGestureListener(){@Override public boolean onScale(ScaleGestureDetector detector){if(data==null||data.size()<2)return false;int next=Math.round(visibleCount/detector.getScaleFactor());visibleCount=Math.max(8,Math.min(data.size(),next));visibleEnd=data.size()-1;selectedIndex=-1;invalidate();return true;}});setMinimumHeight(dp(350));setBackgroundColor(Color.rgb(9,30,54));setPadding(dp(12),dp(18),dp(12),dp(18));}
     private int dp(int v){return Math.round(v*getResources().getDisplayMetrics().density);}
@@ -32,11 +36,14 @@ public final class PriceChartView extends View {
     }
     @Override public boolean onTouchEvent(MotionEvent e){
         if(data==null||data.isEmpty())return false;
+        scaleDetector.onTouchEvent(e);
+        if(scaleDetector.isInProgress())return true;
         if(e.getAction()==MotionEvent.ACTION_DOWN||e.getAction()==MotionEvent.ACTION_MOVE){
             touchX=e.getX();
             float left=getPaddingLeft()+dp(3),right=getWidth()-getPaddingRight()-dp(55);
-            float slot=(right-left)/Math.max(1,data.size());
-            selectedIndex=Math.max(0,Math.min(data.size()-1,(int)((touchX-left)/Math.max(1f,slot))));
+            int start=Math.max(0,visibleEnd-visibleCount+1),count=Math.max(1,visibleEnd-start+1);
+            float slot=(right-left)/count;
+            selectedIndex=Math.max(start,Math.min(visibleEnd,start+(int)((touchX-left)/Math.max(1f,slot))));
             invalidate();return true;
         }
         if(e.getAction()==MotionEvent.ACTION_UP){performClick();return true;}
@@ -46,16 +53,21 @@ public final class PriceChartView extends View {
     private void drawLastPrice(Canvas canvas,float left,float right,float top,float bottom,double min,double max,String symbol,String cur){
         double last=data.get(data.size()-1).close;float yy=y(last,min,max,top,bottom);
         paint.setColor(Color.rgb(240,180,40));paint.setStrokeWidth(dp(1));canvas.drawLine(left,yy,right,yy,paint);
-        paint.setTextSize(dp(10));String t=fmt(displayValue(last,symbol))+" "+cur;float pad=dp(4),tw=paint.measureText(t);paint.setColor(Color.rgb(240,180,40));canvas.drawRect(right+dp(2),yy-dp(10),right+dp(2)+tw+pad*2,yy+dp(5),paint);paint.setColor(Color.rgb(9,30,54));paint.setFakeBoldText(true);canvas.drawText(t,right+dp(2)+pad,yy+dp(2),paint);paint.setFakeBoldText(false);\n    }
+        paint.setTextSize(dp(10));String t=fmt(displayValue(last,symbol))+" "+cur;float pad=dp(4),tw=paint.measureText(t);paint.setColor(Color.rgb(240,180,40));canvas.drawRect(right+dp(2),yy-dp(10),right+dp(2)+tw+pad*2,yy+dp(5),paint);paint.setColor(Color.rgb(9,30,54));paint.setFakeBoldText(true);canvas.drawText(t,right+dp(2)+pad,yy+dp(2),paint);paint.setFakeBoldText(false);
+    }
     private void drawCrosshair(Canvas canvas,float left,float right,float top,float volBottom,int start,int count,double min,double max,String symbol,String cur){
         MarketDataService.Candle c=data.get(selectedIndex);float slot=(right-left)/Math.max(1,count);float x=left+slot*((selectedIndex-start)+.5f);float yy=y(c.close,min,max,top,volBottom-dp(117));
         paint.setColor(Color.argb(180,210,220,230));paint.setStrokeWidth(dp(1));canvas.drawLine(x,top,x,volBottom,paint);canvas.drawLine(left,yy,right,yy,paint);
         paint.setTextSize(dp(10));paint.setColor(Color.WHITE);
-        String info="A "+fmt(displayValue(c.open,symbol))+"  Y "+fmt(displayValue(c.high,symbol))+"  D "+fmt(displayValue(c.low,symbol))+"  K "+fmt(displayValue(c.close,symbol))+" "+cur+"  Hac "+compact(c.volume);\n        float pad=dp(6),boxTop=top-dp(20),boxBottom=top-dp(3),boxRight=Math.min(right,left+paint.measureText(info)+pad*2);paint.setColor(Color.argb(220,18,42,68));canvas.drawRect(left,boxTop,boxRight,boxBottom,paint);paint.setColor(Color.WHITE);canvas.drawText(info,left+pad,top-dp(8),paint);\n        SimpleDateFormat sdf=new SimpleDateFormat("dd.MM.yy HH:mm",Locale.getDefault());String dt=sdf.format(new Date(c.time*1000L));float tw=paint.measureText(dt);canvas.drawText(dt,Math.max(left,Math.min(x-tw/2,right-tw)),getHeight()-dp(25),paint);
+        String info="A "+fmt(displayValue(c.open,symbol))+"  Y "+fmt(displayValue(c.high,symbol))+"  D "+fmt(displayValue(c.low,symbol))+"  K "+fmt(displayValue(c.close,symbol))+" "+cur+"  Hac "+compact(c.volume);
+        float pad=dp(6),boxTop=top-dp(20),boxBottom=top-dp(3),boxRight=Math.min(right,left+paint.measureText(info)+pad*2);paint.setColor(Color.argb(220,18,42,68));canvas.drawRect(left,boxTop,boxRight,boxBottom,paint);paint.setColor(Color.WHITE);canvas.drawText(info,left+pad,top-dp(8),paint);
+        SimpleDateFormat sdf=new SimpleDateFormat("dd.MM.yy HH:mm",Locale.getDefault());String dt=sdf.format(new Date(c.time*1000L));float tw=paint.measureText(dt);canvas.drawText(dt,Math.max(left,Math.min(x-tw/2,right-tw)),getHeight()-dp(25),paint);
     }
     private String compact(double v){if(v>=1000000)return String.format(Locale.US,"%.1fM",v/1000000d);if(v>=1000)return String.format(Locale.US,"%.1fK",v/1000d);return String.format(Locale.US,"%.0f",v);}
     private void drawTimeScale(Canvas canvas,float left,float right,float volBottom,int start,int count){paint.setTextSize(dp(10));paint.setColor(Color.rgb(190,207,226));int ticks=Math.min(5,Math.max(2,count));long span=Math.max(0,data.get(visibleEnd).time-data.get(start).time);String pattern=span<=2*86400L?"HH:mm":span<=120*86400L?"dd.MM":"MM.yy";SimpleDateFormat sdf=new SimpleDateFormat(pattern,Locale.getDefault());for(int i=0;i<ticks;i++){int idx=start+Math.round((count-1)*i/(float)(ticks-1));float x=left+(right-left)*i/(float)(ticks-1);String t=sdf.format(new Date(data.get(idx).time*1000L));float tw=paint.measureText(t);if(i==0)canvas.drawText(t,x,getHeight()-dp(8),paint);else if(i==ticks-1)canvas.drawText(t,x-tw,getHeight()-dp(8),paint);else canvas.drawText(t,x-tw/2,getHeight()-dp(8),paint);paint.setColor(Color.rgb(36,58,82));canvas.drawLine(x,volBottom+dp(2),x,getHeight()-dp(23),paint);paint.setColor(Color.rgb(190,207,226));}}
-    private void drawLegend(Canvas canvas,float left,float y){paint.setTextSize(dp(9));String[] names={"EMA","BB","VWAP","S/R"};boolean[] on={showEma,showBands,showVwap,showLevels};float x=left;for(int i=0;i<names.length;i++){paint.setColor(on[i]?Color.WHITE:Color.rgb(105,120,138));String t=(on[i]?"● ":"○ ")+names[i];canvas.drawText(t,x,y,paint);x+=paint.measureText(t)+dp(12);}}\n    private void drawHighLowLabels(Canvas canvas,float left,float right,float top,float bottom,double min,double max,String symbol,String cur){paint.setTextSize(dp(10));paint.setColor(Color.rgb(210,220,232));String hi="Y "+fmt(displayValue(max,symbol))+" "+cur,lo="D "+fmt(displayValue(min,symbol))+" "+cur;canvas.drawText(hi,left,top+dp(11),paint);canvas.drawText(lo,left,bottom-dp(5),paint);}\n    private float y(double v,double min,double max,float top,float bottom){return bottom-(float)((v-min)/(max-min))*(bottom-top);}
+    private void drawLegend(Canvas canvas,float left,float y){paint.setTextSize(dp(9));String[] names={"EMA","BB","VWAP","S/R"};boolean[] on={showEma,showBands,showVwap,showLevels};float x=left;for(int i=0;i<names.length;i++){paint.setColor(on[i]?Color.WHITE:Color.rgb(105,120,138));String t=(on[i]?"● ":"○ ")+names[i];canvas.drawText(t,x,y,paint);x+=paint.measureText(t)+dp(12);}}
+    private void drawHighLowLabels(Canvas canvas,float left,float right,float top,float bottom,double min,double max,String symbol,String cur){paint.setTextSize(dp(10));paint.setColor(Color.rgb(210,220,232));String hi="Y "+fmt(displayValue(max,symbol))+" "+cur,lo="D "+fmt(displayValue(min,symbol))+" "+cur;canvas.drawText(hi,left,top+dp(11),paint);canvas.drawText(lo,left,bottom-dp(5),paint);}
+    private float y(double v,double min,double max,float top,float bottom){return bottom-(float)((v-min)/(max-min))*(bottom-top);}
     private void drawEma(Canvas canvas,int period,int start,int count,float left,float right,double min,double max,float top,float bottom,int color){if(count<period)return;double k=2.0/(period+1),e=data.get(start).close;Path p=new Path();float slot=(right-left)/Math.max(1,count);for(int j=0;j<count;j++){double c=data.get(start+j).close;e=j==0?c:c*k+e*(1-k);float x=left+slot*(j+.5f),yy=y(e,min,max,top,bottom);if(j==0)p.moveTo(x,yy);else p.lineTo(x,yy);}paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(1));paint.setColor(color);canvas.drawPath(p,paint);paint.setStyle(Paint.Style.FILL);}
     private void drawBollinger(Canvas canvas,int period,int start,int count,float left,float right,double min,double max,float top,float bottom){if(count<period)return;Path up=new Path(),lo=new Path();float slot=(right-left)/Math.max(1,count);boolean begun=false;for(int j=period-1;j<count;j++){double sum=0,sq=0;for(int k=j-period+1;k<=j;k++){double v=data.get(start+k).close;sum+=v;sq+=v*v;}double mean=sum/period,sd=Math.sqrt(Math.max(0,sq/period-mean*mean));float x=left+slot*(j+.5f),yu=y(mean+2*sd,min,max,top,bottom),yl=y(mean-2*sd,min,max,top,bottom);if(!begun){up.moveTo(x,yu);lo.moveTo(x,yl);begun=true;}else{up.lineTo(x,yu);lo.lineTo(x,yl);}}paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(1));paint.setColor(Color.rgb(120,144,156));canvas.drawPath(up,paint);canvas.drawPath(lo,paint);paint.setStyle(Paint.Style.FILL);}
     private void drawVwap(Canvas canvas,int start,int count,float left,float right,double min,double max,float top,float bottom){double pv=0,vol=0;Path p=new Path();float slot=(right-left)/Math.max(1,count);boolean begun=false;for(int j=0;j<count;j++){MarketDataService.Candle c=data.get(start+j);double v=Math.max(0,c.volume);if(v<=0)continue;pv+=((c.high+c.low+c.close)/3.0)*v;vol+=v;double vw=pv/vol;float x=left+slot*(j+.5f),yy=y(vw,min,max,top,bottom);if(!begun){p.moveTo(x,yy);begun=true;}else p.lineTo(x,yy);}if(!begun)return;paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(1));paint.setColor(Color.rgb(38,198,218));canvas.drawPath(p,paint);paint.setStyle(Paint.Style.FILL);}
