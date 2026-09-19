@@ -227,7 +227,8 @@ public class MainActivity extends Activity {
         final String selectedSymbol=symbol;
         final int selectedTimeframe=detailTimeframe;
         shell(selectedSymbol+" • analiz");
-        List<MarketDataService.Candle> instant=DetailedChartController.cached(selectedSymbol,selectedTimeframe);\n        if(instant==null||instant.size()<2)instant=MarketDataService.cachedSeries(selectedSymbol,"1mo","1d");
+        List<MarketDataService.Candle> instant=DetailedChartController.cached(selectedSymbol,selectedTimeframe);
+        if(instant==null||instant.size()<2)instant=MarketDataService.cachedSeries(selectedSymbol,"1mo","1d");
         if(instant!=null && instant.size()>=10){
             try{ShortPulseEngine.Result cachedResult=ShortPulseEngine.analyze(instant);renderStockDetail(selectedSymbol,cachedResult,null,instant);}catch(Exception ignored){content.addView(txt("Fiyat ve teknik görünüm yükleniyor…",15,NAVY));}
         }else content.addView(txt("Fiyat ve teknik görünüm yükleniyor…",15,NAVY));
