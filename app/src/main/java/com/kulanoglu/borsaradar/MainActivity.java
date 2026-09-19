@@ -203,7 +203,7 @@ public class MainActivity extends Activity {
         shell("Tüm Borsa İstanbul Radarı"); LinearLayout top=card(); top.addView(bold("Tüm hisseler • hafif tarama",19,NAVY)); top.addView(txt("İlk tarama teknik olarak hızlı yapılır. Haber/katalizör bağlamı detay açıldığında yüklenir; böylece yüzlerce gereksiz ağ isteği yapılmaz.",13,Color.DKGRAY));
         Button scan=button(scanRunning?"Tarama devam ediyor…":"Tüm BIST'i Tara",GREEN); top.addView(scan); scan.setEnabled(!scanRunning); scan.setOnClickListener(v->scanRadar()); content.addView(top); spacer(8);
         if(scanRunning){int done=scanDone.get(),failed=scanFailed.get();ProgressBar pb=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);pb.setMax(ALL_SYMBOLS.length);pb.setProgress(done);content.addView(pb);content.addView(txt(done+"/"+ALL_SYMBOLS.length+" • başarısız "+failed,14,NAVY));}
-        if(!radarResults.isEmpty()){List<RadarItem> snap=new ArrayList<>(radarResults);LinearLayout summary=card();summary.addView(bold("Son tarama • "+snap.size()+" hisse",16,NAVY));int buy=0,hold=0,risk=0;for(RadarItem x:snap){if(x.recommendation.contains("AL"))buy++;else if(x.recommendation.contains("SAT")||x.recommendation.contains("RİSK"))risk++;else hold++;}summary.addView(txt("AL "+buy+"  •  TUT/İZLE "+hold+"  •  SAT/RİSK "+risk,13,Color.DKGRAY));content.addView(summary);spacer(6);renderRadarList(snap,30);}else content.addView(txt("Henüz radar sonucu yok.",14,Color.GRAY));
+        if(!radarResults.isEmpty()){List<RadarItem> snap=new ArrayList<>(radarResults);LinearLayout summary=card();long radarTs=getSharedPreferences(PREFS,Context.MODE_PRIVATE).getLong("radar_ts",0);String radarAge=radarTs>0?new java.text.SimpleDateFormat("dd.MM HH:mm",Locale.getDefault()).format(new java.util.Date(radarTs)):"önbellek";summary.addView(bold("Son tarama • "+snap.size()+" hisse",16,NAVY));summary.addView(txt("Güncelleme: "+radarAge+(scanRunning?" • yeni tarama sürüyor":""),12,Color.GRAY));int buy=0,hold=0,risk=0;for(RadarItem x:snap){if(x.recommendation.contains("AL"))buy++;else if(x.recommendation.contains("SAT")||x.recommendation.contains("RİSK"))risk++;else hold++;}summary.addView(txt("AL "+buy+"  •  TUT/İZLE "+hold+"  •  SAT/RİSK "+risk,13,Color.DKGRAY));content.addView(summary);spacer(6);renderRadarList(snap,30);}else content.addView(txt("Henüz radar sonucu yok.",14,Color.GRAY));
     }
 
     private void scanRadar() {
@@ -222,7 +222,7 @@ public class MainActivity extends Activity {
                 synchronized(scanBuffer){sorted=new ArrayList<>(scanBuffer);}
                 sorted.sort((x,y)->Double.compare(y.score,x.score));
                 synchronized(radarResults){radarResults.clear();radarResults.addAll(sorted);}
-                scanRunning=false; saveRadarCache(); main.post(this::showRadar);
+                scanRunning=false; saveRadarCache(); getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putLong("radar_ts",System.currentTimeMillis()).apply(); main.post(this::showRadar);
             }else if(done%25==0)main.post(this::showRadar);
         });
     }
@@ -353,5 +353,5 @@ public class MainActivity extends Activity {
         return at<0?s:order.get(Math.floorMod(at+delta,order.size()));
     }
 
-    private String money(double x,String symbol){String n=MarketDataService.normalizeSymbol(symbol);String cur=n.endsWith(".IS")?"₺":n.endsWith(".DE")?"€":"$";return String.format(Locale.US,"%.2f %s",x,cur);} private String fmt(double x){return String.format(Locale.US,"%.2f",x);}
+    private String money(double x,String symbol){String n=MarketDataService.normalizeSymbol(symbol);if(n.endsWith(".IS"))return String.format(Locale.US,"%.2f ₺",x);if(n.endsWith(".DE"))return String.format(Locale.US,"%.2f €",x);double rate=CurrencyService.usdToEur();double shown=Double.isFinite(rate)?x*rate:x;return String.format(Locale.US,"%.2f %s",shown,Double.isFinite(rate)?"€":"$");} private String fmt(double x){return String.format(Locale.US,"%.2f",x);}
 }
