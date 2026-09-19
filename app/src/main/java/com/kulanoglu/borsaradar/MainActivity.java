@@ -179,16 +179,13 @@ public class MainActivity extends Activity {
 
     private TextView signalBanner(ShortPulseEngine.Result s) {
         int color=s.recommendation.contains("SAT")||s.recommendation.contains("RİSK")||s.recommendation.contains("KOVALAMA")?RED:s.recommendation.contains("AL")?GREEN:AMBER;
-        String confidence=s.confidence>=75?"Yüksek güven":s.confidence>=55?"Orta güven":"Düşük güven"; TextView v=bold(s.recommendation+"  •  Pulse "+fmt(s.score)+"
-"+confidence+"  •  "+s.horizonText,18,Color.WHITE); v.setGravity(Gravity.CENTER); v.setBackgroundColor(color); v.setPadding(dp(12),dp(10),dp(12),dp(10)); return v;
+        String confidence=s.confidence>=75?"Yüksek güven":s.confidence>=55?"Orta güven":"Düşük güven"; TextView v=bold(s.recommendation+"  •  Pulse "+fmt(s.score)+"\\n"+confidence+"  •  "+s.horizonText,18,Color.WHITE); v.setGravity(Gravity.CENTER); v.setBackgroundColor(color); v.setPadding(dp(12),dp(10),dp(12),dp(10)); return v;
     }
 
     private TextView contextBanner(CatalystContextEngine.Result c) {
         int color=!c.hasContext?Color.GRAY:c.technicalConflict?PURPLE:c.positiveCatalyst?GREEN:c.negativeCatalyst?RED:AMBER;
         String title=!c.hasContext?"BAĞLAM VERİSİ YETERSİZ":c.technicalConflict?"TEKNİK / HABER ÇELİŞKİSİ":c.positiveCatalyst?"POZİTİF KATALİZÖR":c.negativeCatalyst?"NEGATİF KATALİZÖR":"HABER BAĞLAMI NÖTR";
-        TextView v=bold(title+"  •  Haber "+fmt(c.newsScore)+"/8
-"+c.note+"
-"+c.coverage,14,Color.WHITE); v.setBackgroundColor(color); v.setPadding(dp(12),dp(10),dp(12),dp(10)); return v;
+        TextView v=bold(title+"  •  Haber "+fmt(c.newsScore)+"/8\\n"+c.note+"\\n"+c.coverage,14,Color.WHITE); v.setBackgroundColor(color); v.setPadding(dp(12),dp(10),dp(12),dp(10)); return v;
     }
 
     private void refreshPortfolio() {
@@ -328,10 +325,7 @@ public class MainActivity extends Activity {
         for(int i=0;i<ChartTimeframes.LABELS.length;i++){final int idx=i;Button b=button(ChartTimeframes.LABELS[i],i==detailTimeframe?GREEN:NAVY2);b.setOnClickListener(v->{if(idx!=detailTimeframe)analyzeStock(symbol,idx);});tfRow.addView(b,new LinearLayout.LayoutParams(dp(82),-2));}
         tfScroll.addView(tfRow);content.addView(tfScroll);spacer(5);
         if(chart==null||chart.size()<2){content.addView(txt("Bu zaman diliminde grafik verisi yetersiz.",14,RED));}else{content.addView(txt(ChartTimeframes.label(detailTimeframe)+" • "+chart.size()+" veri noktası",11,Color.GRAY));content.addView(new PriceChartView(this,chart,ChartTimeframes.label(detailTimeframe).toUpperCase(Locale.ROOT)),new LinearLayout.LayoutParams(-1,dp(340)));}spacer(7);
-        LinearLayout info=card();info.addView(bold("Teknik görünüm",17,NAVY));info.addView(txt(r.explanation,14,Color.DKGRAY));LinearLayout metrics=new LinearLayout(this);metrics.setOrientation(LinearLayout.HORIZONTAL);TextView m1=txt("Momentum
-"+r.momentumText,12,Color.DKGRAY),m2=txt("Hacim/Para
-"+r.flowText,12,Color.DKGRAY),m3=txt("Trend
-"+r.trendText,12,Color.DKGRAY);m1.setGravity(Gravity.CENTER);m2.setGravity(Gravity.CENTER);m3.setGravity(Gravity.CENTER);metrics.addView(m1,new LinearLayout.LayoutParams(0,-2,1));metrics.addView(m2,new LinearLayout.LayoutParams(0,-2,1));metrics.addView(m3,new LinearLayout.LayoutParams(0,-2,1));info.addView(metrics);info.addView(txt("Hedef: "+r.horizonText+"  •  Stop ref. "+money(r.stopReference,symbol),13,NAVY2));content.addView(info);
+        LinearLayout info=card();info.addView(bold("Teknik görünüm",17,NAVY));info.addView(txt(r.explanation,14,Color.DKGRAY));LinearLayout metrics=new LinearLayout(this);metrics.setOrientation(LinearLayout.HORIZONTAL);TextView m1=txt("Momentum\\n"+r.momentumText,12,Color.DKGRAY),m2=txt("Hacim/Para\\n"+r.flowText,12,Color.DKGRAY),m3=txt("Trend\\n"+r.trendText,12,Color.DKGRAY);m1.setGravity(Gravity.CENTER);m2.setGravity(Gravity.CENTER);m3.setGravity(Gravity.CENTER);metrics.addView(m1,new LinearLayout.LayoutParams(0,-2,1));metrics.addView(m2,new LinearLayout.LayoutParams(0,-2,1));metrics.addView(m3,new LinearLayout.LayoutParams(0,-2,1));info.addView(metrics);info.addView(txt("Hedef: "+r.horizonText+"  •  Stop ref. "+money(r.stopReference,symbol),13,NAVY2));content.addView(info);
         LinearLayout news=card();news.addView(bold("Bilgi akışı",17,NAVY)); if(cx==null){news.addView(txt("Haber/katalizör verisi arka planda yükleniyor…",14,Color.GRAY));}else{news.addView(txt("Haber skoru: "+fmt(cx.newsScore)+"/8  •  "+cx.dataStatus,14,Color.DKGRAY));news.addView(txt(cx.note,14,cx.technicalConflict?PURPLE:Color.DKGRAY));news.addView(txt("Kapsama: "+cx.coverage,12,Color.GRAY));}content.addView(news);spacer(7);
         LinearLayout actions=new LinearLayout(this); Button prev=button("◀ Önceki",NAVY2), add=button(owned==null?"Portföye Ekle":"Pozisyonu Düzenle",owned==null?GREEN:AMBER), refreshDetail=button("Yenile",NAVY2), next=button("Sonraki ▶",NAVY2); actions.addView(prev,new LinearLayout.LayoutParams(0,-2,1)); actions.addView(add,new LinearLayout.LayoutParams(0,-2,1.15f)); actions.addView(refreshDetail,new LinearLayout.LayoutParams(0,-2,.8f)); actions.addView(next,new LinearLayout.LayoutParams(0,-2,1)); content.addView(actions); prev.setOnClickListener(v->{String s=adjacentSymbol(symbol,-1);if(!s.equals(symbol))analyzeStock(s,detailTimeframe);}); add.setOnClickListener(v->portfolioDialog(owned,symbol)); refreshDetail.setOnClickListener(v->analyzeStock(symbol,detailTimeframe)); next.setOnClickListener(v->{String s=adjacentSymbol(symbol,1);if(!s.equals(symbol))analyzeStock(s,detailTimeframe);});
     }
