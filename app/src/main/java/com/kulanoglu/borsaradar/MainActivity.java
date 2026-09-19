@@ -171,7 +171,7 @@ public class MainActivity extends Activity {
         LinearLayout box=card();box.addView(bold("Portföy özeti",18,NAVY));
         if(priced==0)box.addView(txt("Güncel toplam değer için Tümünü Güncelle'ye bas.",13,Color.GRAY));
         else{
-            if(tlValue>0)addMarketSummary(box,"BIST",tlValue,tlCost,"₺");
+            if(priced<holdings.size())box.addView(txt("Bazı pozisyonların güncel fiyatı henüz yok: "+priced+"/"+holdings.size()+" fiyatlandı.",12,AMBER));\n            if(tlValue>0)addMarketSummary(box,"BIST",tlValue,tlCost,"₺");
             if(eurValue>0)addMarketSummary(box,"Avrupa",eurValue,eurCost,"€");
             if(usdValue>0){double rate=CurrencyService.usdToEur();if(Double.isFinite(rate))addMarketSummary(box,"ABD",usdValue*rate,usdCost*rate,"€");else addMarketSummary(box,"ABD",usdValue,usdCost,"$");}
             box.addView(txt("Fiyatlanan "+priced+"/"+holdings.size()+"  •  Artıda "+positive+"  •  Ekside "+negative,12,Color.DKGRAY));
