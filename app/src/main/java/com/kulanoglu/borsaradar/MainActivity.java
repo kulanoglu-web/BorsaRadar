@@ -205,8 +205,15 @@ public class MainActivity extends Activity {
         EditText qty=new EditText(this); qty.setHint("Lot/Adet"); qty.setInputType(InputType.TYPE_CLASS_NUMBER); EditText cost=new EditText(this); cost.setHint("Alış fiyatı"); cost.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL);
         if(edit!=null){sym.setText(edit.symbol,false);qty.setText(String.valueOf(edit.qty));cost.setText(String.valueOf(edit.cost));} else if(preset!=null)sym.setText(preset,false); box.addView(sym);box.addView(qty);box.addView(cost);
         new AlertDialog.Builder(this).setTitle(edit==null?"Portföye ekle":"Pozisyonu düzenle").setView(box).setPositiveButton("Kaydet",(d,w)->{
-            try{String raw=sym.getText().toString().trim().toUpperCase(Locale.ROOT); String s=parseSymbol(raw); if(s.length()<2)throw new Exception(); int q=Integer.parseInt(qty.getText().toString()); double c=Double.parseDouble(cost.getText().toString().replace(',','.')); if(q<=0||c<=0)throw new Exception(); if(edit==null){Holding existing=null;for(Holding h:holdings)if(MarketDataService.normalizeSymbol(h.symbol).equals(MarketDataService.normalizeSymbol(s))){existing=h;break;}if(existing==null)holdings.add(new Holding(s,q,c));else{int total=existing.qty+q;existing.cost=(existing.cost*existing.qty+c*q)/total;existing.qty=total;}}else{edit.symbol=s;edit.qty=q;edit.cost=c;} savePortfolio();showPortfolio();}catch(Exception ex){Toast.makeText(this,"Hisse / adet / fiyatı kontrol et",Toast.LENGTH_LONG).show();}
+            try{String raw=sym.getText().toString().trim().toUpperCase(Locale.ROOT); String s=parseSymbol(raw); if(s.length()<2)throw new Exception(); int q=Integer.parseInt(qty.getText().toString()); double c=Double.parseDouble(cost.getText().toString().replace(',','.')); if(q<=0||c<=0)throw new Exception(); if(edit==null){Holding existing=null;for(Holding h:holdings)if(MarketDataService.normalizeSymbol(h.symbol).equals(MarketDataService.normalizeSymbol(s))){existing=h;break;}if(existing==null)holdings.add(new Holding(s,q,c));else{int total=existing.qty+q;existing.cost=(existing.cost*existing.qty+c*q)/total;existing.qty=total;}}else{edit.symbol=s;edit.qty=q;edit.cost=c;} savePortfolio();warmPortfolioSignal(s);showPortfolio();}catch(Exception ex){Toast.makeText(this,"Hisse / adet / fiyatı kontrol et",Toast.LENGTH_LONG).show();}
         }).setNegativeButton("İptal",null).show();
+    }
+
+    private void warmPortfolioSignal(String symbol){
+        final String s=MarketDataService.normalizeSymbol(symbol);
+        List<MarketDataService.Candle> cached=MarketDataService.cachedSeries(s,"1mo","1d");
+        if(cached!=null&&cached.size()>=15)try{holdingSignals.put(s,ShortPulseEngine.analyze(cached));}catch(Exception ignored){}
+        io.execute(()->{try{List<MarketDataService.Candle>d=MarketDataService.fetchDaily(s,"1mo");ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);holdingSignals.put(s,r);CatalystContextEngine.Result cx=null;try{cx=CatalystContextEngine.analyze(s,r.score);}catch(Exception ignored){}if(cx!=null)holdingContexts.put(s,cx);main.post(()->{if(findHolding(s)!=null)showPortfolio();});}catch(Exception ignored){}});
     }
 
     private String parseSymbol(String raw){
