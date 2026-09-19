@@ -197,7 +197,7 @@ public class MainActivity extends Activity {
         }
         LinearLayout row=new LinearLayout(this); Button detail=button("Grafik / Tavsiye",NAVY2), edit=button("Düzenle",AMBER), del=button("Sil",RED);
         row.addView(detail,new LinearLayout.LayoutParams(0,-2,1.2f)); row.addView(edit,new LinearLayout.LayoutParams(0,-2,1)); row.addView(del,new LinearLayout.LayoutParams(0,-2,.7f)); c.addView(row);
-        detail.setOnClickListener(v->{ShortPulseEngine.Result cached=holdingSignal(h.symbol);if(cached!=null)detailResult=cached;CatalystContextEngine.Result cc=holdingContext(h.symbol);if(cc!=null)detailContext=cc;analyzeStock(h.symbol);}); edit.setOnClickListener(v->portfolioDialog(h,h.symbol)); del.setOnClickListener(v->{holdings.remove(h); savePortfolio(); showPortfolio();}); content.addView(c); spacer(8);
+        detail.setOnClickListener(v->{ShortPulseEngine.Result cached=holdingSignal(h.symbol);if(cached!=null)detailResult=cached;CatalystContextEngine.Result cc=holdingContext(h.symbol);if(cc!=null)detailContext=cc;analyzeStock(h.symbol);}); edit.setOnClickListener(v->portfolioDialog(h,h.symbol)); del.setOnClickListener(v->{String n=MarketDataService.normalizeSymbol(h.symbol);holdings.remove(h);holdingSignals.keySet().removeIf(k->MarketDataService.normalizeSymbol(k).equals(n));holdingContexts.keySet().removeIf(k->MarketDataService.normalizeSymbol(k).equals(n));savePortfolio();showPortfolio();}); content.addView(c); spacer(8);
     }
 
     private TextView signalBanner(ShortPulseEngine.Result s) {
