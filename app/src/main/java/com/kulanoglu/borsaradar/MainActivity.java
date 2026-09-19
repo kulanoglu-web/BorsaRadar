@@ -163,9 +163,9 @@ public class MainActivity extends Activity {
         for(Holding h:new ArrayList<>(holdings)){
             ShortPulseEngine.Result s=holdingSignals.get(h.symbol);
             if(s==null||s.price<=0)continue;
-            String n=MarketDataService.normalizeSymbol(h.symbol);double v=s.price*h.qty,k=h.cost*h.qty;
+            MarketDataService.Spot live=MarketDataService.latestSpot(h.symbol);double current=live!=null&&live.price>0?live.price:s.price;\n            String n=MarketDataService.normalizeSymbol(h.symbol);double v=current*h.qty,k=h.cost*h.qty;
             if(n.endsWith(".IS")){tlValue+=v;tlCost+=k;}else if(n.endsWith(".DE")){eurValue+=v;eurCost+=k;}else{usdValue+=v;usdCost+=k;}
-            priced++;if(s.price>=h.cost)positive++;else negative++;
+            priced++;if(current>=h.cost)positive++;else negative++;
         }
         LinearLayout box=card();box.addView(bold("Portföy özeti",18,NAVY));
         if(priced==0)box.addView(txt("Güncel toplam değer için Tümünü Güncelle'ye bas.",13,Color.GRAY));
