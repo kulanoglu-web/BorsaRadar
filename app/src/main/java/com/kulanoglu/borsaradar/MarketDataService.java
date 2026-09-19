@@ -63,7 +63,9 @@ public final class MarketDataService {
         return raw;
     }
 
-    public static List<Candle> cachedSeries(String inputSymbol,String range,String interval){Cache c=CACHE.get(normalizeSymbol(inputSymbol)+"|"+range+"|"+interval);return c==null?null:new ArrayList<>(c.data);}\n\n    public static Spot latestSpot(String inputSymbol){String symbol=normalizeSymbol(inputSymbol);Spot s=SPOT_CACHE.get(symbol);if(s!=null&&System.currentTimeMillis()-s.at<120_000L)return s;return null;}
+    public static List<Candle> cachedSeries(String inputSymbol,String range,String interval){Cache c=CACHE.get(normalizeSymbol(inputSymbol)+"|"+range+"|"+interval);return c==null?null:new ArrayList<>(c.data);}
+
+    public static Spot latestSpot(String inputSymbol){String symbol=normalizeSymbol(inputSymbol);Spot s=SPOT_CACHE.get(symbol);if(s!=null&&System.currentTimeMillis()-s.at<120_000L)return s;return null;}
     public static String sourceFor(String inputSymbol,String range,String interval){Cache c=CACHE.get(normalizeSymbol(inputSymbol)+"|"+range+"|"+interval);return c==null?"":c.source;}
 
     public static String normalizeSymbol(String input){
