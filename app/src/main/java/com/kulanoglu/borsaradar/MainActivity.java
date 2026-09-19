@@ -227,7 +227,10 @@ public class MainActivity extends Activity {
         final String selectedSymbol=symbol;
         final int selectedTimeframe=detailTimeframe;
         shell(selectedSymbol+" • analiz");
-        content.addView(txt("Fiyat ve teknik görünüm yükleniyor…",15,NAVY));
+        List<MarketDataService.Candle> instant=MarketDataService.cachedSeries(selectedSymbol,"1mo","1d");
+        if(instant!=null && instant.size()>=10){
+            try{ShortPulseEngine.Result cachedResult=ShortPulseEngine.analyze(instant);renderStockDetail(selectedSymbol,cachedResult,null,instant);}catch(Exception ignored){content.addView(txt("Fiyat ve teknik görünüm yükleniyor…",15,NAVY));}
+        }else content.addView(txt("Fiyat ve teknik görünüm yükleniyor…",15,NAVY));
         io.execute(()->{
             try{
                 // Hızlı ilk çizim: yalnızca kısa günlük seri. Haber ve seçili grafik bekletmez.
