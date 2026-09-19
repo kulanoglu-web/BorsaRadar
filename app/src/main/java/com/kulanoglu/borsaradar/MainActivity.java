@@ -161,7 +161,7 @@ public class MainActivity extends Activity {
     private void renderPortfolioSummary(){
         double tlValue=0,tlCost=0,eurValue=0,eurCost=0,usdValue=0,usdCost=0;int priced=0,positive=0,negative=0;
         for(Holding h:new ArrayList<>(holdings)){
-            ShortPulseEngine.Result s=holdingSignals.get(h.symbol);
+            ShortPulseEngine.Result s=holdingSignal(h.symbol);
             if(s==null||s.price<=0)continue;
             MarketDataService.Spot live=MarketDataService.latestSpot(h.symbol);double current=live!=null&&live.price>0?live.price:s.price;\n            String n=MarketDataService.normalizeSymbol(h.symbol);double v=current*h.qty,k=h.cost*h.qty;
             if(n.endsWith(".IS")){tlValue+=v;tlCost+=k;}else if(n.endsWith(".DE")){eurValue+=v;eurCost+=k;}else{usdValue+=v;usdCost+=k;}
@@ -185,18 +185,18 @@ public class MainActivity extends Activity {
 
     private void renderHolding(Holding h) {
         LinearLayout c=card(); c.addView(bold(h.symbol+"  •  "+h.qty+" lot",20,NAVY)); c.addView(txt("Ortalama maliyet  "+money(h.cost,h.symbol),14,Color.DKGRAY));
-        ShortPulseEngine.Result s=holdingSignals.get(h.symbol);
+        ShortPulseEngine.Result s=holdingSignal(h.symbol);
         if(s==null) c.addView(txt("Güncel değerlendirme için 'Tümünü Güncelle'ye bas.",13,Color.GRAY));
         else {
             MarketDataService.Spot live=MarketDataService.latestSpot(h.symbol); double current=live!=null&&live.price>0?live.price:s.price;
             double pnl=(current-h.cost)*h.qty, pct=h.cost>0?(current/h.cost-1)*100:0;
             c.addView(bold("Son  "+money(current,h.symbol)+"   P/L  "+money(pnl,h.symbol)+"  (%"+fmt(pct)+")",16,pnl>=0?GREEN:RED)); c.addView(txt("Pozisyon değeri  "+money(current*h.qty,h.symbol)+(live!=null?"  •  "+live.source:""),13,Color.DKGRAY)); c.addView(signalBanner(s)); c.addView(txt(s.explanation,13,Color.DKGRAY));
-            CatalystContextEngine.Result cx=holdingContexts.get(h.symbol); if(cx!=null)c.addView(contextBanner(cx));
+            CatalystContextEngine.Result cx=holdingContext(h.symbol); if(cx!=null)c.addView(contextBanner(cx));
             c.addView(txt("Hedef süre: "+s.horizonText+"  •  Güven %"+(int)s.confidence+"  •  Stop ref. "+money(s.stopReference,h.symbol),13,NAVY2));
         }
         LinearLayout row=new LinearLayout(this); Button detail=button("Grafik / Tavsiye",NAVY2), edit=button("Düzenle",AMBER), del=button("Sil",RED);
         row.addView(detail,new LinearLayout.LayoutParams(0,-2,1.2f)); row.addView(edit,new LinearLayout.LayoutParams(0,-2,1)); row.addView(del,new LinearLayout.LayoutParams(0,-2,.7f)); c.addView(row);
-        detail.setOnClickListener(v->{ShortPulseEngine.Result cached=holdingSignals.get(h.symbol);if(cached!=null)detailResult=cached;CatalystContextEngine.Result cc=holdingContexts.get(h.symbol);if(cc!=null)detailContext=cc;analyzeStock(h.symbol);}); edit.setOnClickListener(v->portfolioDialog(h,h.symbol)); del.setOnClickListener(v->{holdings.remove(h); savePortfolio(); showPortfolio();}); content.addView(c); spacer(8);
+        detail.setOnClickListener(v->{ShortPulseEngine.Result cached=holdingSignal(h.symbol);if(cached!=null)detailResult=cached;CatalystContextEngine.Result cc=holdingContext(h.symbol);if(cc!=null)detailContext=cc;analyzeStock(h.symbol);}); edit.setOnClickListener(v->portfolioDialog(h,h.symbol)); del.setOnClickListener(v->{holdings.remove(h); savePortfolio(); showPortfolio();}); content.addView(c); spacer(8);
     }
 
     private TextView signalBanner(ShortPulseEngine.Result s) {
@@ -342,7 +342,7 @@ public class MainActivity extends Activity {
         });
     }
 
-    private Holding findHolding(String symbol){String n=MarketDataService.normalizeSymbol(symbol);for(Holding h:holdings)if(MarketDataService.normalizeSymbol(h.symbol).equals(n))return h;return null;}
+    private Holding findHolding(String symbol){String n=MarketDataService.normalizeSymbol(symbol);for(Holding h:holdings)if(MarketDataService.normalizeSymbol(h.symbol).equals(n))return h;return null;}\n    private ShortPulseEngine.Result holdingSignal(String symbol){String n=MarketDataService.normalizeSymbol(symbol);ShortPulseEngine.Result r=holdingSignals.get(n);if(r!=null)return r;for(Map.Entry<String,ShortPulseEngine.Result> e:holdingSignals.entrySet())if(MarketDataService.normalizeSymbol(e.getKey()).equals(n))return e.getValue();return null;}\n    private CatalystContextEngine.Result holdingContext(String symbol){String n=MarketDataService.normalizeSymbol(symbol);CatalystContextEngine.Result r=holdingContexts.get(n);if(r!=null)return r;for(Map.Entry<String,CatalystContextEngine.Result> e:holdingContexts.entrySet())if(MarketDataService.normalizeSymbol(e.getKey()).equals(n))return e.getValue();return null;}
     private RadarItem findRadarItem(String symbol){String n=MarketDataService.normalizeSymbol(symbol);synchronized(radarResults){for(RadarItem x:radarResults)if(MarketDataService.normalizeSymbol(x.symbol).equals(n))return x;}return null;}
 
     private void renderStockDetail(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx,List<MarketDataService.Candle> chart) {
