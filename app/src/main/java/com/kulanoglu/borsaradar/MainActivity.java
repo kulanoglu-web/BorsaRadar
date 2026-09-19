@@ -419,7 +419,8 @@ public class MainActivity extends Activity {
         if(order.isEmpty())order.addAll(Arrays.asList(ALL_SYMBOLS));
         int at=order.indexOf(s);
         if(at<0){String n=MarketDataService.normalizeSymbol(s);for(int i=0;i<order.size();i++)if(MarketDataService.normalizeSymbol(order.get(i)).equals(n)){at=i;break;}}
-        return at<0?s:order.get(Math.floorMod(at+delta,order.size()));
+        int target=at+delta;
+        return at<0||target<0||target>=order.size()?s:order.get(target);
     }
 
     private String money(double x,String symbol){String n=MarketDataService.normalizeSymbol(symbol);if(n.endsWith(".IS"))return String.format(Locale.US,"%.2f ₺",x);if(n.endsWith(".DE"))return String.format(Locale.US,"%.2f €",x);double rate=CurrencyService.usdToEur();if(!Double.isFinite(rate))io.execute(CurrencyService::refreshIfNeeded);double shown=Double.isFinite(rate)?x*rate:x;return String.format(Locale.US,"%.2f %s",shown,Double.isFinite(rate)?"€":"$");} private String fmt(double x){return String.format(Locale.US,"%.2f",x);}
