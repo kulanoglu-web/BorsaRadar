@@ -175,7 +175,7 @@ public class MainActivity extends Activity {
             if(tlValue>0)addMarketSummary(box,"BIST",tlValue,tlCost,"₺");
             if(eurValue>0)addMarketSummary(box,"Avrupa",eurValue,eurCost,"€");
             if(usdValue>0){double rate=CurrencyService.usdToEur();if(Double.isFinite(rate))addMarketSummary(box,"ABD",usdValue*rate,usdCost*rate,"€");else addMarketSummary(box,"ABD",usdValue,usdCost,"$");}
-            box.addView(txt("Fiyatlanan "+priced+"/"+holdings.size()+"  •  Artıda "+positive+"  •  Ekside "+negative,12,Color.DKGRAY));
+            box.addView(txt("Fiyatlanan "+priced+"/"+holdings.size()+"  •  Artıda "+positive+"  •  Ekside "+negative+"  •  Nötr/eksik "+Math.max(0,holdings.size()-positive-negative),12,Color.DKGRAY));
         }
         content.addView(box);spacer(7);
     }
