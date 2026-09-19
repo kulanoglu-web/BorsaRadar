@@ -286,8 +286,8 @@ public class MainActivity extends Activity {
                 List<RadarItem> sorted;
                 synchronized(scanBuffer){sorted=new ArrayList<>(scanBuffer);}
                 sorted.sort((x,y)->Double.compare(y.score,x.score));
-                if(!sorted.isEmpty()){synchronized(radarResults){radarResults.clear();radarResults.addAll(sorted);}saveRadarCache();getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putLong("radar_ts",System.currentTimeMillis()).apply();}
-                scanRunning=false;main.post(()->{if(sorted.isEmpty())Toast.makeText(this,"Yeni tarama sonuç üretmedi; önceki radar sonuçları korundu.",Toast.LENGTH_LONG).show();showRadar();});
+                int minCoverage=Math.max(20,ALL_SYMBOLS.length/4);if(sorted.size()>=minCoverage){synchronized(radarResults){radarResults.clear();radarResults.addAll(sorted);}saveRadarCache();getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putLong("radar_ts",System.currentTimeMillis()).apply();}
+                scanRunning=false;main.post(()->{if(sorted.size()<minCoverage)Toast.makeText(this,"Yeni tarama yeterli kapsama ulaşmadı; önceki radar sonuçları korundu.",Toast.LENGTH_LONG).show();showRadar();});
             }else if(done%50==0)main.post(this::showRadar);
         });
     }
