@@ -383,7 +383,7 @@ public class MainActivity extends Activity {
     }
 
     private void showBaskets() {
-        shell("100.000 TL • 3 Sepet"); if(radarResults.isEmpty()){LinearLayout c=card();c.addView(bold("Önce radar taraması gerekiyor",18,NAVY));c.addView(txt("Tarama bir kez tamamlanınca sonuç kaydedilir; ekrandan çıksan da kaybolmaz.",13,Color.DKGRAY));Button go=button("Radarı Aç",GREEN);c.addView(go);go.setOnClickListener(v->showRadar());content.addView(c);return;}
+        shell("100.000 TL • 3 Sepet"); if(radarResults.isEmpty()){LinearLayout c=card();c.addView(bold(scanRunning?"Radar taraması devam ediyor":"Önce radar taraması gerekiyor",18,NAVY));c.addView(txt("Tarama bir kez tamamlanınca sonuç kaydedilir; ekrandan çıksan da kaybolmaz.",13,Color.DKGRAY));Button go=button("Radarı Aç",GREEN);c.addView(go);go.setOnClickListener(v->showRadar());content.addView(c);return;}
         List<RadarItem>all=new ArrayList<>(radarResults);all.sort((a,b)->Double.compare(b.score,a.score));List<RadarItem>fast=new ArrayList<>(),twoWeek=new ArrayList<>(),div=new ArrayList<>();List<String>dp=Arrays.asList(DIVIDEND_POOL);for(RadarItem r:all){if(r.score>=5.2&&r.confidence>=60)fast.add(r);if(r.score>=3.7&&!r.recommendation.contains("SAT")&&!r.recommendation.contains("RİSK"))twoWeek.add(r);if(dp.contains(r.symbol)&&r.score>=1.5&&!r.recommendation.contains("SAT"))div.add(r);}basket("1 • HIZLI 1–3 GÜN",33333,fast,GREEN,"Güçlü momentum + hacim + kısa trend.");basket("2 • 4–10 İŞLEM GÜNÜ",33333,twoWeek,NAVY2,"Daha dengeli Pulse skoru; en fazla yaklaşık iki hafta.");basket("3 • TEMETTÜ + TEKNİK",33334,div,PURPLE,"Temettü geçmişi güçlü şirket havuzu içinden mevcut teknik görünümü zayıf olmayanlar.");
     }
 
