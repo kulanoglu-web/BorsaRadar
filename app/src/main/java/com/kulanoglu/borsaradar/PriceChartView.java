@@ -23,6 +23,7 @@ public final class PriceChartView extends View {
     private int visibleEnd=-1;
     private float downX=-1,lastX=-1;
     private long lastTapAt=0;
+    private float lastTapX=-1000,lastTapY=-1000;
     private float legendEmaRight,legendBbRight,legendVwapRight,legendLevelsRight,legendVolumeRight,legendChangeRight;
     private boolean panning=false;
     private final ScaleGestureDetector scaleDetector;
@@ -58,7 +59,7 @@ public final class PriceChartView extends View {
             selectedIndex=Math.max(start,Math.min(visibleEnd,start+(int)((touchX-left)/Math.max(1f,slot))));
             lastX=touchX;invalidate();return true;
         }
-        if(e.getAction()==MotionEvent.ACTION_UP){if(!panning){long now=System.currentTimeMillis();if(now-lastTapAt<320){visibleCount=data.size();visibleEnd=data.size()-1;selectedIndex=-1;touchX=-1;invalidate();}else performClick();lastTapAt=now;}else{selectedIndex=-1;touchX=-1;invalidate();}downX=lastX=-1;panning=false;return true;}
+        if(e.getAction()==MotionEvent.ACTION_UP){if(!panning){long now=System.currentTimeMillis();if(now-lastTapAt<320&&Math.abs(e.getX()-lastTapX)<dp(28)&&Math.abs(e.getY()-lastTapY)<dp(28)){visibleCount=data.size();visibleEnd=data.size()-1;selectedIndex=-1;touchX=-1;invalidate();}else performClick();lastTapAt=now;lastTapX=e.getX();lastTapY=e.getY();}else{selectedIndex=-1;touchX=-1;invalidate();}downX=lastX=-1;panning=false;return true;}
         return true;
     }
     @Override public boolean performClick(){super.performClick();return true;}
