@@ -227,10 +227,14 @@ public class MainActivity extends Activity {
         final String selectedSymbol=symbol;
         final int selectedTimeframe=detailTimeframe;
         shell(selectedSymbol+" • analiz");
-        List<MarketDataService.Candle> instant=DetailedChartController.cached(selectedSymbol,selectedTimeframe);
-        if(instant==null||instant.size()<2)instant=MarketDataService.cachedSeries(selectedSymbol,"1mo","1d");
-        if(instant!=null && instant.size()>=2){
-            try{ShortPulseEngine.Result cachedResult=ShortPulseEngine.analyze(instant);renderStockDetail(selectedSymbol,cachedResult,null,instant);}catch(Exception ignored){content.addView(txt("Fiyat ve teknik görünüm yükleniyor…",15,NAVY));}
+        List<MarketDataService.Candle> instantChart=DetailedChartController.cached(selectedSymbol,selectedTimeframe);
+        List<MarketDataService.Candle> instantAnalysis=MarketDataService.cachedSeries(selectedSymbol,"1mo","1d");
+        if(instantAnalysis!=null && instantAnalysis.size()>=15){
+            try{
+                ShortPulseEngine.Result cachedResult=ShortPulseEngine.analyze(instantAnalysis);
+                List<MarketDataService.Candle> shownChart=instantChart!=null&&instantChart.size()>=2?instantChart:instantAnalysis;
+                renderStockDetail(selectedSymbol,cachedResult,null,shownChart);
+            }catch(Exception ignored){content.addView(txt("Fiyat ve teknik görünüm yükleniyor…",15,NAVY));}
         }else content.addView(txt("Fiyat ve teknik görünüm yükleniyor…",15,NAVY));
         io.execute(()->{
             try{
