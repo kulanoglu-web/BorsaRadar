@@ -70,8 +70,8 @@ public class MainActivity extends Activity {
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newFixedThreadPool(5);
     private final List<Holding> holdings = new ArrayList<>();
-    private final Map<String, ShortPulseEngine.Result> holdingSignals = new HashMap<>();
-    private final Map<String, CatalystContextEngine.Result> holdingContexts = new HashMap<>();
+    private final Map<String, ShortPulseEngine.Result> holdingSignals = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<String, CatalystContextEngine.Result> holdingContexts = new java.util.concurrent.ConcurrentHashMap<>();
     private volatile boolean portfolioRefreshing=false;
     private final List<RadarItem> radarResults = Collections.synchronizedList(new ArrayList<>());
     private final List<RadarItem> scanBuffer = Collections.synchronizedList(new ArrayList<>());
