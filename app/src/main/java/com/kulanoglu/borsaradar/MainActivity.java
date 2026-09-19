@@ -215,7 +215,7 @@ public class MainActivity extends Activity {
         if(holdings.isEmpty()){Toast.makeText(this,"Önce hisse ekle",Toast.LENGTH_SHORT).show();return;} if(portfolioRefreshing)return; portfolioRefreshing=true;
         shell("Portföy güncelleniyor"); ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal); bar.setMax(holdings.size()); content.addView(bar); TextView st=txt("0/"+holdings.size(),15,NAVY); content.addView(st); final int[] done={0};
         for(Holding h:new ArrayList<>(holdings)) io.execute(()->{
-            try { List<MarketDataService.Candle> d=MarketDataService.fetchDaily(h.symbol,"1mo"); ShortPulseEngine.Result s=ShortPulseEngine.analyze(d); holdingSignals.put(h.symbol,s); holdingContexts.put(h.symbol,CatalystContextEngine.analyze(h.symbol,s.score)); } catch(Exception ignored){}
+            try { String key=MarketDataService.normalizeSymbol(h.symbol);List<MarketDataService.Candle> d=MarketDataService.fetchDaily(key,"1mo"); ShortPulseEngine.Result s=ShortPulseEngine.analyze(d); holdingSignals.put(key,s);main.post(this::showPortfolio);io.execute(()->{try{CatalystContextEngine.Result cx=CatalystContextEngine.analyze(key,s.score);if(cx!=null)holdingContexts.put(key,cx);}catch(Exception ignored){}}); } catch(Exception ignored){}
             main.post(()->{done[0]++;bar.setProgress(done[0]);st.setText(done[0]+"/"+holdings.size());if(done[0]>=holdings.size()){portfolioRefreshing=false;getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putLong("portfolio_ts",System.currentTimeMillis()).apply();showPortfolio();}});
         });
     }
