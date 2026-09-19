@@ -54,7 +54,7 @@ public final class PriceChartView extends View {
             selectedIndex=Math.max(start,Math.min(visibleEnd,start+(int)((touchX-left)/Math.max(1f,slot))));
             lastX=touchX;invalidate();return true;
         }
-        if(e.getAction()==MotionEvent.ACTION_UP){if(!panning)performClick();downX=lastX=-1;return true;}
+        if(e.getAction()==MotionEvent.ACTION_UP){if(!panning){performClick();}else{selectedIndex=-1;touchX=-1;invalidate();}downX=lastX=-1;panning=false;return true;}
         return true;
     }
     @Override public boolean performClick(){super.performClick();return true;}
