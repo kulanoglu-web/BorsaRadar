@@ -236,7 +236,7 @@ public class MainActivity extends Activity {
                 // Hızlı ilk çizim: yalnızca kısa günlük seri. Haber ve seçili grafik bekletmez.
                 List<MarketDataService.Candle> base=MarketDataService.fetchDaily(selectedSymbol,"1mo");
                 ShortPulseEngine.Result r=ShortPulseEngine.analyze(base);
-                main.post(()->renderStockDetail(selectedSymbol,r,null,base));
+                main.post(()->{if(selectedSymbol.equals(detailSymbol) && selectedTimeframe==detailTimeframe)renderStockDetail(selectedSymbol,r,null,base);});
 
                 // Ağır verileri ekran açıldıktan sonra arka planda tamamla.
                 io.execute(()->{
@@ -254,7 +254,7 @@ public class MainActivity extends Activity {
                     }catch(Exception ignored){}
                 });
             }catch(Exception e){
-                main.post(()->{shell(selectedSymbol+" • analiz");content.addView(txt("Veri alınamadı: "+e.getMessage(),15,RED));});
+                main.post(()->{if(selectedSymbol.equals(detailSymbol) && selectedTimeframe==detailTimeframe){shell(selectedSymbol+" • analiz");content.addView(txt("Veri alınamadı: "+e.getMessage(),15,RED));}});
             }
         });
     }
