@@ -76,6 +76,8 @@ public class MainActivity extends Activity {
     private volatile boolean scanRunning=false;
     private int detailTimeframe=5; // default: 1 gün
     private String detailSymbol="";
+    private ShortPulseEngine.Result detailResult=null;
+    private CatalystContextEngine.Result detailContext=null;
     private final AtomicInteger scanDone=new AtomicInteger(0), scanFailed=new AtomicInteger(0);
 
     @Override public void onCreate(Bundle b) {
@@ -222,11 +224,18 @@ public class MainActivity extends Activity {
 
     private void analyzeStock(String symbol,int timeframe) {
         if(symbol==null||symbol.trim().length()<2){Toast.makeText(this,"Geçerli hisse seç",Toast.LENGTH_SHORT).show();return;}
-        symbol=parseSymbol(symbol.toUpperCase(Locale.ROOT)); detailSymbol=symbol;
+        symbol=parseSymbol(symbol.toUpperCase(Locale.ROOT));
+        boolean sameSymbol=symbol.equals(detailSymbol);
+        detailSymbol=symbol;
         detailTimeframe=ChartTimeframes.clamp(timeframe);
+        if(!sameSymbol){detailResult=null;detailContext=null;}
         final String selectedSymbol=symbol;
         final int selectedTimeframe=detailTimeframe;
         shell(selectedSymbol+" • analiz");
+        if(sameSymbol && detailResult!=null){
+            List<MarketDataService.Candle> quickChart=DetailedChartController.cached(selectedSymbol,selectedTimeframe);
+            if(quickChart!=null&&quickChart.size()>=2)renderStockDetail(selectedSymbol,detailResult,detailContext,quickChart);
+        }
         List<MarketDataService.Candle> instantChart=DetailedChartController.cached(selectedSymbol,selectedTimeframe);
         List<MarketDataService.Candle> instantAnalysis=MarketDataService.cachedSeries(selectedSymbol,"1mo","1d");
         if(instantAnalysis!=null && instantAnalysis.size()>=15){
@@ -241,6 +250,7 @@ public class MainActivity extends Activity {
                 // Hızlı ilk çizim: yalnızca kısa günlük seri. Haber ve seçili grafik bekletmez.
                 List<MarketDataService.Candle> base=MarketDataService.fetchDaily(selectedSymbol,"1mo");
                 ShortPulseEngine.Result r=ShortPulseEngine.analyze(base);
+                detailResult=r;
                 prefetchAdjacent(selectedSymbol);
                 main.post(()->{if(selectedSymbol.equals(detailSymbol) && selectedTimeframe==detailTimeframe)renderStockDetail(selectedSymbol,r,null,base);});
 
@@ -253,6 +263,7 @@ public class MainActivity extends Activity {
                         try{chart=DetailedChartController.fetch(selectedSymbol,selectedTimeframe);}catch(Exception ignored){chart=base;}
                         final CatalystContextEngine.Result safeCx=cx;
                         final List<MarketDataService.Candle> safeChart=chart;
+                        if(selectedSymbol.equals(detailSymbol))detailContext=safeCx;
                         main.post(()->{
                             if(selectedSymbol.equals(detailSymbol) && selectedTimeframe==detailTimeframe)
                                 renderStockDetail(selectedSymbol,r,safeCx,safeChart);
