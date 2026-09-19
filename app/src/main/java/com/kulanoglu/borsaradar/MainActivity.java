@@ -163,7 +163,8 @@ public class MainActivity extends Activity {
         for(Holding h:new ArrayList<>(holdings)){
             ShortPulseEngine.Result s=holdingSignal(h.symbol);
             if(s==null||s.price<=0)continue;
-            MarketDataService.Spot live=MarketDataService.latestSpot(h.symbol);double current=live!=null&&live.price>0?live.price:s.price;\n            String n=MarketDataService.normalizeSymbol(h.symbol);double v=current*h.qty,k=h.cost*h.qty;
+            MarketDataService.Spot live=MarketDataService.latestSpot(h.symbol);double current=live!=null&&live.price>0?live.price:s.price;
+            String n=MarketDataService.normalizeSymbol(h.symbol);double v=current*h.qty,k=h.cost*h.qty;
             if(n.endsWith(".IS")){tlValue+=v;tlCost+=k;}else if(n.endsWith(".DE")){eurValue+=v;eurCost+=k;}else{usdValue+=v;usdCost+=k;}
             priced++;if(current>=h.cost)positive++;else negative++;
         }
@@ -264,7 +265,9 @@ public class MainActivity extends Activity {
                 List<RadarItem> sorted;
                 synchronized(scanBuffer){sorted=new ArrayList<>(scanBuffer);}
                 sorted.sort((x,y)->Double.compare(y.score,x.score));
-                if(!sorted.isEmpty()){synchronized(radarResults){radarResults.clear();radarResults.addAll(sorted);}saveRadarCache();getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putLong("radar_ts",System.currentTimeMillis()).apply();}\n                scanRunning=false;main.post(()->{if(sorted.isEmpty())Toast.makeText(this,"Yeni tarama sonuç üretmedi; önceki radar sonuçları korundu.",Toast.LENGTH_LONG).show();showRadar();});\n            }else if(done%50==0)main.post(this::showRadar);
+                if(!sorted.isEmpty()){synchronized(radarResults){radarResults.clear();radarResults.addAll(sorted);}saveRadarCache();getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putLong("radar_ts",System.currentTimeMillis()).apply();}
+                scanRunning=false;main.post(()->{if(sorted.isEmpty())Toast.makeText(this,"Yeni tarama sonuç üretmedi; önceki radar sonuçları korundu.",Toast.LENGTH_LONG).show();showRadar();});
+            }else if(done%50==0)main.post(this::showRadar);
         });
     }
 
