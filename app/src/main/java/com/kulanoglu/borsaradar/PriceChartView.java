@@ -34,7 +34,7 @@ public final class PriceChartView extends View {
         if(showEma){drawEma(canvas,5,start,count,left,right,min,max,top,priceBottom,Color.rgb(255,193,7));drawEma(canvas,9,start,count,left,right,min,max,top,priceBottom,Color.rgb(77,208,225));drawEma(canvas,20,start,count,left,right,min,max,top,priceBottom,Color.rgb(186,104,200));drawEma(canvas,50,start,count,left,right,min,max,top,priceBottom,Color.rgb(255,138,101));}if(showBands)drawBollinger(canvas,20,start,count,left,right,min,max,top,priceBottom);if(showVwap)drawVwap(canvas,start,count,left,right,min,max,top,priceBottom);if(showLevels)drawSupportResistance(canvas,start,count,left,right,min,max,top,priceBottom);drawHighLowLabels(canvas,left,right,top,priceBottom,dataMin,dataMax,symbol,cur);
         paint.setTextSize(dp(11));paint.setColor(Color.WHITE);paint.setFakeBoldText(true);canvas.drawText(label+" • MUM + HACİM",left,dp(24),paint);paint.setFakeBoldText(false);drawLegend(canvas,left,dp(42));double last=data.get(visibleEnd).close;String latest="Son "+fmt(displayValue(last,symbol))+" "+cur;canvas.drawText(latest,right-paint.measureText(latest),dp(40),paint);
         drawLastPrice(canvas,left,right,top,priceBottom,min,max,symbol,cur);
-        if(selectedIndex>=start && selectedIndex<=visibleEnd)drawCrosshair(canvas,left,right,top,volBottom,start,count,min,max,symbol,cur);
+        if(selectedIndex>=start && selectedIndex<=visibleEnd)drawCrosshair(canvas,left,right,top,priceBottom,volBottom,start,count,min,max,symbol,cur);
         drawTimeScale(canvas,left,right,volBottom,start,count);
     }
     @Override public boolean onTouchEvent(MotionEvent e){
