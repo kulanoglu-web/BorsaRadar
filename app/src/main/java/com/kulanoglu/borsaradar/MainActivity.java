@@ -251,6 +251,7 @@ public class MainActivity extends Activity {
             }
         }
         if(!instantRendered)content.addView(txt("Fiyat ve teknik görünüm yükleniyor…",15,NAVY));
+        final boolean hadInstant=instantRendered;
         io.execute(()->{
             try{
                 // Hızlı ilk çizim: yalnızca kısa günlük seri. Haber ve seçili grafik bekletmez.
@@ -258,7 +259,7 @@ public class MainActivity extends Activity {
                 ShortPulseEngine.Result r=ShortPulseEngine.analyze(base);
                 detailResult=r;
                 prefetchAdjacent(selectedSymbol);
-                main.post(()->{if(selectedSymbol.equals(detailSymbol) && selectedTimeframe==detailTimeframe)renderStockDetail(selectedSymbol,r,null,base);});
+                if(!hadInstant)main.post(()->{if(selectedSymbol.equals(detailSymbol) && selectedTimeframe==detailTimeframe)renderStockDetail(selectedSymbol,r,null,base);});
 
                 // Ağır verileri ekran açıldıktan sonra arka planda tamamla.
                 io.execute(()->{
