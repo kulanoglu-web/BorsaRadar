@@ -168,7 +168,7 @@ public class MainActivity extends Activity {
         if(s==null) c.addView(txt("Güncel değerlendirme için 'Tümünü Güncelle'ye bas.",13,Color.GRAY));
         else {
             double pnl=(s.price-h.cost)*h.qty, pct=h.cost>0?(s.price/h.cost-1)*100:0;
-            c.addView(bold("Son  "+money(s.price,h.symbol)+"   P/L  "+money(pnl,h.symbol)+"  (%"+fmt(pct)+")",16,pnl>=0?GREEN:RED)); c.addView(signalBanner(s)); c.addView(txt(s.explanation,13,Color.DKGRAY));
+            c.addView(bold("Son  "+money(s.price,h.symbol)+"   P/L  "+money(pnl,h.symbol)+"  (%"+fmt(pct)+")",16,pnl>=0?GREEN:RED)); c.addView(txt("Pozisyon değeri  "+money(s.price*h.qty,h.symbol),13,Color.DKGRAY)); c.addView(signalBanner(s)); c.addView(txt(s.explanation,13,Color.DKGRAY));
             CatalystContextEngine.Result cx=holdingContexts.get(h.symbol); if(cx!=null)c.addView(contextBanner(cx));
             c.addView(txt("Hedef süre: "+s.horizonText+"  •  Güven %"+(int)s.confidence+"  •  Stop ref. "+money(s.stopReference,h.symbol),13,NAVY2));
         }
