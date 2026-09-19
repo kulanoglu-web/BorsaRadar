@@ -192,7 +192,7 @@ public class MainActivity extends Activity {
         else {
             MarketDataService.Spot live=MarketDataService.latestSpot(h.symbol); double current=live!=null&&live.price>0?live.price:s.price;
             double pnl=(current-h.cost)*h.qty, pct=h.cost>0?(current/h.cost-1)*100:0;
-            c.addView(bold("Son  "+money(current,h.symbol)+"   P/L  "+money(pnl,h.symbol)+"  (%"+fmt(pct)+")",16,pnl>=0?GREEN:RED)); c.addView(txt("Pozisyon değeri  "+money(current*h.qty,h.symbol)+(live!=null?"  •  "+live.source:""),13,Color.DKGRAY)); c.addView(signalBanner(s)); c.addView(txt(s.explanation,13,Color.DKGRAY));
+            c.addView(bold("Son  "+money(current,h.symbol)+"   P/L  "+money(pnl,h.symbol)+"  (%"+fmt(pct)+")",16,pnl>=0?GREEN:RED)); c.addView(txt("Pozisyon değeri  "+money(current*h.qty,h.symbol)+(live!=null?"  •  fiyat "+live.source:"  •  teknik kapanış"),13,Color.DKGRAY)); c.addView(signalBanner(s)); c.addView(txt(s.explanation,13,Color.DKGRAY));
             CatalystContextEngine.Result cx=holdingContext(h.symbol); if(cx!=null)c.addView(contextBanner(cx));else c.addView(txt("Haber/katalizör bağlamı arka planda hazırlanıyor.",12,Color.GRAY));
             c.addView(txt("Hedef süre: "+s.horizonText+"  •  Güven %"+(int)s.confidence+"  •  Stop ref. "+money(s.stopReference,h.symbol),13,NAVY2));RadarItem radar=findRadarItem(h.symbol);if(radar!=null)c.addView(txt("Radar: "+radar.recommendation+" • Pulse "+fmt(radar.score)+" • Güven %"+(int)radar.confidence,12,NAVY2));
         }
