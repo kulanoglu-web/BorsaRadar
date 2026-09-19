@@ -200,7 +200,7 @@ public class MainActivity extends Activity {
         shell("Tüm Borsa İstanbul Radarı"); LinearLayout top=card(); top.addView(bold("Tüm hisseler • hafif tarama",19,NAVY)); top.addView(txt("İlk tarama teknik olarak hızlı yapılır. Haber/katalizör bağlamı detay açıldığında yüklenir; böylece yüzlerce gereksiz ağ isteği yapılmaz.",13,Color.DKGRAY));
         Button scan=button(scanRunning?"Tarama devam ediyor…":"Tüm BIST'i Tara",GREEN); top.addView(scan); scan.setEnabled(!scanRunning); scan.setOnClickListener(v->scanRadar()); content.addView(top); spacer(8);
         if(scanRunning){int done=scanDone.get(),failed=scanFailed.get();ProgressBar pb=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);pb.setMax(ALL_SYMBOLS.length);pb.setProgress(done);content.addView(pb);content.addView(txt(done+"/"+ALL_SYMBOLS.length+" • başarısız "+failed,14,NAVY));}
-        if(!radarResults.isEmpty())renderRadarList(new ArrayList<>(radarResults),30);else content.addView(txt("Henüz radar sonucu yok.",14,Color.GRAY));
+        if(!radarResults.isEmpty()){List<RadarItem> snap=new ArrayList<>(radarResults);LinearLayout summary=card();summary.addView(bold("Son tarama • "+snap.size()+" hisse",16,NAVY));int buy=0,hold=0,risk=0;for(RadarItem x:snap){if(x.recommendation.contains("AL"))buy++;else if(x.recommendation.contains("SAT")||x.recommendation.contains("RİSK"))risk++;else hold++;}summary.addView(txt("AL "+buy+"  •  TUT/İZLE "+hold+"  •  SAT/RİSK "+risk,13,Color.DKGRAY));content.addView(summary);spacer(6);renderRadarList(snap,30);}else content.addView(txt("Henüz radar sonucu yok.",14,Color.GRAY));
     }
 
     private void scanRadar() {
