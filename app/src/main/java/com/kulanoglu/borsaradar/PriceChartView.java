@@ -20,7 +20,7 @@ public final class PriceChartView extends View {
     private int selectedIndex=-1;
     private float touchX=-1;
     private int visibleCount=0;
-    private int visibleEnd=-1;
+    private int visibleEnd=-1;\n    private float downX=-1,lastX=-1;\n    private boolean panning=false;
     private final ScaleGestureDetector scaleDetector;
     public PriceChartView(Context c,List<MarketDataService.Candle>d){this(c,d,"1 GÜN");}
     public PriceChartView(Context c,List<MarketDataService.Candle>d,String l){super(c);data=d;label=l;visibleCount=d==null?0:d.size();visibleEnd=d==null?-1:d.size()-1;scaleDetector=new ScaleGestureDetector(c,new ScaleGestureDetector.SimpleOnScaleGestureListener(){@Override public boolean onScale(ScaleGestureDetector detector){if(data==null||data.size()<2)return false;int next=Math.round(visibleCount/detector.getScaleFactor());visibleCount=Math.max(8,Math.min(data.size(),next));visibleEnd=data.size()-1;selectedIndex=-1;invalidate();return true;}});setMinimumHeight(dp(350));setBackgroundColor(Color.rgb(9,30,54));setPadding(dp(12),dp(18),dp(12),dp(18));}
@@ -38,15 +38,20 @@ public final class PriceChartView extends View {
         if(data==null||data.isEmpty())return false;
         scaleDetector.onTouchEvent(e);
         if(scaleDetector.isInProgress())return true;
-        if(e.getAction()==MotionEvent.ACTION_DOWN||e.getAction()==MotionEvent.ACTION_MOVE){
+        if(e.getAction()==MotionEvent.ACTION_DOWN){downX=lastX=touchX=e.getX();panning=false;return true;}
+        if(e.getAction()==MotionEvent.ACTION_MOVE){
             touchX=e.getX();
             float left=getPaddingLeft()+dp(3),right=getWidth()-getPaddingRight()-dp(55);
             int start=Math.max(0,visibleEnd-visibleCount+1),count=Math.max(1,visibleEnd-start+1);
-            float slot=(right-left)/count;
+            float slot=(right-left)/count,dx=touchX-lastX;
+            if(Math.abs(touchX-downX)>dp(12)&&visibleCount<data.size()){
+                int shift=Math.round(-dx/Math.max(1f,slot));
+                if(shift!=0){visibleEnd=Math.max(visibleCount-1,Math.min(data.size()-1,visibleEnd+shift));panning=true;selectedIndex=-1;lastX=touchX;invalidate();return true;}
+            }
             selectedIndex=Math.max(start,Math.min(visibleEnd,start+(int)((touchX-left)/Math.max(1f,slot))));
-            invalidate();return true;
+            lastX=touchX;invalidate();return true;
         }
-        if(e.getAction()==MotionEvent.ACTION_UP){performClick();return true;}
+        if(e.getAction()==MotionEvent.ACTION_UP){if(!panning)performClick();downX=lastX=-1;return true;}
         return true;
     }
     @Override public boolean performClick(){super.performClick();return true;}
