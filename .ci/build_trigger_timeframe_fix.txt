@@ -1,0 +1,1 @@
+Timeframe fix: never render 1mo fallback as selected 3mo/6mo/1y/2y chart; wait for matching range. Long-range visible counts aligned to trading days.
