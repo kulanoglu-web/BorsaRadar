@@ -341,7 +341,7 @@ public class MainActivity extends Activity {
                 ShortPulseEngine.Result r=ShortPulseEngine.analyze(base);
                 detailResult=r;
                 prefetchAdjacent(selectedSymbol);
-                if(!hadInstant)main.post(()->{if(selectedSymbol.equals(detailSymbol) && selectedTimeframe==detailTimeframe)renderStockDetail(selectedSymbol,r,null,base);});
+                if(!hadInstant)main.post(()->{if(selectedSymbol.equals(detailSymbol) && selectedTimeframe==detailTimeframe){ List<MarketDataService.Candle> initialChart=DetailedChartController.cached(selectedSymbol,selectedTimeframe); if(initialChart!=null&&initialChart.size()>=2) renderStockDetail(selectedSymbol,r,null,initialChart); else { shell(selectedSymbol+" • "+ChartTimeframes.label(selectedTimeframe)); content.addView(txt(ChartTimeframes.label(selectedTimeframe)+" grafik verisi yükleniyor…",15,NAVY)); } }});
 
                 // Ağır verileri ekran açıldıktan sonra arka planda tamamla.
                 io.execute(()->{
