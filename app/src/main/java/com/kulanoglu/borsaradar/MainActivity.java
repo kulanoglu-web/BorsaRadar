@@ -372,15 +372,52 @@ public class MainActivity extends Activity {
     private RadarItem findRadarItem(String symbol){String n=MarketDataService.normalizeSymbol(symbol);synchronized(radarResults){for(RadarItem x:radarResults)if(MarketDataService.normalizeSymbol(x.symbol).equals(n))return x;}return null;}
 
     private void renderStockDetail(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx,List<MarketDataService.Candle> chart) {
-        shell(symbol+" • "+ChartTimeframes.label(detailTimeframe)); Holding owned=findHolding(symbol); RadarItem radarHit=findRadarItem(symbol); LinearLayout q=card(); LinearLayout head=new LinearLayout(this);head.setGravity(Gravity.CENTER_VERTICAL); LinearLayout left=new LinearLayout(this);left.setOrientation(LinearLayout.VERTICAL);left.addView(bold(symbol,22,NAVY));left.addView(txt(ChartTimeframes.label(detailTimeframe)+" grafik • karar ufku "+r.horizonText,12,Color.GRAY)); MarketDataService.Spot live=MarketDataService.latestSpot(symbol); double shownPrice=live!=null&&live.price>0?live.price:r.price; LinearLayout right=new LinearLayout(this);right.setOrientation(LinearLayout.VERTICAL);right.setGravity(Gravity.END);right.addView(bold(money(shownPrice,symbol),25,r.changePct>=0?GREEN:RED));right.addView(txt((r.changePct>=0?"+":"")+fmt(r.changePct)+"%",14,r.changePct>=0?GREEN:RED));right.addView(txt("Günlük teknik değişim",10,Color.GRAY));head.addView(left,new LinearLayout.LayoutParams(0,-2,1));head.addView(right,new LinearLayout.LayoutParams(-2,-2));q.addView(head); if(live!=null)q.addView(txt("Fiyat kaynağı: "+live.source+" • canlı/son cache",11,Color.GRAY));else q.addView(txt("Fiyat: teknik veri kapanışı",11,Color.GRAY));q.addView(txt("ATR% "+fmt(r.atrPct)+"  •  RelVol x"+fmt(r.relativeVolume)+"  •  Güven %"+(int)r.confidence,13,Color.DKGRAY));q.addView(txt("Sinyal ufku: "+r.horizonText+" • güven %"+(int)r.confidence,11,Color.GRAY)); if(owned!=null){q.addView(txt("PORTFÖY POZİSYONU",11,NAVY2));q.addView(txt("Bu hisse mevcut portföy hesabına bağlı.",11,Color.GRAY));double pnl=(shownPrice-owned.cost)*owned.qty,pct=owned.cost>0?(shownPrice/owned.cost-1)*100:0;q.addView(txt("Portföy: "+owned.qty+" adet • Maliyet "+money(owned.cost,symbol)+" • Değer "+money(shownPrice*owned.qty,symbol)+" • P/L "+money(pnl,symbol)+" ("+String.format(Locale.US,"%+.2f%%",pct)+")",13,pnl>=0?GREEN:RED));} if(radarHit!=null){q.addView(txt("RADAR BAĞLANTISI",11,NAVY2));q.addView(txt("Son tamamlanan BIST taramasındaki karşılığı",11,Color.GRAY));q.addView(txt("Radar: "+radarHit.recommendation+" • Pulse "+fmt(radarHit.score)+" • Güven %"+(int)radarHit.confidence+" • "+radarHit.horizon,12,NAVY2));};content.addView(q);spacer(7);
-        content.addView(signalBanner(r));content.addView(txt("Karar: "+r.recommendation+" • teknik skor "+fmt(r.score),11,Color.GRAY));spacer(7); if(cx!=null){content.addView(contextBanner(cx));spacer(7);}else{content.addView(txt("Haber/katalizör analizi teknik ekranı bekletmeden arka planda yükleniyor.",12,Color.GRAY));spacer(7);}
-        HorizontalScrollView tfScroll=new HorizontalScrollView(this); LinearLayout tfRow=new LinearLayout(this); tfRow.setOrientation(LinearLayout.HORIZONTAL);
-        for(int i=0;i<ChartTimeframes.LABELS.length;i++){final int idx=i;Button b=button(ChartTimeframes.LABELS[i],i==detailTimeframe?GREEN:NAVY2);b.setOnClickListener(v->{if(idx!=detailTimeframe)analyzeStock(symbol,idx);});tfRow.addView(b,new LinearLayout.LayoutParams(dp(82),-2));}
-        tfScroll.addView(tfRow);content.addView(tfScroll);content.addView(txt("Yeşil düğme aktif grafik zaman dilimidir.",11,Color.GRAY));spacer(5);
-        if(chart==null||chart.size()<2){content.addView(txt("Bu zaman diliminde grafik verisi yetersiz. Başka bir zaman dilimi seçebilir veya ↻ Yenile diyebilirsin.",14,RED));content.addView(txt("Teknik karar yukarıdaki günlük analizden görünmeye devam eder.",11,Color.GRAY));}else{content.addView(txt(ChartTimeframes.label(detailTimeframe)+" • "+chart.size()+" veri noktası",11,Color.GRAY));content.addView(new PriceChartView(this,chart,ChartTimeframes.label(detailTimeframe).toUpperCase(Locale.ROOT)),new LinearLayout.LayoutParams(-1,dp(340)));}spacer(7);
-        LinearLayout info=card();info.addView(bold("Teknik görünüm",17,NAVY));info.addView(txt("Karar motoru: momentum + hacim/para + trend birleşimi.",11,Color.GRAY));info.addView(txt(r.explanation,14,Color.DKGRAY));LinearLayout metrics=new LinearLayout(this);metrics.setOrientation(LinearLayout.HORIZONTAL);TextView m1=txt("Momentum\\n"+r.momentumText,12,Color.DKGRAY),m2=txt("Hacim/Para\\n"+r.flowText,12,Color.DKGRAY),m3=txt("Trend\\n"+r.trendText,12,Color.DKGRAY);m1.setGravity(Gravity.CENTER);m2.setGravity(Gravity.CENTER);m3.setGravity(Gravity.CENTER);metrics.addView(m1,new LinearLayout.LayoutParams(0,-2,1));metrics.addView(m2,new LinearLayout.LayoutParams(0,-2,1));metrics.addView(m3,new LinearLayout.LayoutParams(0,-2,1));info.addView(metrics);info.addView(txt("Hedef: "+r.horizonText+"  •  Stop ref. "+money(r.stopReference,symbol),13,NAVY2));info.addView(txt("Karar sinyali günlük analizden; üstte seçilen zaman dilimi grafik görünümünü değiştirir.",11,Color.GRAY));info.addView(txt("Grafik üzerindeki görsel katmanlar karar motoruna otomatik eklenmez.",11,Color.GRAY));content.addView(info);
-        LinearLayout news=card();news.addView(bold("Bilgi akışı",17,NAVY));news.addView(txt("Teknik kararın yanında haber/katalizör kontrolü.",11,Color.GRAY)); if(cx==null){news.addView(txt("Haber/katalizör verisi arka planda yükleniyor…",14,Color.GRAY));news.addView(txt("Bu sırada teknik sinyal değişmeden kullanılabilir.",11,Color.GRAY));}else{news.addView(txt("Haber skoru: "+fmt(cx.newsScore)+"/8  •  "+cx.dataStatus,14,Color.DKGRAY));news.addView(txt(cx.note,14,cx.technicalConflict?PURPLE:Color.DKGRAY));news.addView(txt("Kapsama: "+cx.coverage,12,Color.GRAY));news.addView(txt("Haber bağlamı teknik sinyali tamamlar; tek başına AL/SAT üretmez.",11,Color.GRAY));}content.addView(news);spacer(7);
-        LinearLayout actions=new LinearLayout(this); Button prev=button("◀ Önceki",NAVY2), add=button(owned==null?"Portföye Ekle":"Pozisyonu Düzenle",owned==null?GREEN:AMBER), refreshDetail=button("Yenile",NAVY2), next=button("Sonraki ▶",NAVY2);refreshDetail.setText("↻ Yenile");refreshDetail.setContentDescription(symbol+" verisini yenile");String prevSymbol=adjacentSymbol(symbol,-1),nextSymbol=adjacentSymbol(symbol,1);prev.setEnabled(!prevSymbol.equals(symbol));next.setEnabled(!nextSymbol.equals(symbol));if(!prev.isEnabled())prev.setText("◀ Başlangıç");if(!next.isEnabled())next.setText("Son ▶");prev.setContentDescription("Önceki radar hissesi");next.setContentDescription("Sonraki radar hissesi"); actions.addView(prev,new LinearLayout.LayoutParams(0,-2,1)); actions.addView(add,new LinearLayout.LayoutParams(0,-2,1.15f)); actions.addView(refreshDetail,new LinearLayout.LayoutParams(0,-2,.8f)); actions.addView(next,new LinearLayout.LayoutParams(0,-2,1)); content.addView(actions); prev.setOnClickListener(v->{if(!prevSymbol.equals(symbol))analyzeStock(prevSymbol,detailTimeframe);}); add.setOnClickListener(v->portfolioDialog(owned,symbol)); refreshDetail.setOnClickListener(v->analyzeStock(symbol,detailTimeframe)); next.setOnClickListener(v->{if(!nextSymbol.equals(symbol))analyzeStock(nextSymbol,detailTimeframe);});
+        shell(symbol+" • Grafik");
+        Holding owned=findHolding(symbol);
+        MarketDataService.Spot live=MarketDataService.latestSpot(symbol);
+        double shownPrice=live!=null&&live.price>0?live.price:r.price;
+
+        LinearLayout hero=card();
+        LinearLayout head=new LinearLayout(this); head.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout left=new LinearLayout(this); left.setOrientation(LinearLayout.VERTICAL);
+        left.addView(bold(symbol,22,NAVY));
+        left.addView(txt("BORSA RADAR • "+ChartTimeframes.label(detailTimeframe),11,Color.GRAY));
+        LinearLayout right=new LinearLayout(this); right.setOrientation(LinearLayout.VERTICAL); right.setGravity(Gravity.END);
+        right.addView(bold(money(shownPrice,symbol),27,r.changePct>=0?GREEN:RED));
+        right.addView(txt(String.format(Locale.US,"%+.2f%%",r.changePct),13,r.changePct>=0?GREEN:RED));
+        head.addView(left,new LinearLayout.LayoutParams(0,-2,1)); head.addView(right,new LinearLayout.LayoutParams(-2,-2));
+        hero.addView(head);
+        if(owned!=null){double pnl=(shownPrice-owned.cost)*owned.qty;hero.addView(txt("Maliyet "+money(owned.cost,symbol)+"  •  P/L "+money(pnl,symbol),12,pnl>=0?GREEN:RED));}
+        content.addView(hero); spacer(6);
+
+        LinearLayout tfRow=new LinearLayout(this); tfRow.setOrientation(LinearLayout.HORIZONTAL); tfRow.setGravity(Gravity.CENTER);
+        final int[] compactIdx={7,8,9,10,11};
+        final String[] compactLabels={"1A","3A","6A","1Y","2Y"};
+        for(int k=0;k<compactIdx.length;k++){final int idx=compactIdx[k];Button b=button(compactLabels[k],idx==detailTimeframe?GREEN:NAVY2);b.setAllCaps(false);b.setTextSize(12);b.setOnClickListener(v->{if(idx!=detailTimeframe)analyzeStock(symbol,idx);});tfRow.addView(b,new LinearLayout.LayoutParams(0,dp(42),1));}
+        content.addView(tfRow); spacer(4);
+
+        if(chart==null||chart.size()<2){
+            LinearLayout empty=card(); empty.addView(bold(ChartTimeframes.label(detailTimeframe)+" grafik",16,NAVY)); empty.addView(txt("Bu zaman aralığının verisi yüklenemedi. Yanlış zaman aralığından grafik gösterilmiyor.",12,RED)); content.addView(empty);
+        }else{
+            content.addView(txt(ChartTimeframes.label(detailTimeframe)+" • "+chart.size()+" mum",11,Color.GRAY));
+            content.addView(new PriceChartView(this,chart,ChartTimeframes.label(detailTimeframe).toUpperCase(Locale.ROOT)),new LinearLayout.LayoutParams(-1,dp(430)));
+        }
+        spacer(6);
+
+        LinearLayout quick=card(); quick.addView(bold("Özet",16,NAVY));
+        quick.addView(txt("Teknik karar: "+r.recommendation+"  •  Güven %"+(int)r.confidence+"  •  ATR %"+fmt(r.atrPct)+"  •  RelVol x"+fmt(r.relativeVolume),12,Color.DKGRAY));
+        if(cx!=null)quick.addView(txt("Haber bağlamı: "+cx.dataStatus,11,Color.GRAY));
+        content.addView(quick); spacer(6);
+
+        LinearLayout actions=new LinearLayout(this);
+        Button prev=button("◀",NAVY2),add=button(owned==null?"Portföye Ekle":"Pozisyon",owned==null?GREEN:AMBER),refresh=button("↻",NAVY2),next=button("▶",NAVY2);
+        String prevSymbol=adjacentSymbol(symbol,-1),nextSymbol=adjacentSymbol(symbol,1);
+        actions.addView(prev,new LinearLayout.LayoutParams(0,-2,.65f)); actions.addView(add,new LinearLayout.LayoutParams(0,-2,1.7f)); actions.addView(refresh,new LinearLayout.LayoutParams(0,-2,.65f)); actions.addView(next,new LinearLayout.LayoutParams(0,-2,.65f));
+        content.addView(actions);
+        prev.setOnClickListener(v->{if(!prevSymbol.equals(symbol))analyzeStock(prevSymbol,detailTimeframe);});
+        add.setOnClickListener(v->portfolioDialog(owned,symbol));
+        refresh.setOnClickListener(v->analyzeStock(symbol,detailTimeframe));
+        next.setOnClickListener(v->{if(!nextSymbol.equals(symbol))analyzeStock(nextSymbol,detailTimeframe);});
     }
 
     private void showBaskets() {
