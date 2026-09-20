@@ -1,0 +1,1 @@
+Chart stabilization batch: unified axis width, touch interception/cancel recovery, badge clipping, volume-aware layout, accurate range count, safe volume rendering.
