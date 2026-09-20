@@ -51,10 +51,10 @@ public final class MarketDataService {
         if(cached!=null && now-cached.at<ttl){raw=new ArrayList<>(cached.data);source=cached.source;}
         else {
             boolean daily="1d".equals(interval);
-            boolean stooqFirst=false;
+            boolean stooqFirst=daily && symbol.endsWith(".IS") && ("6mo".equals(range)||"1y".equals(range)||"2y".equals(range));
             if(stooqFirst){try{raw=fetchStooqDaily(symbol,range);source="Stooq";}catch(Exception e){last=e;}}
             if(raw==null){try{raw=fetchYahoo(symbol,range,interval);source="Yahoo";}catch(Exception e){last=e;}}
-            if(raw==null && daily && !symbol.endsWith(".IS")){try{raw=fetchStooqDaily(symbol,range);source="Stooq";}catch(Exception e){last=e;}}
+            if(raw==null && daily){try{raw=fetchStooqDaily(symbol,range);source="Stooq";}catch(Exception e){last=e;}}
             if(raw==null){if(cached!=null){raw=new ArrayList<>(cached.data);source=cached.source+"/cache";}else throw last==null?new Exception("Veri alınamadı: "+symbol):last;}
             else CACHE.put(key,new Cache(now,raw,source));
         }
