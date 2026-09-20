@@ -71,7 +71,7 @@ public final class PriceChartView extends View {
     private void drawLastPrice(Canvas canvas,float left,float right,float top,float bottom,double min,double max,String symbol,String cur){
         double last=data.get(visibleEnd).close;float yy=y(last,min,max,top,bottom);
         paint.setColor(Color.rgb(240,180,40));paint.setStrokeWidth(dp(1));for(float xx=left;xx<right;xx+=dp(10))canvas.drawLine(xx,yy,Math.min(right,xx+dp(5)),yy,paint);
-        paint.setTextSize(dp(10));String t=priceFmt(displayValue(last,symbol))+" "+cur;float pad=dp(4),tw=paint.measureText(t);paint.setColor(Color.rgb(240,180,40));canvas.drawRect(right+dp(2),yy-dp(10),right+dp(2)+tw+pad*2,yy+dp(5),paint);paint.setColor(Color.rgb(9,30,54));paint.setFakeBoldText(true);canvas.drawText(t,right+dp(2)+pad,yy+dp(2),paint);paint.setFakeBoldText(false);
+        paint.setTextSize(dp(10));String t="SON "+priceFmt(displayValue(last,symbol))+" "+cur;float pad=dp(4),tw=paint.measureText(t);paint.setColor(Color.rgb(240,180,40));canvas.drawRect(right+dp(2),yy-dp(10),right+dp(2)+tw+pad*2,yy+dp(5),paint);paint.setColor(Color.rgb(9,30,54));paint.setFakeBoldText(true);canvas.drawText(t,right+dp(2)+pad,yy+dp(2),paint);paint.setFakeBoldText(false);
     }
     private void drawCrosshair(Canvas canvas,float left,float right,float top,float priceBottom,float volBottom,int start,int count,double min,double max,String symbol,String cur){
         MarketDataService.Candle c=data.get(selectedIndex);float slot=(right-left)/Math.max(1,count);float x=left+slot*((selectedIndex-start)+.5f);float yy=y(c.close,min,max,top,priceBottom);
