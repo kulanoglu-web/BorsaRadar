@@ -1,0 +1,1 @@
+Long-range chart fix: BIST 6mo/1y/2y daily data uses Stooq first, Yahoo fallback; all daily symbols can use Stooq fallback. Wrong 1mo fallback already removed.
