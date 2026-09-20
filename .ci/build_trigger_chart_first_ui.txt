@@ -1,0 +1,1 @@
+Chart-first stock detail UI: compact symbol/price header, 1A 3A 6A 1Y 2Y controls, 430dp chart, minimal summary and navigation. No indicator-engine changes.
