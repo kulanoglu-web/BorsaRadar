@@ -350,7 +350,7 @@ public class MainActivity extends Activity {
                         if(cx==null)try{cx=CatalystContextEngine.analyze(selectedSymbol,r.score);}catch(Exception ignored){cx=null;}
                         List<MarketDataService.Candle> chart;
                         chart=DetailedChartController.cached(selectedSymbol,selectedTimeframe);
-                        if(chart==null||chart.size()<2)try{chart=DetailedChartController.fetch(selectedSymbol,selectedTimeframe);}catch(Exception ignored){chart=base;}
+                        if(chart==null||chart.size()<2)try{chart=DetailedChartController.fetch(selectedSymbol,selectedTimeframe);}catch(Exception ignored){chart=null;}
                         final CatalystContextEngine.Result safeCx=cx;
                         final List<MarketDataService.Candle> safeChart=chart;
                         if(selectedSymbol.equals(detailSymbol))detailContext=safeCx;
