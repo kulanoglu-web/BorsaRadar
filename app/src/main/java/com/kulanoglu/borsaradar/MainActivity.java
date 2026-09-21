@@ -371,6 +371,12 @@ public class MainActivity extends Activity {
         final int requestGeneration=detailRequestGeneration.incrementAndGet();
 
         shellDetail(selectedSymbol);
+        // Yükleme sırasında da ekran boş kalmasın: sekmeler ve seçili zaman dilimi hemen görünür.
+        stockTabs(selectedSymbol,"Grafik",detailResult,detailContext);
+        LinearLayout loadingTf=new LinearLayout(this); loadingTf.setOrientation(LinearLayout.HORIZONTAL); loadingTf.setGravity(Gravity.CENTER);
+        final int[] loadingIdx={5,3,7,8,9,10,11}; final String[] loadingLabels={"1G","1H","1A","3A","6A","1Y","2Y"};
+        for(int k=0;k<loadingIdx.length;k++){final int idx=loadingIdx[k];Button b=button(loadingLabels[k],idx==selectedTimeframe?GREEN:NAVY2);b.setAllCaps(false);b.setTextSize(11);b.setOnClickListener(v->{if(idx!=detailTimeframe)analyzeStock(selectedSymbol,idx);});loadingTf.addView(b,new LinearLayout.LayoutParams(0,dp(38),1));}
+        content.addView(loadingTf);
         content.addView(txt(ChartTimeframes.label(selectedTimeframe)+" grafik verisi yükleniyor…",14,Color.rgb(170,195,215)));
 
         final ShortPulseEngine.Result previousResult=sameSymbol?detailResult:null;
