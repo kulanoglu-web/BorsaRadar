@@ -135,7 +135,12 @@ public class MainActivity extends Activity {
         content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(10),dp(8),dp(10),dp(12)); content.setBackgroundColor(NAVY);
         sv.addView(content); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout nav=new LinearLayout(this); nav.setOrientation(LinearLayout.HORIZONTAL); nav.setPadding(dp(4),dp(3),dp(4),dp(4)); nav.setBackgroundColor(Color.rgb(7,27,46));
-        Button home=button("⌂\nAna Sayfa",NAVY2), markets=button("▥\nPiyasalar",NAVY2), radar=button("◎\nRadar",NAVY2), portfolio=button("▣\nPortföy",NAVY2), more=button("•••\nDiğer",NAVY2);
+        Button home=button("⌂
+Ana Sayfa",NAVY2), markets=button("▥
+Piyasalar",NAVY2), radar=button("◎
+Radar",NAVY2), portfolio=button("▣
+Portföy",NAVY2), more=button("•••
+Diğer",NAVY2);
         Button[] ns={home,markets,radar,portfolio,more}; String[] pages={"Ana Sayfa","Piyasalar","Radar Taraması","Portföy","Diğer"}; for(int i=0;i<ns.length;i++){Button b=ns[i];b.setTextSize(10);b.setAllCaps(false); if(page.equals(pages[i])||(i==2&&page.contains("Radar")))b.setTextColor(Color.rgb(90,165,255)); nav.addView(b,new LinearLayout.LayoutParams(0,dp(52),1));}
         home.setOnClickListener(v->showDashboard()); markets.setOnClickListener(v->singleStockDialog()); radar.setOnClickListener(v->showRadar()); portfolio.setOnClickListener(v->showPortfolio()); more.setOnClickListener(v->showMore()); root.addView(nav);
         setContentView(root);
@@ -154,7 +159,12 @@ public class MainActivity extends Activity {
         ScrollView sv=new ScrollView(this); sv.setFillViewport(true); sv.setBackgroundColor(NAVY);
         content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(8),dp(4),dp(8),dp(12)); content.setBackgroundColor(NAVY);
         sv.addView(content); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
-        LinearLayout nav=new LinearLayout(this); nav.setBackgroundColor(Color.rgb(7,27,46)); Button home=button("⌂\nAna Sayfa",NAVY2),markets=button("▥\nPiyasalar",NAVY2),radar=button("◎\nRadar",NAVY2),portfolio=button("▣\nPortföy",NAVY2),more=button("•••\nDiğer",NAVY2); Button[] ns={home,markets,radar,portfolio,more}; for(Button b:ns){b.setTextSize(9);b.setAllCaps(false);nav.addView(b,new LinearLayout.LayoutParams(0,dp(48),1));} home.setOnClickListener(v->showDashboard());markets.setOnClickListener(v->singleStockDialog());radar.setOnClickListener(v->showRadar());portfolio.setOnClickListener(v->showPortfolio());more.setOnClickListener(v->showMore());root.addView(nav);
+        LinearLayout nav=new LinearLayout(this); nav.setBackgroundColor(Color.rgb(7,27,46)); Button home=button("⌂
+Ana Sayfa",NAVY2),markets=button("▥
+Piyasalar",NAVY2),radar=button("◎
+Radar",NAVY2),portfolio=button("▣
+Portföy",NAVY2),more=button("•••
+Diğer",NAVY2); Button[] ns={home,markets,radar,portfolio,more}; for(Button b:ns){b.setTextSize(9);b.setAllCaps(false);nav.addView(b,new LinearLayout.LayoutParams(0,dp(48),1));} home.setOnClickListener(v->showDashboard());markets.setOnClickListener(v->singleStockDialog());radar.setOnClickListener(v->showRadar());portfolio.setOnClickListener(v->showPortfolio());more.setOnClickListener(v->showMore());root.addView(nav);
         setContentView(root);
     }
 
@@ -400,12 +410,14 @@ public class MainActivity extends Activity {
                 final ShortPulseEngine.Result safeResult=r;
                 final List<MarketDataService.Candle> safeChart=chart;
 
-                CatalystContextEngine.Result cx=detailContext;\n                final CatalystContextEngine.Result safeCx=cx;
+                CatalystContextEngine.Result cx=detailContext;
+                final CatalystContextEngine.Result safeCx=cx;
 
                 main.post(()->{
                     if(requestGeneration!=detailRequestGeneration.get()||!selectedSymbol.equals(detailSymbol)||selectedTimeframe!=detailTimeframe)return;
                     detailResult=safeResult; detailContext=safeCx;
                     renderStockDetail(selectedSymbol,safeResult,safeCx,safeChart);
+                     if(safeCx==null) loadDetailContextAsync(selectedSymbol,safeResult.score,requestGeneration);
                      if(selectedTimeframe<=8){ prefetchTimeframes(selectedSymbol); prefetchAdjacent(selectedSymbol); }
                 });
             }catch(Exception e){
@@ -424,7 +436,11 @@ public class MainActivity extends Activity {
     private CatalystContextEngine.Result holdingContext(String symbol){String n=MarketDataService.normalizeSymbol(symbol);CatalystContextEngine.Result r=holdingContexts.get(n);if(r!=null)return r;for(Map.Entry<String,CatalystContextEngine.Result> e:holdingContexts.entrySet())if(MarketDataService.normalizeSymbol(e.getKey()).equals(n))return e.getValue();return null;}
     private RadarItem findRadarItem(String symbol){String n=MarketDataService.normalizeSymbol(symbol);synchronized(radarResults){for(RadarItem x:radarResults)if(MarketDataService.normalizeSymbol(x.symbol).equals(n))return x;}return null;}
 
-    private void loadDetailContextAsync(String symbol,double score,int generation) {\n        io.execute(()->{try{CatalystContextEngine.Result cx=CatalystContextEngine.analyze(symbol,score);if(cx!=null)main.post(()->{if(generation==detailRequestGeneration.get()&&symbol.equals(detailSymbol)){detailContext=cx;}});}catch(Exception ignored){}});\n    }\n\n    private void renderStockDetail(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx,List<MarketDataService.Candle> chart) {
+    private void loadDetailContextAsync(String symbol,double score,int generation) {
+        io.execute(()->{try{CatalystContextEngine.Result cx=CatalystContextEngine.analyze(symbol,score);if(cx!=null)main.post(()->{if(generation==detailRequestGeneration.get()&&symbol.equals(detailSymbol)){detailContext=cx;}});}catch(Exception ignored){}});
+    }
+
+    private void renderStockDetail(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx,List<MarketDataService.Candle> chart) {
         shellDetail(symbol);
         stockTabs(symbol,"Grafik",r,cx);
         Holding owned=findHolding(symbol);
