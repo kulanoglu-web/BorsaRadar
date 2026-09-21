@@ -135,8 +135,8 @@ public class MainActivity extends Activity {
         content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(12),dp(6),dp(12),dp(10)); content.setBackgroundColor(NAVY);
         sv.addView(content); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout nav=new LinearLayout(this); nav.setOrientation(LinearLayout.HORIZONTAL); nav.setPadding(dp(4),dp(3),dp(4),dp(4)); nav.setBackgroundColor(Color.rgb(7,27,46));
-        Button home=button("⌂\nAna Sayfa",NAVY2), markets=button("▥\nPiyasalar",NAVY2), radar=button("◎\nRadar",NAVY2), portfolio=button("▣\nPortföy",NAVY2), more=button("•••\nDiğer",NAVY2);
-        Button[] ns={home,markets,radar,portfolio,more}; String[] pages={"Ana Sayfa","Piyasalar","Radar Taraması","Portföy","Diğer"}; for(int i=0;i<ns.length;i++){Button b=ns[i];b.setTextSize(10);b.setAllCaps(false); if(page.equals(pages[i])||(i==2&&page.contains("Radar")))b.setTextColor(Color.rgb(90,165,255)); nav.addView(b,new LinearLayout.LayoutParams(0,dp(44),1));}
+        Button home=button("⌂\nAna Sayfa",page.equals("Ana Sayfa")?Color.rgb(16,48,78):NAVY2), markets=button("▥\nPiyasalar",page.equals("Piyasalar")?Color.rgb(16,48,78):NAVY2), radar=button("◎\nRadar",page.contains("Radar")?Color.rgb(16,48,78):NAVY2), portfolio=button("▣\nPortföy",page.equals("Portföy")?Color.rgb(16,48,78):NAVY2), more=button("•••\nDiğer",page.equals("Diğer")?Color.rgb(16,48,78):NAVY2);
+        Button[] ns={home,markets,radar,portfolio,more}; String[] pages={"Ana Sayfa","Piyasalar","Radar Taraması","Portföy","Diğer"}; for(int i=0;i<ns.length;i++){Button b=ns[i];b.setTextSize(10);b.setAllCaps(false); if(page.equals(pages[i])||(i==2&&page.contains("Radar"))){b.setTextColor(Color.rgb(90,165,255));} nav.addView(b,new LinearLayout.LayoutParams(0,dp(44),1));}
         home.setOnClickListener(v->showDashboard()); markets.setOnClickListener(v->singleStockDialog()); radar.setOnClickListener(v->showRadar()); portfolio.setOnClickListener(v->showPortfolio()); more.setOnClickListener(v->showMore()); root.addView(nav);
         setContentView(root);
     }
