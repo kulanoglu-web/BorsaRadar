@@ -532,10 +532,10 @@ public class MainActivity extends Activity {
 
     private void showMore() {
         shell("Diğer");
-        LinearLayout profile=card(); profile.setBackgroundColor(NAVY2); profile.addView(bold("BorsaRadar",18,Color.WHITE)); profile.addView(txt("Piyasa araçları ve uygulama ayarları",12,Color.rgb(170,195,215))); content.addView(profile); spacer(6);
-        String[] items={"Piyasa Takvimi","Sektörler","Favorilerim","Alarmlar","Hisse Karşılaştırma","Döviz / Altın / Emtia","Ekonomik Veriler","Ayarlar","Destek","Hakkında"};
-        for(String item:items){Button b=button(item+"   ›",NAVY2);b.setGravity(Gravity.LEFT|Gravity.CENTER_VERTICAL);b.setAllCaps(false);content.addView(b,new LinearLayout.LayoutParams(-1,dp(46)));spacer(2);}
-        Button strategy=button("Strateji Seçimi",Color.rgb(25,105,220)); strategy.setOnClickListener(v->showBaskets()); content.addView(strategy); spacer(4); Button exit=button("Çıkış Yap",RED); content.addView(exit);
+        LinearLayout profile=card();profile.setBackgroundColor(NAVY2);profile.addView(bold("BorsaRadar",18,Color.WHITE));profile.addView(txt("Piyasa araçları ve uygulama ayarları",12,Color.rgb(170,195,215)));content.addView(profile);spacer(7);
+        String[][] groups={{"PİYASA","Piyasa Takvimi","Sektörler","Favorilerim","Alarmlar","Hisse Karşılaştırma"},{"ARAÇLAR","Döviz / Altın / Emtia","Ekonomik Veriler"},{"UYGULAMA","Ayarlar","Destek","Hakkında"}};
+        for(String[] g:groups){content.addView(bold(g[0],11,Color.rgb(130,165,195)));for(int i=1;i<g.length;i++){LinearLayout row=card();row.setBackgroundColor(NAVY2);TextView name=bold(g[i],13,Color.WHITE),arrow=bold("›",20,Color.rgb(120,170,220));arrow.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);row.setOrientation(LinearLayout.HORIZONTAL);row.addView(name,new LinearLayout.LayoutParams(0,dp(34),1));row.addView(arrow,new LinearLayout.LayoutParams(dp(30),dp(34)));content.addView(row);spacer(3);}spacer(4);}
+        Button strategy=button("Strateji Seçimi",Color.rgb(25,105,220));strategy.setOnClickListener(v->showBaskets());content.addView(strategy,new LinearLayout.LayoutParams(-1,dp(46)));spacer(5);Button exit=button("Çıkış Yap",RED);content.addView(exit,new LinearLayout.LayoutParams(-1,dp(46)));
     }
 
     private void showBaskets() {
