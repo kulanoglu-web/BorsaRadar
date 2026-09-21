@@ -1,0 +1,1 @@
+Clean release source: one package declaration, one detail request generation field, Android back override restored.
