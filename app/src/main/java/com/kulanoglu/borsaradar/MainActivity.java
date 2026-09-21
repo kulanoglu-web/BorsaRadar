@@ -332,7 +332,7 @@ public class MainActivity extends Activity {
         final String selectedSymbol=symbol;
         final int selectedTimeframe=detailTimeframe;
         final int requestGeneration=detailRequestGeneration.incrementAndGet();
-        shell(selectedSymbol+" • analiz");
+        shellDetail(selectedSymbol);
         boolean instantRendered=false;
         List<MarketDataService.Candle> instantChart=DetailedChartController.cached(selectedSymbol,selectedTimeframe);
         if(sameSymbol && detailResult!=null && instantChart!=null && instantChart.size()>=2){
