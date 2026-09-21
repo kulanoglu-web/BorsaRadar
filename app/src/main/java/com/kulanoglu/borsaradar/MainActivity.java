@@ -423,7 +423,16 @@ public class MainActivity extends Activity {
     private CatalystContextEngine.Result holdingContext(String symbol){String n=MarketDataService.normalizeSymbol(symbol);CatalystContextEngine.Result r=holdingContexts.get(n);if(r!=null)return r;for(Map.Entry<String,CatalystContextEngine.Result> e:holdingContexts.entrySet())if(MarketDataService.normalizeSymbol(e.getKey()).equals(n))return e.getValue();return null;}
     private RadarItem findRadarItem(String symbol){String n=MarketDataService.normalizeSymbol(symbol);synchronized(radarResults){for(RadarItem x:radarResults)if(MarketDataService.normalizeSymbol(x.symbol).equals(n))return x;}return null;}
 
-    private void loadDetailContextAsync(String symbol,double score,int generation) {\n        io.execute(()->{\n            try{\n                CatalystContextEngine.Result cx=CatalystContextEngine.analyze(symbol,score);\n                if(cx!=null)main.post(()->{if(generation==detailRequestGeneration.get()&&symbol.equals(detailSymbol))detailContext=cx;});\n            }catch(Exception ignored){}\n        });\n    }\n\n    private void renderStockDetail(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx,List<MarketDataService.Candle> chart) {
+    private void loadDetailContextAsync(String symbol,double score,int generation) {
+        io.execute(()->{
+            try{
+                CatalystContextEngine.Result cx=CatalystContextEngine.analyze(symbol,score);
+                if(cx!=null)main.post(()->{if(generation==detailRequestGeneration.get()&&symbol.equals(detailSymbol))detailContext=cx;});
+            }catch(Exception ignored){}
+        });
+    }
+
+    private void renderStockDetail(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx,List<MarketDataService.Candle> chart) {
         shellDetail(symbol);
         stockTabs(symbol,"Grafik",r,cx);
         Holding owned=findHolding(symbol);
