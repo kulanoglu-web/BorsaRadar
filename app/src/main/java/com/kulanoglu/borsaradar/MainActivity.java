@@ -126,19 +126,19 @@ public class MainActivity extends Activity {
     }
 
     private void shell(String page) {
-        LinearLayout root=new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(BG);
-        LinearLayout head=new LinearLayout(this);
-        head.setOrientation(LinearLayout.VERTICAL); head.setPadding(dp(16),dp(12),dp(16),dp(10)); head.setBackgroundColor(NAVY);
-        TextView brand=bold("BORSA RADAR",23,Color.WHITE); brand.setPadding(0,0,0,0); head.addView(brand);
-        TextView sub=txt(page,13,Color.rgb(190,207,224)); sub.setPadding(0,2,0,0); head.addView(sub); root.addView(head);
-        LinearLayout nav=new LinearLayout(this); nav.setOrientation(LinearLayout.HORIZONTAL);
-        Button home=button("Ana Sayfa",NAVY2), markets=button("Piyasalar",PURPLE), r=button("Radar",GREEN), p=button("Portföy",NAVY2), more=button("Diğer",AMBER);
-        nav.addView(home,new LinearLayout.LayoutParams(0,-2,1)); nav.addView(markets,new LinearLayout.LayoutParams(0,-2,1)); nav.addView(r,new LinearLayout.LayoutParams(0,-2,1)); nav.addView(p,new LinearLayout.LayoutParams(0,-2,1)); nav.addView(more,new LinearLayout.LayoutParams(0,-2,1));
-        home.setOnClickListener(v->showDashboard()); markets.setOnClickListener(v->singleStockDialog()); r.setOnClickListener(v->showRadar()); p.setOnClickListener(v->showPortfolio()); more.setOnClickListener(v->showBaskets()); root.addView(nav);
-        ScrollView sv=new ScrollView(this); content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(10),dp(8),dp(10),dp(14)); sv.addView(content); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
-        TextView foot=txt("BorsaRadar • teknik + haber/katalizör bağlamı",11,Color.rgb(100,110,124)); foot.setGravity(Gravity.CENTER); root.addView(foot); setContentView(root);
+        LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(NAVY);
+        LinearLayout head=new LinearLayout(this); head.setGravity(Gravity.CENTER_VERTICAL); head.setPadding(dp(14),dp(9),dp(14),dp(7)); head.setBackgroundColor(NAVY);
+        TextView logo=bold("BR",16,Color.WHITE); logo.setGravity(Gravity.CENTER); logo.setBackgroundColor(RED);
+        TextView brand=bold(" BorsaRadar",18,Color.WHITE); TextView title=bold(page,13,Color.rgb(170,190,210)); title.setGravity(Gravity.END);
+        head.addView(logo,new LinearLayout.LayoutParams(dp(38),dp(38))); head.addView(brand,new LinearLayout.LayoutParams(0,dp(38),1)); head.addView(title,new LinearLayout.LayoutParams(0,dp(38),1)); root.addView(head);
+        ScrollView sv=new ScrollView(this); sv.setFillViewport(true); sv.setBackgroundColor(NAVY);
+        content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(10),dp(8),dp(10),dp(12)); content.setBackgroundColor(NAVY);
+        sv.addView(content); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
+        LinearLayout nav=new LinearLayout(this); nav.setOrientation(LinearLayout.HORIZONTAL); nav.setPadding(dp(4),dp(3),dp(4),dp(4)); nav.setBackgroundColor(Color.rgb(7,27,46));
+        Button home=button("⌂\nAna Sayfa",NAVY2), markets=button("▥\nPiyasalar",NAVY2), radar=button("◎\nRadar",NAVY2), portfolio=button("▣\nPortföy",NAVY2), more=button("•••\nDiğer",NAVY2);
+        Button[] ns={home,markets,radar,portfolio,more}; for(Button b:ns){b.setTextSize(10);b.setAllCaps(false);nav.addView(b,new LinearLayout.LayoutParams(0,dp(52),1));}
+        home.setOnClickListener(v->showDashboard()); markets.setOnClickListener(v->singleStockDialog()); radar.setOnClickListener(v->showRadar()); portfolio.setOnClickListener(v->showPortfolio()); more.setOnClickListener(v->showBaskets()); root.addView(nav);
+        setContentView(root);
     }
 
     private void shellDetail(String symbol) {
