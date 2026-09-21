@@ -110,8 +110,8 @@ public class MainActivity extends Activity {
 
     private Button button(String text, int color) {
         Button b=new Button(this);
-        b.setText(text); b.setAllCaps(false); b.setTextColor(Color.WHITE); b.setTextSize(14);
-        android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable(); bg.setColor(color); bg.setCornerRadius(dp(10)); b.setBackground(bg); b.setPadding(dp(8),dp(7),dp(8),dp(7));
+        b.setText(text); b.setAllCaps(false); b.setTextColor(Color.WHITE); b.setTextSize(13);
+        android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable(); bg.setColor(color); bg.setCornerRadius(dp(8)); b.setBackground(bg); b.setPadding(dp(7),dp(5),dp(7),dp(5));
         return b;
     }
 
@@ -120,23 +120,23 @@ public class MainActivity extends Activity {
     private LinearLayout card() {
         LinearLayout c=new LinearLayout(this);
         c.setOrientation(LinearLayout.VERTICAL);
-        c.setPadding(dp(12),dp(10),dp(12),dp(10));
-        android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable(); bg.setColor(NAVY2); bg.setCornerRadius(dp(12)); c.setBackground(bg);
+        c.setPadding(dp(10),dp(8),dp(10),dp(8));
+        android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable(); bg.setColor(NAVY2); bg.setCornerRadius(dp(10)); c.setBackground(bg);
         return c;
     }
 
     private void shell(String page) {
         LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(NAVY);
-        LinearLayout head=new LinearLayout(this); head.setGravity(Gravity.CENTER_VERTICAL); head.setPadding(dp(14),dp(9),dp(14),dp(7)); head.setBackgroundColor(NAVY);
+        LinearLayout head=new LinearLayout(this); head.setGravity(Gravity.CENTER_VERTICAL); head.setPadding(dp(12),dp(6),dp(12),dp(5)); head.setBackgroundColor(NAVY);
         TextView logo=bold("BR",14,Color.WHITE); logo.setGravity(Gravity.CENTER); android.graphics.drawable.GradientDrawable lbg=new android.graphics.drawable.GradientDrawable(); lbg.setColor(Color.rgb(25,105,220)); lbg.setCornerRadius(dp(10)); logo.setBackground(lbg);
-        TextView brand=bold("  BORSA RADAR",17,Color.WHITE); TextView title=bold(page,13,Color.rgb(170,190,210)); title.setGravity(Gravity.END);
-        head.addView(logo,new LinearLayout.LayoutParams(dp(34),dp(34))); head.addView(brand,new LinearLayout.LayoutParams(0,dp(38),1)); head.addView(title,new LinearLayout.LayoutParams(0,dp(38),1)); root.addView(head);
+        TextView brand=bold("  BORSA RADAR",15,Color.WHITE); TextView title=bold(page,11,Color.rgb(170,190,210)); title.setGravity(Gravity.END);
+        head.addView(logo,new LinearLayout.LayoutParams(dp(30),dp(30))); head.addView(brand,new LinearLayout.LayoutParams(0,dp(38),1)); head.addView(title,new LinearLayout.LayoutParams(0,dp(38),1)); root.addView(head);
         ScrollView sv=new ScrollView(this); sv.setFillViewport(true); sv.setBackgroundColor(NAVY);
-        content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(14),dp(8),dp(14),dp(12)); content.setBackgroundColor(NAVY);
+        content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(12),dp(6),dp(12),dp(10)); content.setBackgroundColor(NAVY);
         sv.addView(content); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout nav=new LinearLayout(this); nav.setOrientation(LinearLayout.HORIZONTAL); nav.setPadding(dp(4),dp(3),dp(4),dp(4)); nav.setBackgroundColor(Color.rgb(7,27,46));
         Button home=button("⌂\nAna Sayfa",NAVY2), markets=button("▥\nPiyasalar",NAVY2), radar=button("◎\nRadar",NAVY2), portfolio=button("▣\nPortföy",NAVY2), more=button("•••\nDiğer",NAVY2);
-        Button[] ns={home,markets,radar,portfolio,more}; String[] pages={"Ana Sayfa","Piyasalar","Radar Taraması","Portföy","Diğer"}; for(int i=0;i<ns.length;i++){Button b=ns[i];b.setTextSize(10);b.setAllCaps(false); if(page.equals(pages[i])||(i==2&&page.contains("Radar")))b.setTextColor(Color.rgb(90,165,255)); nav.addView(b,new LinearLayout.LayoutParams(0,dp(48),1));}
+        Button[] ns={home,markets,radar,portfolio,more}; String[] pages={"Ana Sayfa","Piyasalar","Radar Taraması","Portföy","Diğer"}; for(int i=0;i<ns.length;i++){Button b=ns[i];b.setTextSize(10);b.setAllCaps(false); if(page.equals(pages[i])||(i==2&&page.contains("Radar")))b.setTextColor(Color.rgb(90,165,255)); nav.addView(b,new LinearLayout.LayoutParams(0,dp(44),1));}
         home.setOnClickListener(v->showDashboard()); markets.setOnClickListener(v->singleStockDialog()); radar.setOnClickListener(v->showRadar()); portfolio.setOnClickListener(v->showPortfolio()); more.setOnClickListener(v->showMore()); root.addView(nav);
         setContentView(root);
     }
