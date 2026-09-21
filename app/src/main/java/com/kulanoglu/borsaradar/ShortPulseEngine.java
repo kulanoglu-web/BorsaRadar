@@ -47,7 +47,7 @@ public final class ShortPulseEngine {
         double range=Math.max(1e-9,last.high-last.low);
         double upperWick=last.high-Math.max(last.open,last.close);
         r.stretchPct=e20==0?0:(r.price/e20-1)*100;
-        boolean stretched=r.stretchPct>10.5 || rsi7>77;
+        boolean fastRun=r.changePct>=5.0 || roc3>=8.0;\n        boolean stretched=r.stretchPct>8.0 || rsi7>74 || fastRun;
         boolean trap=(upperWick/range>0.58 && rv>1.35) || (rsi7>80 && breakout);
 
         double early=0;
@@ -59,7 +59,7 @@ public final class ShortPulseEngine {
         if(acceleration) early+=0.9;
         if(rv>=1.05 && rv<=2.4) early+=0.65;
         if(tightToTrend) early+=0.65;
-        if(stretched) early-=1.6;
+        if(stretched) early-=1.6;\n        if(fastRun) early-=1.4;
         if(trap) early-=2.0;
         r.earlyBreakScore=early;
         r.earlyBreakout=!breakout && early>=4.0;
@@ -82,7 +82,7 @@ public final class ShortPulseEngine {
         if(r.earlyBreakout)s+=1.35;
         else if(nearBreak)s+=0.55;
         if(acceleration)s+=0.45;
-        if(stretched)s-=1.45;
+        if(stretched)s-=1.45;\n        if(fastRun)s-=1.25;
         if(trap)s-=2.2;
         r.score=s;
 
@@ -103,10 +103,10 @@ public final class ShortPulseEngine {
         r.momentumText=acceleration?"ivmeleniyor":roc3>0&&roc5>0?"pozitif":roc3<0&&roc5<0?"negatif":"karışık";
         r.flowText=cmf>0.04&&vp>0.05?"para/hacim girişi":cmf<-0.08&&vp<-0.08?"para/hacim çıkışı":"nötr";
         r.trendText=emaStack?"yukarı":e3<e5&&e5<e8?"aşağı":"yatay";
-        r.phaseText=r.earlyBreakout?"KIRILIM HAZIRLIĞI":breakout?(stretched?"GEÇ / UZAMIŞ":"KIRILIM"):(nearBreak?"SIKIŞMA / EŞİĞE YAKIN":"NORMAL");
+        r.phaseText=fastRun?"HAREKET BAŞLAMIŞ":r.earlyBreakout?"KIRILIM HAZIRLIĞI":breakout?(stretched?"GEÇ / UZAMIŞ":"KIRILIM TEYİDİ"):(nearBreak?"SIKIŞMA / EŞİĞE YAKIN":"NORMAL");
         r.explanation=String.format(Locale.US,
                 "%s • erken %.1f/6 • EMA20 uzaklık %.1f%% • RSI7 %.1f • ROC3 %.1f%% (ivme %.1f) • RelVol x%.2f • CMF %.2f • ATR sıkışma %.2f%s",
-                r.phaseText,early,r.stretchPct,rsi7,roc3,accel,rv,cmf,atr14==0?1:atr7/atr14,trap?" • TUZAK RİSKİ":"");
+                r.phaseText,early,r.stretchPct,rsi7,roc3,accel,rv,cmf,atr14==0?1:atr7/atr14,trap?" • TUZAK RİSKİ":fastRun?" • GEÇ GİRİŞ RİSKİ":"");
         return r;
     }
 
