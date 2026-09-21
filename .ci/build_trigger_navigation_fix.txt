@@ -1,0 +1,1 @@
+Critical navigation fix: visible back button, Android back handling, stale detail request cancellation, responsive timeframe navigation.
