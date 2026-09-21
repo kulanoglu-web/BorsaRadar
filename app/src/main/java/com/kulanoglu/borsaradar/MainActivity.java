@@ -224,13 +224,16 @@ public class MainActivity extends Activity {
 
     private TextView signalBanner(ShortPulseEngine.Result s) {
         int color=s.recommendation.contains("SAT")||s.recommendation.contains("RİSK")||s.recommendation.contains("KOVALAMA")?RED:s.recommendation.contains("AL")?GREEN:AMBER;
-        String confidence=s.confidence>=75?"Yüksek güven":s.confidence>=55?"Orta güven":"Düşük güven"; TextView v=bold(s.recommendation+"  •  Pulse "+fmt(s.score)+"\\n"+confidence+"  •  "+s.horizonText,18,Color.WHITE); v.setGravity(Gravity.CENTER); v.setBackgroundColor(color); v.setPadding(dp(12),dp(10),dp(12),dp(10)); return v;
+        String confidence=s.confidence>=75?"Yüksek güven":s.confidence>=55?"Orta güven":"Düşük güven"; TextView v=bold(s.recommendation+"  •  Pulse "+fmt(s.score)+"
+"+confidence+"  •  "+s.horizonText,18,Color.WHITE); v.setGravity(Gravity.CENTER); v.setBackgroundColor(color); v.setPadding(dp(12),dp(10),dp(12),dp(10)); return v;
     }
 
     private TextView contextBanner(CatalystContextEngine.Result c) {
         int color=!c.hasContext?Color.GRAY:c.technicalConflict?PURPLE:c.positiveCatalyst?GREEN:c.negativeCatalyst?RED:AMBER;
         String title=!c.hasContext?"BAĞLAM VERİSİ YETERSİZ":c.technicalConflict?"TEKNİK / HABER ÇELİŞKİSİ":c.positiveCatalyst?"POZİTİF KATALİZÖR":c.negativeCatalyst?"NEGATİF KATALİZÖR":"HABER BAĞLAMI NÖTR";
-        TextView v=bold(title+"  •  Haber "+fmt(c.newsScore)+"/8\\n"+c.note+"\\n"+c.coverage,14,Color.WHITE); v.setBackgroundColor(color); v.setPadding(dp(12),dp(10),dp(12),dp(10)); return v;
+        TextView v=bold(title+"  •  Haber "+fmt(c.newsScore)+"/8
+"+c.note+"
+"+c.coverage,14,Color.WHITE); v.setBackgroundColor(color); v.setPadding(dp(12),dp(10),dp(12),dp(10)); return v;
     }
 
     private void stockTabs(String symbol,String active,ShortPulseEngine.Result r,CatalystContextEngine.Result cx){
@@ -397,9 +400,7 @@ public class MainActivity extends Activity {
                 final ShortPulseEngine.Result safeResult=r;
                 final List<MarketDataService.Candle> safeChart=chart;
 
-                CatalystContextEngine.Result cx=detailContext;
-                if(cx==null)try{cx=CatalystContextEngine.analyze(selectedSymbol,safeResult.score);}catch(Exception ignored){}
-                final CatalystContextEngine.Result safeCx=cx;
+                CatalystContextEngine.Result cx=detailContext;\n                final CatalystContextEngine.Result safeCx=cx;
 
                 main.post(()->{
                     if(requestGeneration!=detailRequestGeneration.get()||!selectedSymbol.equals(detailSymbol)||selectedTimeframe!=detailTimeframe)return;
@@ -423,7 +424,7 @@ public class MainActivity extends Activity {
     private CatalystContextEngine.Result holdingContext(String symbol){String n=MarketDataService.normalizeSymbol(symbol);CatalystContextEngine.Result r=holdingContexts.get(n);if(r!=null)return r;for(Map.Entry<String,CatalystContextEngine.Result> e:holdingContexts.entrySet())if(MarketDataService.normalizeSymbol(e.getKey()).equals(n))return e.getValue();return null;}
     private RadarItem findRadarItem(String symbol){String n=MarketDataService.normalizeSymbol(symbol);synchronized(radarResults){for(RadarItem x:radarResults)if(MarketDataService.normalizeSymbol(x.symbol).equals(n))return x;}return null;}
 
-    private void renderStockDetail(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx,List<MarketDataService.Candle> chart) {
+    private void loadDetailContextAsync(String symbol,double score,int generation) {\n        io.execute(()->{try{CatalystContextEngine.Result cx=CatalystContextEngine.analyze(symbol,score);if(cx!=null)main.post(()->{if(generation==detailRequestGeneration.get()&&symbol.equals(detailSymbol)){detailContext=cx;}});}catch(Exception ignored){}});\n    }\n\n    private void renderStockDetail(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx,List<MarketDataService.Candle> chart) {
         shellDetail(symbol);
         stockTabs(symbol,"Grafik",r,cx);
         Holding owned=findHolding(symbol);
