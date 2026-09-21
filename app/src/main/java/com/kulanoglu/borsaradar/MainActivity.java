@@ -448,7 +448,7 @@ public class MainActivity extends Activity {
         content.addView(priceBox);
 
         LinearLayout tfRow=new LinearLayout(this); tfRow.setOrientation(LinearLayout.HORIZONTAL); tfRow.setGravity(Gravity.CENTER); tfRow.setPadding(0,dp(3),0,dp(3));
-        final int[] compactIdx={7,8,9,10,11}; final String[] compactLabels={"1A","3A","6A","1Y","2Y"};
+        final int[] compactIdx={5,3,7,8,9,10,11}; final String[] compactLabels={"1G","1H","1A","3A","6A","1Y","2Y"};
         for(int k=0;k<compactIdx.length;k++){final int idx=compactIdx[k];Button b=button(compactLabels[k],idx==detailTimeframe?GREEN:NAVY2);b.setAllCaps(false);b.setTextSize(12);b.setPadding(dp(2),0,dp(2),0);b.setOnClickListener(v->{if(idx!=detailTimeframe)analyzeStock(symbol,idx);});tfRow.addView(b,new LinearLayout.LayoutParams(0,dp(38),1));}
         content.addView(tfRow);
 
