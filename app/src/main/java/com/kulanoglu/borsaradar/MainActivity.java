@@ -154,6 +154,7 @@ public class MainActivity extends Activity {
         ScrollView sv=new ScrollView(this); sv.setFillViewport(true); sv.setBackgroundColor(NAVY);
         content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(8),dp(4),dp(8),dp(12)); content.setBackgroundColor(NAVY);
         sv.addView(content); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
+        LinearLayout nav=new LinearLayout(this); nav.setBackgroundColor(Color.rgb(7,27,46)); Button home=button("⌂\nAna Sayfa",NAVY2),markets=button("▥\nPiyasalar",NAVY2),radar=button("◎\nRadar",NAVY2),portfolio=button("▣\nPortföy",NAVY2),more=button("•••\nDiğer",NAVY2); Button[] ns={home,markets,radar,portfolio,more}; for(Button b:ns){b.setTextSize(9);b.setAllCaps(false);nav.addView(b,new LinearLayout.LayoutParams(0,dp(48),1));} home.setOnClickListener(v->showDashboard());markets.setOnClickListener(v->singleStockDialog());radar.setOnClickListener(v->showRadar());portfolio.setOnClickListener(v->showPortfolio());more.setOnClickListener(v->showMore());root.addView(nav);
         setContentView(root);
     }
 
@@ -263,7 +264,7 @@ public class MainActivity extends Activity {
         box.addView(txt("Mevcut fiyat   "+money(r.price,symbol),13,Color.WHITE)); box.addView(txt("Sinyal güveni   %"+(int)r.confidence,13,Color.WHITE));
         box.addView(txt("Hedef, stop ve risk/ödül seviyeleri doğrulanmış fiyat yapısından hesaplanarak burada gösterilecek.",12,Color.rgb(180,200,218))); content.addView(box);
         LinearLayout actions=new LinearLayout(this); Button add=button("+ Portföye Ekle",GREEN),chart=button("Grafiğe Dön",Color.rgb(25,105,220)); actions.addView(add,new LinearLayout.LayoutParams(0,dp(44),1)); actions.addView(chart,new LinearLayout.LayoutParams(0,dp(44),1)); content.addView(actions);
-        Holding owned=findHolding(symbol); add.setOnClickListener(v->portfolioDialog(owned,symbol)); chart.setOnClickListener(v->analyzeStock(symbol,detailTimeframe));
+        stockTabs(symbol,"Grafik",r,cx);\n        Holding owned=findHolding(symbol); add.setOnClickListener(v->portfolioDialog(owned,symbol)); chart.setOnClickListener(v->analyzeStock(symbol,detailTimeframe));
     }
 
     private void refreshPortfolio() {
