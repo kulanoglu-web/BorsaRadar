@@ -33,7 +33,10 @@ jobs:
           disable-animations: true
           script: |
             mkdir -p emulator-artifacts
-            APK=$(find app/build/outputs/apk/debug -name '*.apk' | head -1)
+            APK=$(find "$GITHUB_WORKSPACE/app/build/outputs/apk/debug" -type f -name "*.apk" | head -1)
+            echo "APK=$APK"
+            test -n "$APK"
+            test -f "$APK"
             adb install -r "$APK"
             adb shell monkey -p com.kulanoglu.borsaradar.finalapp -c android.intent.category.LAUNCHER 1
             sleep 8
