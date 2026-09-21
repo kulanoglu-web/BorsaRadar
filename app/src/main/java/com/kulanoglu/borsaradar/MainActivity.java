@@ -481,8 +481,8 @@ public class MainActivity extends Activity {
 
         LinearLayout priceBox=new LinearLayout(this); priceBox.setOrientation(LinearLayout.VERTICAL); priceBox.setPadding(dp(10),dp(3),dp(10),dp(5)); priceBox.setBackgroundColor(NAVY);
         LinearLayout priceRow=new LinearLayout(this); priceRow.setGravity(Gravity.BOTTOM);
-        TextView price=bold(money(shownPrice,symbol),30,pos); price.setPadding(0,0,0,0);
-        TextView change=bold(String.format(Locale.US,"  %+.2f%%",r.changePct),14,pos); change.setPadding(0,0,0,dp(4));
+        TextView price=bold(money(shownPrice,symbol),26,Color.WHITE); price.setPadding(0,0,0,0);
+        TextView change=bold(String.format(Locale.US,"  %+.2f%%",r.changePct),13,pos); change.setPadding(0,0,0,dp(4));
         priceRow.addView(price); priceRow.addView(change); priceBox.addView(priceRow);
         String source=chartLast>0?ChartTimeframes.label(detailTimeframe)+" grafik kapanışı":(live!=null?live.source:"teknik kapanış");
         TextView sourceLine=txt("Son fiyat • "+source,10,Color.rgb(160,178,198)); sourceLine.setPadding(0,dp(2),0,0); priceBox.addView(sourceLine);
@@ -491,17 +491,15 @@ public class MainActivity extends Activity {
         LinearLayout tfRow=new LinearLayout(this); tfRow.setOrientation(LinearLayout.HORIZONTAL); tfRow.setGravity(Gravity.CENTER); tfRow.setPadding(0,dp(3),0,dp(3));
         final int[] compactIdx={5,3,7,8,9,10,11}; final String[] compactLabels={"1G","1H","1A","3A","6A","1Y","2Y"};
         for(int k=0;k<compactIdx.length;k++){final int idx=compactIdx[k];Button b=button(compactLabels[k],idx==detailTimeframe?GREEN:NAVY2);b.setAllCaps(false);b.setTextSize(12);b.setPadding(dp(2),0,dp(2),0);b.setOnClickListener(v->{if(idx!=detailTimeframe)analyzeStock(symbol,idx);});tfRow.addView(b,new LinearLayout.LayoutParams(0,dp(38),1));}
-        content.addView(tfRow);
-
-        if(chart==null||chart.size()<2){
+        content.addView(tfRow);\n        LinearLayout indicators=new LinearLayout(this); indicators.setGravity(Gravity.CENTER); String[] inds={"RSI","MACD","Stoch","CCI","BB"}; for(String in:inds){Button ib=button(in,NAVY2);ib.setTextSize(10);ib.setAllCaps(false);indicators.addView(ib,new LinearLayout.LayoutParams(0,dp(34),1));} content.addView(indicators);\n\n        if(chart==null||chart.size()<2){
             TextView empty=txt(ChartTimeframes.label(detailTimeframe)+" verisi yüklenemedi. Başka zaman diliminden veri gösterilmedi.",12,Color.rgb(255,120,120)); empty.setPadding(dp(10),dp(18),dp(10),dp(18)); content.addView(empty);
         }else{
-            content.addView(new PriceChartView(this,chart,ChartTimeframes.label(detailTimeframe).toUpperCase(Locale.ROOT)),new LinearLayout.LayoutParams(-1,dp(405)));
+            content.addView(new PriceChartView(this,chart,ChartTimeframes.label(detailTimeframe).toUpperCase(Locale.ROOT)),new LinearLayout.LayoutParams(-1,dp(365)));
         }
 
         LinearLayout status=new LinearLayout(this); status.setOrientation(LinearLayout.VERTICAL); status.setPadding(dp(10),dp(7),dp(10),dp(7)); status.setBackgroundColor(NAVY2);
-        TextView sig=bold(r.recommendation+" • Güven %"+(int)r.confidence,13,Color.WHITE); sig.setPadding(0,0,0,0); status.addView(sig);
-        TextView sigScope=txt("Sinyal: kısa vade teknik motoru • Grafik: "+ChartTimeframes.label(detailTimeframe),10,Color.rgb(160,178,198)); sigScope.setPadding(0,dp(3),0,0); status.addView(sigScope);
+        int sigColor=r.recommendation.contains("AL")?GREEN:(r.recommendation.contains("SAT")||r.recommendation.contains("RİSK")?RED:AMBER); TextView sig=bold(r.recommendation+"   •   Güven %"+(int)r.confidence,14,sigColor); sig.setPadding(0,0,0,0); status.addView(sig);
+        TextView sigScope=txt("Teknik sinyal • "+ChartTimeframes.label(detailTimeframe)+" grafik • Pulse "+fmt(r.score),10,Color.rgb(160,178,198)); sigScope.setPadding(0,dp(3),0,0); status.addView(sigScope);
         if(owned!=null){double pnl=(shownPrice-owned.cost)*owned.qty;TextView own=txt("Maliyet "+money(owned.cost,symbol)+" • P/L "+money(pnl,symbol),11,pnl>=0?Color.rgb(90,220,170):Color.rgb(255,130,140));own.setPadding(0,dp(3),0,0);status.addView(own);}
         content.addView(status); spacer(4);
 
