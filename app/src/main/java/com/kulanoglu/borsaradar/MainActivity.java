@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MainActivity extends Activity {
     private static final String PREFS = "borsaradar_final";
     private static final int NAVY = Color.rgb(9, 30, 54);
-    private static final int NAVY2 = Color.rgb(17, 50, 82);
+    private static final int NAVY2 = Color.rgb(14, 38, 65);\n    private static final int PANEL = Color.rgb(12, 34, 59);\n    private static final int BLUE = Color.rgb(36, 118, 255);\n    private static final int MUTED = Color.rgb(137, 163, 188);
     private static final int GREEN = Color.rgb(0, 135, 92);
     private static final int RED = Color.rgb(205, 42, 55);
     private static final int AMBER = Color.rgb(225, 145, 0);
@@ -97,10 +97,10 @@ public class MainActivity extends Activity {
 
     private int dp(int x) { return Math.round(x * getResources().getDisplayMetrics().density); }
 
-    private TextView txt(String text, int sp, int color) {
+    private android.graphics.drawable.GradientDrawable bg(int color,int radius) { android.graphics.drawable.GradientDrawable g=new android.graphics.drawable.GradientDrawable(); g.setColor(color); g.setCornerRadius(dp(radius)); return g; }\n\n    private TextView chip(String text,int color) { TextView v=bold(text,10,Color.WHITE); v.setGravity(Gravity.CENTER); v.setPadding(dp(8),dp(3),dp(8),dp(3)); v.setBackground(bg(color,12)); return v; }\n\n    private TextView txt(String text, int sp, int color) {
         TextView v=new TextView(this);
         v.setText(text); v.setTextSize(sp); v.setTextColor(color);
-        v.setPadding(dp(14),dp(8),dp(14),dp(8));
+        v.setPadding(dp(8),dp(4),dp(8),dp(4));
         return v;
     }
 
@@ -111,7 +111,7 @@ public class MainActivity extends Activity {
     private Button button(String text, int color) {
         Button b=new Button(this);
         b.setText(text); b.setAllCaps(false); b.setTextColor(Color.WHITE); b.setTextSize(13);
-        android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable(); bg.setColor(color); bg.setCornerRadius(dp(8)); b.setBackground(bg); b.setPadding(dp(7),dp(5),dp(7),dp(5));
+        android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable(); bg.setColor(color); bg.setCornerRadius(dp(10)); b.setBackground(bg); b.setPadding(dp(6),dp(3),dp(6),dp(3));
         return b;
     }
 
@@ -120,7 +120,7 @@ public class MainActivity extends Activity {
     private LinearLayout card() {
         LinearLayout c=new LinearLayout(this);
         c.setOrientation(LinearLayout.VERTICAL);
-        c.setPadding(dp(10),dp(8),dp(10),dp(8));
+        c.setPadding(dp(9),dp(7),dp(9),dp(7));
         android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable(); bg.setColor(NAVY2); bg.setCornerRadius(dp(10)); c.setBackground(bg);
         return c;
     }
