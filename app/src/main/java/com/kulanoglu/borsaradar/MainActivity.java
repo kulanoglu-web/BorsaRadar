@@ -132,7 +132,7 @@ public class MainActivity extends Activity {
         TextView brand=bold("  BORSA RADAR",17,Color.WHITE); TextView title=bold(page,13,Color.rgb(170,190,210)); title.setGravity(Gravity.END);
         head.addView(logo,new LinearLayout.LayoutParams(dp(34),dp(34))); head.addView(brand,new LinearLayout.LayoutParams(0,dp(38),1)); head.addView(title,new LinearLayout.LayoutParams(0,dp(38),1)); root.addView(head);
         ScrollView sv=new ScrollView(this); sv.setFillViewport(true); sv.setBackgroundColor(NAVY);
-        content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(10),dp(8),dp(10),dp(12)); content.setBackgroundColor(NAVY);
+        content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(14),dp(8),dp(14),dp(12)); content.setBackgroundColor(NAVY);
         sv.addView(content); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout nav=new LinearLayout(this); nav.setOrientation(LinearLayout.HORIZONTAL); nav.setPadding(dp(4),dp(3),dp(4),dp(4)); nav.setBackgroundColor(Color.rgb(7,27,46));
         Button home=button("⌂\nAna Sayfa",NAVY2), markets=button("▥\nPiyasalar",NAVY2), radar=button("◎\nRadar",NAVY2), portfolio=button("▣\nPortföy",NAVY2), more=button("•••\nDiğer",NAVY2);
@@ -160,31 +160,31 @@ public class MainActivity extends Activity {
 
     private void showDashboard() {
         shell("Ana Sayfa");
-        TextView welcome=bold("Piyasayı tek ekrandan takip et",20,Color.WHITE); welcome.setPadding(dp(4),dp(4),dp(4),dp(10)); content.addView(welcome);
+        TextView welcome=bold("Piyasayı tek ekrandan takip et",19,Color.WHITE); welcome.setPadding(dp(4),dp(4),dp(4),dp(10)); content.addView(welcome);
         TextView search=txt("⌕   Hisse, endeks veya şirket ara...",14,Color.WHITE); search.setPadding(dp(16),dp(14),dp(16),dp(14)); search.setBackgroundColor(NAVY2); search.setOnClickListener(v->singleStockDialog()); content.addView(search); spacer(8);
 
         LinearLayout exchange=new LinearLayout(this); String[] ex={"BIST","Almanya","ABD","Tümü"}; for(String e:ex){Button q=button(e,e.equals("BIST")?Color.rgb(25,105,220):NAVY2);q.setTextSize(11);exchange.addView(q,new LinearLayout.LayoutParams(0,dp(38),1));} content.addView(exchange); spacer(10);
 
-        LinearLayout strategies=new LinearLayout(this); strategies.setOrientation(LinearLayout.VERTICAL); strategies.addView(bold("Stratejiler",16,Color.WHITE));
+        LinearLayout strategies=new LinearLayout(this); strategies.setOrientation(LinearLayout.VERTICAL); strategies.addView(bold("Stratejiler",15,Color.WHITE));
         LinearLayout r1=new LinearLayout(this),r2=new LinearLayout(this);
         Button fast=button("⚡  Hızlı Tarama\nAnlık fırsatlar",Color.rgb(25,105,220)),shortB=button("↗  Kısa Vade\nGünlük / saatlik",PURPLE);
         Button div=button("◆  Temettü\nDüzenli gelir",GREEN),longB=button("◎  Uzun Vade\nGüçlü şirketler",AMBER);
         for(Button b:new Button[]{fast,shortB,div,longB}){b.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);b.setTextSize(12);}
-        r1.addView(fast,new LinearLayout.LayoutParams(0,dp(72),1));r1.addView(shortB,new LinearLayout.LayoutParams(0,dp(72),1));
-        r2.addView(div,new LinearLayout.LayoutParams(0,dp(72),1));r2.addView(longB,new LinearLayout.LayoutParams(0,dp(72),1));strategies.addView(r1);strategies.addView(r2);content.addView(strategies); spacer(10);
+        r1.addView(fast,new LinearLayout.LayoutParams(0,dp(66),1));r1.addView(shortB,new LinearLayout.LayoutParams(0,dp(66),1));
+        r2.addView(div,new LinearLayout.LayoutParams(0,dp(66),1));r2.addView(longB,new LinearLayout.LayoutParams(0,dp(66),1));strategies.addView(r1);strategies.addView(r2);content.addView(strategies); spacer(10);
         fast.setOnClickListener(v->showRadar());shortB.setOnClickListener(v->showRadar());div.setOnClickListener(v->showBaskets());longB.setOnClickListener(v->showBaskets());
 
-        content.addView(bold("Günün Öne Çıkanları",16,Color.WHITE));
+        content.addView(bold("Günün Öne Çıkanları",15,Color.WHITE));
         LinearLayout featured=card();featured.setBackgroundColor(NAVY2);
         List<RadarItem> top=new ArrayList<>(radarResults);top.removeIf(x->x.recommendation.contains("SAT")||x.recommendation.contains("RİSK"));top.sort((a,b)->Double.compare(b.score,a.score));
         if(top.isEmpty()){featured.addView(bold("Radar taramasını başlat",15,Color.WHITE));featured.addView(txt("En güçlü AL ve İZLE adayları burada görünecek.",12,Color.rgb(170,198,216)));Button go=button("Radarı Aç",Color.rgb(25,105,220));featured.addView(go);go.setOnClickListener(v->showRadar());}
         else for(int i=0;i<Math.min(3,top.size());i++){RadarItem x=top.get(i);TextView pick=bold(x.symbol+"     "+money(x.price,x.symbol)+"     "+x.recommendation,14,x.recommendation.contains("AL")?GREEN:AMBER);pick.setOnClickListener(v->analyzeStock(x.symbol));featured.addView(pick);featured.addView(txt("Pulse "+fmt(x.score)+"  •  Güven %"+(int)x.confidence,11,Color.rgb(170,198,216)));}
         content.addView(featured); spacer(10);
 
-        content.addView(bold("Piyasa Özeti",16,Color.WHITE));
+        content.addView(bold("Piyasa Özeti",15,Color.WHITE));
         LinearLayout m1=new LinearLayout(this),m2=new LinearLayout(this);
         String[] names={"BIST 100\nTürkiye","DAX\nAlmanya","S&P 500\nABD","NASDAQ\nTeknoloji"};
-        for(int i=0;i<4;i++){LinearLayout mc=card();mc.setBackgroundColor(NAVY2);mc.addView(bold(names[i],13,Color.WHITE));mc.addView(txt("—  Veri bekleniyor",11,Color.rgb(155,180,200)));(i<2?m1:m2).addView(mc,new LinearLayout.LayoutParams(0,dp(74),1));}
+        for(int i=0;i<4;i++){LinearLayout mc=card();mc.setBackgroundColor(NAVY2);mc.addView(bold(names[i],13,Color.WHITE));mc.addView(txt("—  Veri bekleniyor",11,Color.rgb(155,180,200)));(i<2?m1:m2).addView(mc,new LinearLayout.LayoutParams(0,dp(66),1));}
         content.addView(m1);content.addView(m2);spacer(10);
 
         LinearLayout news=card();news.setBackgroundColor(NAVY2);news.addView(bold("●  Son Dakika",15,Color.WHITE));news.addView(txt("KAP, şirket haberleri ve önemli piyasa gelişmeleri burada öne çıkar.",12,Color.rgb(175,198,216)));content.addView(news);spacer(8);
