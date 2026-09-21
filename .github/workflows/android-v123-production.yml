@@ -80,3 +80,5 @@ jobs:
 # timeframe cache isolation and daily-range fix
 
 # seven reference timeframe buttons
+
+# remove nested executor deadlock on timeframe changes
