@@ -495,7 +495,7 @@ public class MainActivity extends Activity {
         // Seçili grafik zaten ekranda; bu işlem sadece sonraki dokunuşları hızlandırır.
         final String s=symbol; final int generation=detailRequestGeneration.get();
         io.execute(()->{
-            for(int idx:new int[]{5,3,7,8,9,10,11}){
+            for(int idx:new int[]{5,3,7,8}){
                 if(generation!=detailRequestGeneration.get()||!s.equals(detailSymbol))return;
                 if(idx==detailTimeframe)continue;
                 try{
