@@ -429,7 +429,8 @@ public class MainActivity extends Activity {
     private RadarItem findRadarItem(String symbol){String n=MarketDataService.normalizeSymbol(symbol);synchronized(radarResults){for(RadarItem x:radarResults)if(MarketDataService.normalizeSymbol(x.symbol).equals(n))return x;}return null;}
 
     private void renderStockDetail(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx,List<MarketDataService.Candle> chart) {
-        shellDetail(symbol);\n        stockTabs(symbol,"Grafik",r,cx);
+        shellDetail(symbol);
+        stockTabs(symbol,"Grafik",r,cx);
         Holding owned=findHolding(symbol);
         MarketDataService.Spot live=MarketDataService.latestSpot(symbol);
         double shownPrice=live!=null&&live.price>0?live.price:r.price;
@@ -452,8 +453,7 @@ public class MainActivity extends Activity {
         if(chart==null||chart.size()<2){
             TextView empty=txt(ChartTimeframes.label(detailTimeframe)+" verisi yüklenemedi. Başka zaman diliminden veri gösterilmedi.",12,Color.rgb(255,120,120)); empty.setPadding(dp(10),dp(18),dp(10),dp(18)); content.addView(empty);
         }else{
-            TextView range=bold(ChartTimeframes.label(detailTimeframe)+" • "+chart.size()+" mum",11,Color.rgb(172,190,208)); range.setPadding(dp(8),dp(3),dp(8),dp(3)); content.addView(range);
-            content.addView(new PriceChartView(this,chart,ChartTimeframes.label(detailTimeframe).toUpperCase(Locale.ROOT)),new LinearLayout.LayoutParams(-1,dp(455)));
+            content.addView(new PriceChartView(this,chart,ChartTimeframes.label(detailTimeframe).toUpperCase(Locale.ROOT)),new LinearLayout.LayoutParams(-1,dp(405)));
         }
 
         LinearLayout status=new LinearLayout(this); status.setOrientation(LinearLayout.VERTICAL); status.setPadding(dp(10),dp(7),dp(10),dp(7)); status.setBackgroundColor(NAVY2);
