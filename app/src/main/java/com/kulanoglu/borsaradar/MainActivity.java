@@ -405,8 +405,7 @@ public class MainActivity extends Activity {
                     if(requestGeneration!=detailRequestGeneration.get()||!selectedSymbol.equals(detailSymbol)||selectedTimeframe!=detailTimeframe)return;
                     detailResult=safeResult; detailContext=safeCx;
                     renderStockDetail(selectedSymbol,safeResult,safeCx,safeChart);
-                    prefetchTimeframes(selectedSymbol);
-                    prefetchAdjacent(selectedSymbol);
+                     if(selectedTimeframe<=8){ prefetchTimeframes(selectedSymbol); prefetchAdjacent(selectedSymbol); }
                 });
             }catch(Exception e){
                 final String msg=e.getMessage()==null?"veri alınamadı":e.getMessage();
