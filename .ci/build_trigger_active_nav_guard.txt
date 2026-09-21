@@ -1,0 +1,1 @@
+Active revision hotfix: request generation is created in analyzeStock, wrong 1mo chart fallback removed, detail loading remains in dark shell.
