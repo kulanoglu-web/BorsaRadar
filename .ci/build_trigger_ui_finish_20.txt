@@ -1,0 +1,1 @@
+20-step UI stabilization checkpoint: chart-first dark detail, fixed long-range selector, compact price/status/actions, no indicator-engine changes.
