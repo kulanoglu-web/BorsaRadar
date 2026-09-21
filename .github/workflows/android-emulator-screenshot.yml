@@ -43,7 +43,7 @@ jobs:
             adb install -r BorsaRadar-emulator.apk
             adb shell monkey -p com.kulanoglu.borsaradar.finalapp -c android.intent.category.LAUNCHER 1
             sleep 8
-            adb exec-out screencap -p > emulator-artifacts/01-home.png
+            adb exec-out screencap -p > emulator-artifacts/01-home.png\n            adb shell input tap 520 365\n            sleep 1\n            adb shell input text THYAO\n            adb shell input keyevent 66\n            sleep 8\n            adb exec-out screencap -p > emulator-artifacts/03-detail-graph.png
             adb shell input tap 535 2160
             sleep 2
             adb exec-out screencap -p > emulator-artifacts/02-radar.png
