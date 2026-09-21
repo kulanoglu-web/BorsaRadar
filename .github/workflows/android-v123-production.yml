@@ -58,3 +58,5 @@ jobs:
           path: BorsaRadar-v3.12.153.apk
           if-no-files-found: error
           retention-days: 30
+
+# UI build trigger 2026-09-21 reference screens
