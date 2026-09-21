@@ -428,7 +428,8 @@ public class MainActivity extends Activity {
         stockTabs(symbol,"Grafik",r,cx);
         Holding owned=findHolding(symbol);
         MarketDataService.Spot live=MarketDataService.latestSpot(symbol);
-        double shownPrice=live!=null&&live.price>0?live.price:r.price;
+        double chartLast=(chart!=null&&!chart.isEmpty())?chart.get(chart.size()-1).close:0;
+        double shownPrice=chartLast>0?chartLast:(live!=null&&live.price>0?live.price:r.price);
         int pos=r.changePct>=0?GREEN:RED;
 
         LinearLayout priceBox=new LinearLayout(this); priceBox.setOrientation(LinearLayout.VERTICAL); priceBox.setPadding(dp(10),dp(3),dp(10),dp(5)); priceBox.setBackgroundColor(NAVY);
@@ -436,7 +437,7 @@ public class MainActivity extends Activity {
         TextView price=bold(money(shownPrice,symbol),30,pos); price.setPadding(0,0,0,0);
         TextView change=bold(String.format(Locale.US,"  %+.2f%%",r.changePct),14,pos); change.setPadding(0,0,0,dp(4));
         priceRow.addView(price); priceRow.addView(change); priceBox.addView(priceRow);
-        String source=live!=null?live.source:"teknik kapanış";
+        String source=chartLast>0?ChartTimeframes.label(detailTimeframe)+" grafik kapanışı":(live!=null?live.source:"teknik kapanış");
         TextView sourceLine=txt("Son fiyat • "+source,10,Color.rgb(160,178,198)); sourceLine.setPadding(0,dp(2),0,0); priceBox.addView(sourceLine);
         content.addView(priceBox);
 
@@ -453,6 +454,7 @@ public class MainActivity extends Activity {
 
         LinearLayout status=new LinearLayout(this); status.setOrientation(LinearLayout.VERTICAL); status.setPadding(dp(10),dp(7),dp(10),dp(7)); status.setBackgroundColor(NAVY2);
         TextView sig=bold(r.recommendation+" • Güven %"+(int)r.confidence,13,Color.WHITE); sig.setPadding(0,0,0,0); status.addView(sig);
+        TextView sigScope=txt("Sinyal: kısa vade teknik motoru • Grafik: "+ChartTimeframes.label(detailTimeframe),10,Color.rgb(160,178,198)); sigScope.setPadding(0,dp(3),0,0); status.addView(sigScope);
         if(owned!=null){double pnl=(shownPrice-owned.cost)*owned.qty;TextView own=txt("Maliyet "+money(owned.cost,symbol)+" • P/L "+money(pnl,symbol),11,pnl>=0?Color.rgb(90,220,170):Color.rgb(255,130,140));own.setPadding(0,dp(3),0,0);status.addView(own);}
         content.addView(status); spacer(4);
 
