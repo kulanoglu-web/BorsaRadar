@@ -230,9 +230,9 @@ public class MainActivity extends Activity {
     }
 
     private void stockTabs(String symbol,String active,ShortPulseEngine.Result r,CatalystContextEngine.Result cx){
-        LinearLayout tabs=new LinearLayout(this); String[] names={"Genel","Grafik","Haber","KAP","Finansal"};
+        LinearLayout tabs=new LinearLayout(this); String[] names={"Genel","Grafik","Haber","KAP","Finansal","Teknik","Hedef/Risk"};
         for(String t:names){Button b=button(t,t.equals(active)?Color.rgb(25,105,220):NAVY);b.setTextSize(10);b.setAllCaps(false);tabs.addView(b,new LinearLayout.LayoutParams(0,dp(38),1));
-            if(t.equals("Genel"))b.setOnClickListener(v->showStockGeneral(symbol,r,cx)); else if(t.equals("Grafik"))b.setOnClickListener(v->analyzeStock(symbol,detailTimeframe)); else if(t.equals("Haber")||t.equals("KAP"))b.setOnClickListener(v->showStockNews(symbol,r,cx)); else b.setOnClickListener(v->showStockFinancial(symbol,r));}
+            if(t.equals("Genel"))b.setOnClickListener(v->showStockGeneral(symbol,r,cx)); else if(t.equals("Grafik"))b.setOnClickListener(v->analyzeStock(symbol,detailTimeframe)); else if(t.equals("Haber")||t.equals("KAP"))b.setOnClickListener(v->showStockNews(symbol,r,cx)); else if(t.equals("Finansal"))b.setOnClickListener(v->showStockFinancial(symbol,r)); else if(t.equals("Teknik"))b.setOnClickListener(v->showStockTechnical(symbol,r)); else b.setOnClickListener(v->showStockRisk(symbol,r));}
         content.addView(tabs);
     }
     private void showStockGeneral(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx){
@@ -246,6 +246,21 @@ public class MainActivity extends Activity {
     }
     private void showStockFinancial(String symbol,ShortPulseEngine.Result r){
         shellDetail(symbol); stockTabs(symbol,"Finansal",r,detailContext); LinearLayout box=card(); box.setBackgroundColor(NAVY2); box.addView(bold("Temel Finansal Veriler",17,Color.WHITE)); box.addView(txt("Son fiyat   "+money(r.price,symbol),13,Color.WHITE)); box.addView(txt("Günlük değişim   "+String.format(Locale.US,"%+.2f%%",r.changePct),13,r.changePct>=0?GREEN:RED)); box.addView(txt("Teknik güven   %"+(int)r.confidence,13,Color.WHITE)); box.addView(txt("Finansal oranlar veri kaynağı doğrulandıkça bu ekrana eklenecek.",11,Color.rgb(160,180,200))); content.addView(box);
+    }
+
+    private void showStockTechnical(String symbol,ShortPulseEngine.Result r){
+        shellDetail(symbol); stockTabs(symbol,"Teknik",r,detailContext);
+        LinearLayout box=card(); box.setBackgroundColor(NAVY2); box.addView(bold("Teknik Görünüm",17,Color.WHITE));
+        box.addView(txt("Pulse skoru   "+fmt(r.score),13,Color.WHITE)); box.addView(txt("Sinyal   "+r.recommendation,13,r.recommendation.contains("AL")?GREEN:r.recommendation.contains("SAT")?RED:AMBER));
+        box.addView(txt("Güven   %"+(int)r.confidence,13,Color.WHITE)); box.addView(txt("Zaman dilimi   "+ChartTimeframes.label(detailTimeframe),12,Color.rgb(170,195,215))); content.addView(box);
+    }
+    private void showStockRisk(String symbol,ShortPulseEngine.Result r){
+        shellDetail(symbol); stockTabs(symbol,"Hedef/Risk",r,detailContext);
+        LinearLayout box=card(); box.setBackgroundColor(NAVY2); box.addView(bold("Hedef & Risk",17,Color.WHITE));
+        box.addView(txt("Mevcut fiyat   "+money(r.price,symbol),13,Color.WHITE)); box.addView(txt("Sinyal güveni   %"+(int)r.confidence,13,Color.WHITE));
+        box.addView(txt("Hedef, stop ve risk/ödül seviyeleri doğrulanmış fiyat yapısından hesaplanarak burada gösterilecek.",12,Color.rgb(180,200,218))); content.addView(box);
+        LinearLayout actions=new LinearLayout(this); Button add=button("+ Portföye Ekle",GREEN),chart=button("Grafiğe Dön",Color.rgb(25,105,220)); actions.addView(add,new LinearLayout.LayoutParams(0,dp(44),1)); actions.addView(chart,new LinearLayout.LayoutParams(0,dp(44),1)); content.addView(actions);
+        Holding owned=findHolding(symbol); add.setOnClickListener(v->portfolioDialog(owned,symbol)); chart.setOnClickListener(v->analyzeStock(symbol,detailTimeframe));
     }
 
     private void refreshPortfolio() {
