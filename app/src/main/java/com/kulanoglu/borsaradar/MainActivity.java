@@ -405,6 +405,7 @@ public class MainActivity extends Activity {
                     if(requestGeneration!=detailRequestGeneration.get()||!selectedSymbol.equals(detailSymbol)||selectedTimeframe!=detailTimeframe)return;
                     detailResult=safeResult; detailContext=safeCx;
                     renderStockDetail(selectedSymbol,safeResult,safeCx,safeChart);
+                    prefetchTimeframes(selectedSymbol);
                     prefetchAdjacent(selectedSymbol);
                 });
             }catch(Exception e){
@@ -488,6 +489,22 @@ public class MainActivity extends Activity {
     private void loadPortfolio(){holdings.clear();try{JSONArray a=new JSONArray(getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString("portfolio","[]"));for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);holdings.add(new Holding(o.getString("s"),o.getInt("q"),o.getDouble("c")));}}catch(Exception ignored){}}
     private void saveRadarCache(){JSONArray a=new JSONArray();try{int n=Math.min(80,radarResults.size());for(int i=0;i<n;i++){RadarItem r=radarResults.get(i);JSONObject o=new JSONObject();o.put("s",r.symbol);o.put("r",r.recommendation);o.put("w",r.why);o.put("h",r.horizon);o.put("p",r.price);o.put("sc",r.score);o.put("cf",r.confidence);a.put(o);}}catch(Exception ignored){}getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putString("radar",a.toString()).apply();}
     private void loadRadarCache(){radarResults.clear();try{JSONArray a=new JSONArray(getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString("radar","[]"));for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);ShortPulseEngine.Result pr=new ShortPulseEngine.Result();pr.recommendation=o.getString("r");pr.explanation=o.getString("w");pr.horizonText=o.getString("h");pr.price=o.getDouble("p");pr.score=o.getDouble("sc");pr.confidence=o.getDouble("cf");radarResults.add(new RadarItem(o.getString("s"),pr));}}catch(Exception ignored){}}
+
+    private void prefetchTimeframes(String symbol) {
+        // Grafik açıldıktan sonra diğer görünür zaman dilimlerini cache'e hazırla.
+        // Seçili grafik zaten ekranda; bu işlem sadece sonraki dokunuşları hızlandırır.
+        final String s=symbol; final int generation=detailRequestGeneration.get();
+        io.execute(()->{
+            for(int idx:new int[]{5,3,7,8,9,10,11}){
+                if(generation!=detailRequestGeneration.get()||!s.equals(detailSymbol))return;
+                if(idx==detailTimeframe)continue;
+                try{
+                    List<MarketDataService.Candle> d=DetailedChartController.cached(s,idx);
+                    if(d==null||d.size()<2)DetailedChartController.fetch(s,idx);
+                }catch(Exception ignored){}
+            }
+        });
+    }
 
     private void prefetchAdjacent(String symbol) {
         final int tfIndex=detailTimeframe;
