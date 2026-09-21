@@ -21,7 +21,12 @@ jobs:
       - name: Restore signing key
         run: base64 -d .ci/borsaradar-final.keystore.b64 > .ci/borsaradar-final.keystore
       - name: Build debug APK
-        run: gradle --no-daemon assembleDebug --console=plain
+        run: |
+          gradle --no-daemon assembleDebug --console=plain
+          APK=$(find "$GITHUB_WORKSPACE/app/build/outputs" -type f -name "*.apk" | head -1)
+          test -n "$APK"
+          cp "$APK" "$GITHUB_WORKSPACE/BorsaRadar-emulator.apk"
+          ls -lh "$GITHUB_WORKSPACE/BorsaRadar-emulator.apk"
       - name: Boot emulator, install and capture
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -33,9 +38,8 @@ jobs:
           disable-animations: true
           script: |
             mkdir -p emulator-artifacts
-            APK=$(find "$GITHUB_WORKSPACE/app/build/outputs/apk/debug" -type f -name "*.apk" | head -1)
+            APK="$GITHUB_WORKSPACE/BorsaRadar-emulator.apk"
             echo "APK=$APK"
-            test -n "$APK"
             test -f "$APK"
             adb install -r "$APK"
             adb shell monkey -p com.kulanoglu.borsaradar.finalapp -c android.intent.category.LAUNCHER 1
