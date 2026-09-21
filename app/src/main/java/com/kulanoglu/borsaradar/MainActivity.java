@@ -234,7 +234,7 @@ public class MainActivity extends Activity {
     }
 
     private void stockTabs(String symbol,String active,ShortPulseEngine.Result r,CatalystContextEngine.Result cx){
-        LinearLayout tabs=new LinearLayout(this); String[] names={"Genel","Grafik","Haber","KAP","Finansal","Teknik","Hedef"};
+        LinearLayout tabs=new LinearLayout(this); String[] names={"Genel","Grafik","Haber","KAP","Finansal"};
         for(String t:names){Button b=button(t,t.equals(active)?Color.rgb(25,105,220):NAVY);b.setTextSize(10);b.setAllCaps(false);tabs.addView(b,new LinearLayout.LayoutParams(0,dp(38),1));
             if(t.equals("Genel"))b.setOnClickListener(v->showStockGeneral(symbol,r,cx)); else if(t.equals("Grafik"))b.setOnClickListener(v->analyzeStock(symbol,detailTimeframe)); else if(t.equals("Haber")||t.equals("KAP"))b.setOnClickListener(v->showStockNews(symbol,r,cx)); else if(t.equals("Finansal"))b.setOnClickListener(v->showStockFinancial(symbol,r)); else if(t.equals("Teknik"))b.setOnClickListener(v->showStockTechnical(symbol,r)); else b.setOnClickListener(v->showStockRisk(symbol,r));}
         content.addView(tabs);
@@ -242,7 +242,7 @@ public class MainActivity extends Activity {
     private void showStockGeneral(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx){
         shellDetail(symbol); stockTabs(symbol,"Genel",r,cx);
         LinearLayout signal=card(); signal.setBackgroundColor(NAVY2); signal.addView(bold("Hisse Detayı • Genel",17,Color.WHITE)); signal.addView(bold(r.recommendation+"   •   Güven %"+(int)r.confidence,18,r.recommendation.contains("AL")?GREEN:r.recommendation.contains("SAT")?RED:AMBER)); signal.addView(txt("Değişim "+String.format(Locale.US,"%+.2f%%",r.changePct)+"   •   Pulse "+fmt(r.score),13,Color.rgb(190,210,225))); content.addView(signal);
-        LinearLayout quick=card(); quick.setBackgroundColor(NAVY2); quick.addView(bold("Hızlı Bilgiler",15,Color.WHITE)); quick.addView(txt("F/K   —        PD/DD   —        Temettü   —        Beta   —",12,Color.rgb(180,205,222))); quick.addView(txt("Teknik sinyal, fiyat hareketi ve haber bağlamı birlikte değerlendirilir.",12,Color.rgb(180,200,218))); if(cx!=null)quick.addView(txt("Haber bağlamı: "+cx.note,12,Color.WHITE)); content.addView(quick);
+        LinearLayout quick=card(); quick.setBackgroundColor(NAVY2); quick.addView(bold("Hızlı Bilgiler",15,Color.WHITE)); quick.addView(txt("F/K   —        PD/DD   —        Temettü   —        Beta   —",12,Color.rgb(180,205,222))); quick.addView(txt("Teknik sinyal, fiyat hareketi ve haber bağlamı birlikte değerlendirilir.",12,Color.rgb(180,200,218))); if(cx!=null)quick.addView(txt("Haber bağlamı: "+cx.note,12,Color.WHITE)); content.addView(quick); LinearLayout links=new LinearLayout(this); Button technical=button("Teknik Analiz",Color.rgb(25,105,220)), risk=button("Hedef Fiyat & Risk",NAVY2); links.addView(technical,new LinearLayout.LayoutParams(0,dp(42),1)); links.addView(risk,new LinearLayout.LayoutParams(0,dp(42),1)); content.addView(links); technical.setOnClickListener(v->showStockTechnical(symbol,r)); risk.setOnClickListener(v->showStockRisk(symbol,r));
     }
     private void showStockNews(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx){
         shellDetail(symbol); stockTabs(symbol,"Haber",r,cx); LinearLayout box=card(); box.setBackgroundColor(NAVY2); box.addView(bold("Haber & KAP",17,Color.WHITE)); box.addView(txt("Tümü   •   KAP   •   Medya   •   Analist",11,Color.rgb(130,185,255)));
