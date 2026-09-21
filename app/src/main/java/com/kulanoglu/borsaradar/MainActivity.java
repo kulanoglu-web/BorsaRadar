@@ -76,7 +76,7 @@ public class MainActivity extends Activity {
     private final List<RadarItem> radarResults = Collections.synchronizedList(new ArrayList<>());
     private final List<RadarItem> scanBuffer = Collections.synchronizedList(new ArrayList<>());
     private volatile boolean scanRunning=false;
-    private int detailTimeframe=5; // default: 1 gün
+    private int detailTimeframe=7; // detail chart default: 1 ay
     private String detailSymbol="";
     private ShortPulseEngine.Result detailResult=null;
     private CatalystContextEngine.Result detailContext=null;
@@ -138,6 +138,21 @@ public class MainActivity extends Activity {
         home.setOnClickListener(v->showDashboard()); markets.setOnClickListener(v->singleStockDialog()); r.setOnClickListener(v->showRadar()); p.setOnClickListener(v->showPortfolio()); more.setOnClickListener(v->showBaskets()); root.addView(nav);
         ScrollView sv=new ScrollView(this); content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(10),dp(8),dp(10),dp(14)); sv.addView(content); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
         TextView foot=txt("BorsaRadar • teknik + haber/katalizör bağlamı",11,Color.rgb(100,110,124)); foot.setGravity(Gravity.CENTER); root.addView(foot); setContentView(root);
+    }
+
+    private void shellDetail(String symbol) {
+        LinearLayout root=new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(NAVY);
+        LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL); top.setPadding(dp(14),dp(8),dp(14),dp(5)); top.setBackgroundColor(NAVY);
+        TextView brand=bold("BORSA RADAR",16,Color.WHITE); brand.setPadding(0,0,0,0);
+        TextView ticker=bold(symbol,17,Color.WHITE); ticker.setGravity(Gravity.END); ticker.setPadding(0,0,0,0);
+        top.addView(brand,new LinearLayout.LayoutParams(0,dp(38),1)); top.addView(ticker,new LinearLayout.LayoutParams(0,dp(38),1));
+        root.addView(top);
+        ScrollView sv=new ScrollView(this); sv.setFillViewport(true); sv.setBackgroundColor(NAVY);
+        content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(8),dp(4),dp(8),dp(12)); content.setBackgroundColor(NAVY);
+        sv.addView(content); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
+        setContentView(root);
     }
 
     private void showDashboard() {
@@ -372,7 +387,7 @@ public class MainActivity extends Activity {
     private RadarItem findRadarItem(String symbol){String n=MarketDataService.normalizeSymbol(symbol);synchronized(radarResults){for(RadarItem x:radarResults)if(MarketDataService.normalizeSymbol(x.symbol).equals(n))return x;}return null;}
 
     private void renderStockDetail(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx,List<MarketDataService.Candle> chart) {
-        shell(symbol+" • Grafik");
+        shellDetail(symbol);
         Holding owned=findHolding(symbol);
         MarketDataService.Spot live=MarketDataService.latestSpot(symbol);
         double shownPrice=live!=null&&live.price>0?live.price:r.price;
