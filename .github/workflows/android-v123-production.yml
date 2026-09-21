@@ -64,3 +64,5 @@ jobs:
 # rebuild after UI javac repair
 
 # rebuild after physical newline repair
+
+# exact source repair verified
