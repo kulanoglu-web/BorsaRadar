@@ -38,10 +38,9 @@ jobs:
           disable-animations: true
           script: |
             mkdir -p emulator-artifacts
-            APK="$GITHUB_WORKSPACE/BorsaRadar-emulator.apk"
-            echo "APK=$APK"
-            test -f "$APK"
-            adb install -r "$APK"
+            pwd
+            ls -lh BorsaRadar-emulator.apk
+            adb install -r BorsaRadar-emulator.apk
             adb shell monkey -p com.kulanoglu.borsaradar.finalapp -c android.intent.category.LAUNCHER 1
             sleep 8
             adb exec-out screencap -p > emulator-artifacts/home.png
