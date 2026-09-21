@@ -1,4 +1,4 @@
-\n    @Override public void onBackPressed(){ if(detailSymbol!=null&&!detailSymbol.isEmpty()){ detailRequestGeneration.incrementAndGet(); detailSymbol=""; showPortfolio(); } else super.onBackPressed(); }\npackage com.kulanoglu.borsaradar;
+package com.kulanoglu.borsaradar;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -80,7 +80,7 @@ public class MainActivity extends Activity {
     private String detailSymbol="";
     private ShortPulseEngine.Result detailResult=null;
     private CatalystContextEngine.Result detailContext=null;
-    private final AtomicInteger scanDone=new AtomicInteger(0), scanFailed=new AtomicInteger(0);\n    private final AtomicInteger detailRequestGeneration=new AtomicInteger(0);\n    private final AtomicInteger detailRequestGeneration=new AtomicInteger(0);
+    private final AtomicInteger scanDone=new AtomicInteger(0), scanFailed=new AtomicInteger(0);\n    private final AtomicInteger detailRequestGeneration=new AtomicInteger(0);\n
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -473,4 +473,6 @@ public class MainActivity extends Activity {
     }
 
     private String money(double x,String symbol){String n=MarketDataService.normalizeSymbol(symbol);if(n.endsWith(".IS"))return String.format(Locale.US,"%.2f ₺",x);if(n.endsWith(".DE"))return String.format(Locale.US,"%.2f €",x);double rate=CurrencyService.usdToEur();if(!Double.isFinite(rate))io.execute(CurrencyService::refreshIfNeeded);double shown=Double.isFinite(rate)?x*rate:x;return String.format(Locale.US,"%.2f %s",shown,Double.isFinite(rate)?"€":"$");} private String fmt(double x){return String.format(Locale.US,"%.2f",x);}
+    @Override public void onBackPressed(){ if(detailSymbol!=null&&!detailSymbol.isEmpty()){ detailRequestGeneration.incrementAndGet(); detailSymbol=""; showPortfolio(); } else super.onBackPressed(); }
+
 }
