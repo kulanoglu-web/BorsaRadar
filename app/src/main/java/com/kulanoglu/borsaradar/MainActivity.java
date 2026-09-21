@@ -87,7 +87,7 @@ public class MainActivity extends Activity {
         super.onCreate(b);
         loadPortfolio();
         loadRadarCache();
-        showPortfolio();
+        showDashboard();
     }
 
     @Override protected void onDestroy() {
@@ -160,12 +160,35 @@ public class MainActivity extends Activity {
 
     private void showDashboard() {
         shell("Ana Sayfa");
-        TextView search=txt("⌕  Hisse ara (ör. THYAO, NVDA, SAP)...",13,Color.rgb(180,198,216)); search.setPadding(dp(12),dp(12),dp(12),dp(12)); search.setBackgroundColor(NAVY2); search.setOnClickListener(v->singleStockDialog()); content.addView(search); spacer(7);
-        LinearLayout exchange=new LinearLayout(this); String[] ex={"BIST","Almanya","ABD","Tümü"}; for(String e:ex){Button q=button(e,e.equals("BIST")?Color.rgb(25,105,220):NAVY2);q.setTextSize(11);exchange.addView(q,new LinearLayout.LayoutParams(0,dp(40),1));} content.addView(exchange); spacer(7);
-        LinearLayout hero=card();hero.addView(bold("Hızlı Tarama",18,Color.WHITE)); hero.setBackgroundColor(NAVY2);if(scanRunning){ProgressBar scanBar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);scanBar.setMax(ALL_SYMBOLS.length);scanBar.setProgress(scanDone.get());hero.addView(scanBar);hero.addView(txt("BIST taraması "+scanDone.get()+"/"+ALL_SYMBOLS.length+"  •  başarılı "+Math.max(0,scanDone.get()-scanFailed.get())+"  •  başarısız "+scanFailed.get(),12,Color.GRAY));}
-        LinearLayout row=new LinearLayout(this);Button radar=button(scanRunning?"Tarama "+scanDone.get()+"/"+ALL_SYMBOLS.length:"Hızlı Tarama",RED),portfolio=button("Kısa Vade",Color.rgb(20,95,180)),baskets=button("Temettü",GREEN),longTerm=button("Uzun Vade",NAVY2);row.addView(radar,new LinearLayout.LayoutParams(0,-2,1));row.addView(portfolio,new LinearLayout.LayoutParams(0,-2,1));row.addView(baskets,new LinearLayout.LayoutParams(0,-2,1));row.addView(longTerm,new LinearLayout.LayoutParams(0,-2,1));hero.addView(row);radar.setOnClickListener(v->showRadar());portfolio.setOnClickListener(v->showPortfolio());baskets.setOnClickListener(v->showBaskets());longTerm.setOnClickListener(v->showBaskets());content.addView(hero);spacer(7);
-        LinearLayout status=card();status.addView(bold("Durum",17,NAVY));int buy=0,risk=0,watch=0;for(RadarItem x:new ArrayList<>(radarResults)){if(x.recommendation.contains("AL"))buy++;else if(x.recommendation.contains("SAT")||x.recommendation.contains("RİSK"))risk++;else watch++;}status.addView(txt("Portföy: "+holdings.size()+" pozisyon  •  Radar: "+radarResults.size()+" sonuç"+(scanRunning?"  •  tarama sürüyor":"")+(portfolioRefreshing?"  •  portföy yenileniyor":""),13,Color.DKGRAY));if(!radarResults.isEmpty()){status.addView(txt("Radar özeti: "+buy+" AL • "+watch+" TUT/İZLE • "+risk+" SAT/RİSK",13,Color.DKGRAY));int ownedRadar=0;for(Holding h:new ArrayList<>(holdings))if(findRadarItem(h.symbol)!=null)ownedRadar++;if(ownedRadar>0)status.addView(txt("Portföy-radar eşleşmesi: "+ownedRadar+" pozisyon",12,NAVY2));}long rt=getSharedPreferences(PREFS,Context.MODE_PRIVATE).getLong("radar_ts",0),pt=getSharedPreferences(PREFS,Context.MODE_PRIVATE).getLong("portfolio_ts",0);if(rt>0)status.addView(txt("Radar güncelleme: "+new java.text.SimpleDateFormat("dd.MM HH:mm",Locale.getDefault()).format(new java.util.Date(rt)),12,Color.GRAY));if(pt>0)status.addView(txt("Portföy güncelleme: "+new java.text.SimpleDateFormat("dd.MM HH:mm",Locale.getDefault()).format(new java.util.Date(pt)),12,Color.GRAY));if(rt==0&&!scanRunning)status.addView(txt("Radar henüz taranmadı.",11,Color.GRAY));if(pt==0&&!holdings.isEmpty()&&!portfolioRefreshing)status.addView(txt("Portföy henüz güncellenmedi.",11,Color.GRAY));content.addView(status);spacer(7); LinearLayout featured=card(); featured.setBackgroundColor(NAVY2); featured.addView(bold("Günün Öne Çıkanları",16,Color.WHITE)); featured.addView(txt("Radar sonuçları hazır olduğunda en güçlü AL / İZLE adayları burada öne çıkar.",12,Color.rgb(175,198,216))); content.addView(featured); spacer(7); LinearLayout market=card(); market.setBackgroundColor(NAVY2); market.addView(bold("Piyasa Özeti",15,Color.WHITE)); market.addView(txt("BIST 100     DAX     S&P 500     NASDAQ",12,Color.rgb(170,198,216))); content.addView(market); spacer(7); LinearLayout breaking=card(); breaking.setBackgroundColor(NAVY2); breaking.addView(bold("Son Dakika",15,Color.WHITE)); breaking.addView(txt("Önemli piyasa haberleri ve KAP gelişmeleri burada gösterilir.",12,Color.rgb(170,198,216))); content.addView(breaking); spacer(7);
-        if(!radarResults.isEmpty()){List<RadarItem> top=new ArrayList<>(radarResults);top.removeIf(x->x.recommendation.contains("SAT")||x.recommendation.contains("RİSK"));top.sort((a,b)->Double.compare(b.score,a.score));int n=Math.min(3,top.size());LinearLayout picks=card();picks.addView(bold("Radar ilk 3",17,NAVY));picks.addView(txt("SAT/RİSK sinyalleri bu kısa listede gösterilmez. Pulse sırası kullanılır.",11,Color.GRAY));if(n==0)picks.addView(txt("Şu an AL/TUT tarafında öne çıkan aday yok.",12,Color.GRAY));else picks.addView(txt(n+" aday • doğrudan detaya geç",11,Color.GRAY));for(int i=0;i<n;i++){RadarItem x=top.get(i);Button pick=button((i+1)+". "+x.symbol+" • "+x.recommendation+" • Pulse "+fmt(x.score)+" • %"+(int)x.confidence,x.recommendation.contains("AL")?GREEN:AMBER);picks.addView(pick);pick.setOnClickListener(v->analyzeStock(x.symbol));}content.addView(picks);spacer(7);}LinearLayout quick=new LinearLayout(this);Button stock=button("Tek Hisse Analizi",AMBER),refreshP=button(portfolioRefreshing?"Portföy yenileniyor":"Portföyü Güncelle",NAVY2);stock.setContentDescription("Hisse koduyla tek hisse analizi aç");refreshP.setContentDescription("Portföy teknik verilerini güncelle");quick.addView(stock,new LinearLayout.LayoutParams(0,-2,1));quick.addView(refreshP,new LinearLayout.LayoutParams(0,-2,1));content.addView(quick);stock.setOnClickListener(v->singleStockDialog());refreshP.setEnabled(!portfolioRefreshing&&!holdings.isEmpty());refreshP.setOnClickListener(v->refreshPortfolio());
+        TextView welcome=bold("Piyasayı tek ekrandan takip et",20,Color.WHITE); welcome.setPadding(dp(4),dp(4),dp(4),dp(10)); content.addView(welcome);
+        TextView search=txt("⌕   Hisse, endeks veya şirket ara...",14,Color.WHITE); search.setPadding(dp(16),dp(14),dp(16),dp(14)); search.setBackgroundColor(NAVY2); search.setOnClickListener(v->singleStockDialog()); content.addView(search); spacer(8);
+
+        LinearLayout exchange=new LinearLayout(this); String[] ex={"BIST","Almanya","ABD","Tümü"}; for(String e:ex){Button q=button(e,e.equals("BIST")?Color.rgb(25,105,220):NAVY2);q.setTextSize(11);exchange.addView(q,new LinearLayout.LayoutParams(0,dp(38),1));} content.addView(exchange); spacer(10);
+
+        LinearLayout strategies=new LinearLayout(this); strategies.setOrientation(LinearLayout.VERTICAL); strategies.addView(bold("Stratejiler",16,Color.WHITE));
+        LinearLayout r1=new LinearLayout(this),r2=new LinearLayout(this);
+        Button fast=button("⚡  Hızlı Tarama\nAnlık fırsatlar",Color.rgb(25,105,220)),shortB=button("↗  Kısa Vade\nGünlük / saatlik",PURPLE);
+        Button div=button("◆  Temettü\nDüzenli gelir",GREEN),longB=button("◎  Uzun Vade\nGüçlü şirketler",AMBER);
+        for(Button b:new Button[]{fast,shortB,div,longB}){b.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);b.setTextSize(12);}
+        r1.addView(fast,new LinearLayout.LayoutParams(0,dp(72),1));r1.addView(shortB,new LinearLayout.LayoutParams(0,dp(72),1));
+        r2.addView(div,new LinearLayout.LayoutParams(0,dp(72),1));r2.addView(longB,new LinearLayout.LayoutParams(0,dp(72),1));strategies.addView(r1);strategies.addView(r2);content.addView(strategies); spacer(10);
+        fast.setOnClickListener(v->showRadar());shortB.setOnClickListener(v->showRadar());div.setOnClickListener(v->showBaskets());longB.setOnClickListener(v->showBaskets());
+
+        content.addView(bold("Günün Öne Çıkanları",16,Color.WHITE));
+        LinearLayout featured=card();featured.setBackgroundColor(NAVY2);
+        List<RadarItem> top=new ArrayList<>(radarResults);top.removeIf(x->x.recommendation.contains("SAT")||x.recommendation.contains("RİSK"));top.sort((a,b)->Double.compare(b.score,a.score));
+        if(top.isEmpty()){featured.addView(bold("Radar taramasını başlat",15,Color.WHITE));featured.addView(txt("En güçlü AL ve İZLE adayları burada görünecek.",12,Color.rgb(170,198,216)));Button go=button("Radarı Aç",Color.rgb(25,105,220));featured.addView(go);go.setOnClickListener(v->showRadar());}
+        else for(int i=0;i<Math.min(3,top.size());i++){RadarItem x=top.get(i);TextView pick=bold(x.symbol+"     "+money(x.price,x.symbol)+"     "+x.recommendation,14,x.recommendation.contains("AL")?GREEN:AMBER);pick.setOnClickListener(v->analyzeStock(x.symbol));featured.addView(pick);featured.addView(txt("Pulse "+fmt(x.score)+"  •  Güven %"+(int)x.confidence,11,Color.rgb(170,198,216)));}
+        content.addView(featured); spacer(10);
+
+        content.addView(bold("Piyasa Özeti",16,Color.WHITE));
+        LinearLayout m1=new LinearLayout(this),m2=new LinearLayout(this);
+        String[] names={"BIST 100\nTürkiye","DAX\nAlmanya","S&P 500\nABD","NASDAQ\nTeknoloji"};
+        for(int i=0;i<4;i++){LinearLayout mc=card();mc.setBackgroundColor(NAVY2);mc.addView(bold(names[i],13,Color.WHITE));mc.addView(txt("—  Veri bekleniyor",11,Color.rgb(155,180,200)));(i<2?m1:m2).addView(mc,new LinearLayout.LayoutParams(0,dp(74),1));}
+        content.addView(m1);content.addView(m2);spacer(10);
+
+        LinearLayout news=card();news.setBackgroundColor(NAVY2);news.addView(bold("●  Son Dakika",15,Color.WHITE));news.addView(txt("KAP, şirket haberleri ve önemli piyasa gelişmeleri burada öne çıkar.",12,Color.rgb(175,198,216)));content.addView(news);spacer(8);
+        if(scanRunning){ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);bar.setMax(ALL_SYMBOLS.length);bar.setProgress(scanDone.get());content.addView(bar);content.addView(txt("Radar taranıyor  "+scanDone.get()+"/"+ALL_SYMBOLS.length,11,Color.rgb(170,198,216)));}
     }
 
     private void showPortfolio() {
