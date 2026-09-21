@@ -264,7 +264,8 @@ public class MainActivity extends Activity {
         box.addView(txt("Mevcut fiyat   "+money(r.price,symbol),13,Color.WHITE)); box.addView(txt("Sinyal güveni   %"+(int)r.confidence,13,Color.WHITE));
         box.addView(txt("Hedef, stop ve risk/ödül seviyeleri doğrulanmış fiyat yapısından hesaplanarak burada gösterilecek.",12,Color.rgb(180,200,218))); content.addView(box);
         LinearLayout actions=new LinearLayout(this); Button add=button("+ Portföye Ekle",GREEN),chart=button("Grafiğe Dön",Color.rgb(25,105,220)); actions.addView(add,new LinearLayout.LayoutParams(0,dp(44),1)); actions.addView(chart,new LinearLayout.LayoutParams(0,dp(44),1)); content.addView(actions);
-        stockTabs(symbol,"Grafik",r,cx);\n        Holding owned=findHolding(symbol); add.setOnClickListener(v->portfolioDialog(owned,symbol)); chart.setOnClickListener(v->analyzeStock(symbol,detailTimeframe));
+        stockTabs(symbol,"Grafik",r,cx);
+        Holding owned=findHolding(symbol); add.setOnClickListener(v->portfolioDialog(owned,symbol)); chart.setOnClickListener(v->analyzeStock(symbol,detailTimeframe));
     }
 
     private void refreshPortfolio() {
