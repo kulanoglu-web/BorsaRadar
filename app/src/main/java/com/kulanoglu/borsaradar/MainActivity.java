@@ -391,43 +391,39 @@ public class MainActivity extends Activity {
         Holding owned=findHolding(symbol);
         MarketDataService.Spot live=MarketDataService.latestSpot(symbol);
         double shownPrice=live!=null&&live.price>0?live.price:r.price;
+        int pos=r.changePct>=0?GREEN:RED;
 
-        LinearLayout hero=card();
-        LinearLayout head=new LinearLayout(this); head.setGravity(Gravity.CENTER_VERTICAL);
-        LinearLayout left=new LinearLayout(this); left.setOrientation(LinearLayout.VERTICAL);
-        left.addView(bold(symbol,22,NAVY));
-        left.addView(txt("BORSA RADAR • "+ChartTimeframes.label(detailTimeframe),11,Color.GRAY));
-        LinearLayout right=new LinearLayout(this); right.setOrientation(LinearLayout.VERTICAL); right.setGravity(Gravity.END);
-        right.addView(bold(money(shownPrice,symbol),27,r.changePct>=0?GREEN:RED));
-        right.addView(txt(String.format(Locale.US,"%+.2f%%",r.changePct),13,r.changePct>=0?GREEN:RED));
-        head.addView(left,new LinearLayout.LayoutParams(0,-2,1)); head.addView(right,new LinearLayout.LayoutParams(-2,-2));
-        hero.addView(head);
-        if(owned!=null){double pnl=(shownPrice-owned.cost)*owned.qty;hero.addView(txt("Maliyet "+money(owned.cost,symbol)+"  •  P/L "+money(pnl,symbol),12,pnl>=0?GREEN:RED));}
-        content.addView(hero); spacer(6);
+        LinearLayout priceBox=new LinearLayout(this); priceBox.setOrientation(LinearLayout.VERTICAL); priceBox.setPadding(dp(10),dp(3),dp(10),dp(5)); priceBox.setBackgroundColor(NAVY);
+        LinearLayout priceRow=new LinearLayout(this); priceRow.setGravity(Gravity.BOTTOM);
+        TextView price=bold(money(shownPrice,symbol),30,pos); price.setPadding(0,0,0,0);
+        TextView change=bold(String.format(Locale.US,"  %+.2f%%",r.changePct),14,pos); change.setPadding(0,0,0,dp(4));
+        priceRow.addView(price); priceRow.addView(change); priceBox.addView(priceRow);
+        String source=live!=null?live.source:"teknik kapanış";
+        TextView sourceLine=txt("Son fiyat • "+source,10,Color.rgb(160,178,198)); sourceLine.setPadding(0,dp(2),0,0); priceBox.addView(sourceLine);
+        content.addView(priceBox);
 
-        LinearLayout tfRow=new LinearLayout(this); tfRow.setOrientation(LinearLayout.HORIZONTAL); tfRow.setGravity(Gravity.CENTER);
-        final int[] compactIdx={7,8,9,10,11};
-        final String[] compactLabels={"1A","3A","6A","1Y","2Y"};
-        for(int k=0;k<compactIdx.length;k++){final int idx=compactIdx[k];Button b=button(compactLabels[k],idx==detailTimeframe?GREEN:NAVY2);b.setAllCaps(false);b.setTextSize(12);b.setOnClickListener(v->{if(idx!=detailTimeframe)analyzeStock(symbol,idx);});tfRow.addView(b,new LinearLayout.LayoutParams(0,dp(42),1));}
-        content.addView(tfRow); spacer(4);
+        LinearLayout tfRow=new LinearLayout(this); tfRow.setOrientation(LinearLayout.HORIZONTAL); tfRow.setGravity(Gravity.CENTER); tfRow.setPadding(0,dp(3),0,dp(3));
+        final int[] compactIdx={7,8,9,10,11}; final String[] compactLabels={"1A","3A","6A","1Y","2Y"};
+        for(int k=0;k<compactIdx.length;k++){final int idx=compactIdx[k];Button b=button(compactLabels[k],idx==detailTimeframe?GREEN:NAVY2);b.setAllCaps(false);b.setTextSize(12);b.setPadding(dp(2),0,dp(2),0);b.setOnClickListener(v->{if(idx!=detailTimeframe)analyzeStock(symbol,idx);});tfRow.addView(b,new LinearLayout.LayoutParams(0,dp(38),1));}
+        content.addView(tfRow);
 
         if(chart==null||chart.size()<2){
-            LinearLayout empty=card(); empty.addView(bold(ChartTimeframes.label(detailTimeframe)+" grafik",16,NAVY)); empty.addView(txt("Bu zaman aralığının verisi yüklenemedi. Yanlış zaman aralığından grafik gösterilmiyor.",12,RED)); content.addView(empty);
+            TextView empty=txt(ChartTimeframes.label(detailTimeframe)+" verisi yüklenemedi. Başka zaman diliminden veri gösterilmedi.",12,Color.rgb(255,120,120)); empty.setPadding(dp(10),dp(18),dp(10),dp(18)); content.addView(empty);
         }else{
-            content.addView(txt(ChartTimeframes.label(detailTimeframe)+" • "+chart.size()+" mum",11,Color.GRAY));
-            content.addView(new PriceChartView(this,chart,ChartTimeframes.label(detailTimeframe).toUpperCase(Locale.ROOT)),new LinearLayout.LayoutParams(-1,dp(430)));
+            TextView range=bold(ChartTimeframes.label(detailTimeframe)+" • "+chart.size()+" mum",11,Color.rgb(172,190,208)); range.setPadding(dp(8),dp(3),dp(8),dp(3)); content.addView(range);
+            content.addView(new PriceChartView(this,chart,ChartTimeframes.label(detailTimeframe).toUpperCase(Locale.ROOT)),new LinearLayout.LayoutParams(-1,dp(455)));
         }
-        spacer(6);
 
-        LinearLayout quick=card(); quick.addView(bold("Özet",16,NAVY));
-        quick.addView(txt("Teknik karar: "+r.recommendation+"  •  Güven %"+(int)r.confidence+"  •  ATR %"+fmt(r.atrPct)+"  •  RelVol x"+fmt(r.relativeVolume),12,Color.DKGRAY));
-        if(cx!=null)quick.addView(txt("Haber bağlamı: "+cx.dataStatus,11,Color.GRAY));
-        content.addView(quick); spacer(6);
+        LinearLayout status=new LinearLayout(this); status.setOrientation(LinearLayout.VERTICAL); status.setPadding(dp(10),dp(7),dp(10),dp(7)); status.setBackgroundColor(NAVY2);
+        TextView sig=bold(r.recommendation+" • Güven %"+(int)r.confidence,13,Color.WHITE); sig.setPadding(0,0,0,0); status.addView(sig);
+        if(owned!=null){double pnl=(shownPrice-owned.cost)*owned.qty;TextView own=txt("Maliyet "+money(owned.cost,symbol)+" • P/L "+money(pnl,symbol),11,pnl>=0?Color.rgb(90,220,170):Color.rgb(255,130,140));own.setPadding(0,dp(3),0,0);status.addView(own);}
+        content.addView(status); spacer(4);
 
         LinearLayout actions=new LinearLayout(this);
-        Button prev=button("◀",NAVY2),add=button(owned==null?"Portföye Ekle":"Pozisyon",owned==null?GREEN:AMBER),refresh=button("↻",NAVY2),next=button("▶",NAVY2);
+        Button prev=button("◀",NAVY2),add=button(owned==null?"+ Portföy":"Pozisyon",owned==null?GREEN:AMBER),refresh=button("↻",NAVY2),next=button("▶",NAVY2);
         String prevSymbol=adjacentSymbol(symbol,-1),nextSymbol=adjacentSymbol(symbol,1);
-        actions.addView(prev,new LinearLayout.LayoutParams(0,-2,.65f)); actions.addView(add,new LinearLayout.LayoutParams(0,-2,1.7f)); actions.addView(refresh,new LinearLayout.LayoutParams(0,-2,.65f)); actions.addView(next,new LinearLayout.LayoutParams(0,-2,.65f));
+        prev.setEnabled(!prevSymbol.equals(symbol)); next.setEnabled(!nextSymbol.equals(symbol));
+        actions.addView(prev,new LinearLayout.LayoutParams(0,dp(42),.65f)); actions.addView(add,new LinearLayout.LayoutParams(0,dp(42),1.7f)); actions.addView(refresh,new LinearLayout.LayoutParams(0,dp(42),.65f)); actions.addView(next,new LinearLayout.LayoutParams(0,dp(42),.65f));
         content.addView(actions);
         prev.setOnClickListener(v->{if(!prevSymbol.equals(symbol))analyzeStock(prevSymbol,detailTimeframe);});
         add.setOnClickListener(v->portfolioDialog(owned,symbol));
