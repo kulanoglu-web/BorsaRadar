@@ -1,0 +1,1 @@
+Fixed exact javac failures reported at MainActivity lines 83, 148, 221-230: literal slash-n corruption and multiline Java string literals.
