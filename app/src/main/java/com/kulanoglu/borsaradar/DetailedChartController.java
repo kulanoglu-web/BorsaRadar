@@ -19,7 +19,7 @@ public final class DetailedChartController {
   return d;
  }
  private static int visiblePoints(int i){
-  switch(i){case 0:return 5;case 1:return 15;case 2:return 30;case 3:return 12;case 4:return 16;case 5:return 96;case 6:return 80;case 7:return 180;case 8:return 90;case 9:return 132;case 10:return 264;case 11:return 528;default:return 0;}
+  switch(i){case 0:return 5;case 1:return 15;case 2:return 30;case 3:return 12;case 4:return 16;case 5:return 96;case 6:return 80;case 7:return 23;case 8:return 66;case 9:return 132;case 10:return 264;case 11:return 528;default:return 0;}
  }
  public static String label(int i){return ChartTimeframes.label(i);}
  private DetailedChartController(){}
