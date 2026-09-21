@@ -86,3 +86,5 @@ jobs:
 # breakout phase vs chase-risk classification
 
 # verified physical Java lines for chase risk
+
+# actual ShortPulseEngine diff verified at 4be865c6
