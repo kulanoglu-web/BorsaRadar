@@ -283,11 +283,23 @@ public class MainActivity extends Activity {
     }
 
     private void showStockNews(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx){
-        shellDetail(symbol); stockTabs(symbol,"Haber",r,cx); LinearLayout box=card(); box.setBackgroundColor(NAVY2); box.addView(bold("Haber & KAP",17,Color.WHITE)); box.addView(txt("Tümü   •   KAP   •   Medya   •   Analist",11,Color.rgb(130,185,255)));
-        if(cx==null)box.addView(txt("Haber/KAP bağlamı henüz yüklenmedi. Grafik ekranından yenileyebilirsin.",12,Color.rgb(180,200,218))); else {box.addView(txt(cx.note,13,Color.WHITE)); box.addView(txt("Kapsam: "+cx.coverage+"   •   Haber skoru "+fmt(cx.newsScore)+"/8",12,Color.rgb(170,195,215)));} content.addView(box);
+        shellDetail(symbol); stockTabs(symbol,"Haber",r,cx);
+        LinearLayout header=card();header.setBackgroundColor(NAVY2);header.addView(bold("Haber & KAP",18,Color.WHITE));
+        LinearLayout filters=new LinearLayout(this);String[] fs={"Tümü","KAP","Medya","Analist"};for(int i=0;i<fs.length;i++){Button q=button(fs[i],i==0?Color.rgb(25,105,220):NAVY2);q.setTextSize(10);filters.addView(q,new LinearLayout.LayoutParams(0,dp(36),1));}header.addView(filters);content.addView(header);spacer(6);
+        if(cx==null){LinearLayout empty=card();empty.setBackgroundColor(NAVY2);empty.addView(bold("Haber akışı hazırlanıyor",14,Color.WHITE));empty.addView(txt("KAP ve haber bağlamı arka planda yükleniyor.",12,Color.rgb(175,198,216)));content.addView(empty);}
+        else{
+            LinearLayout n1=card();n1.setBackgroundColor(NAVY2);n1.addView(bold(cx.positiveCatalyst?"POZİTİF":"GÜNCEL BAĞLAM",11,cx.positiveCatalyst?GREEN:AMBER));n1.addView(bold(cx.note,14,Color.WHITE));n1.addView(txt("Kapsam: "+cx.coverage+"  •  Haber skoru "+fmt(cx.newsScore)+"/8",11,Color.rgb(170,195,215)));content.addView(n1);spacer(5);
+            LinearLayout n2=card();n2.setBackgroundColor(NAVY2);n2.addView(bold("Teknik / Haber İlişkisi",13,Color.WHITE));n2.addView(txt(cx.technicalConflict?"Teknik görünüm ile haber akışı arasında çelişki var.":"Haber bağlamı teknik görünümle birlikte değerlendiriliyor.",12,cx.technicalConflict?AMBER:Color.rgb(175,198,216)));content.addView(n2);
+        }
     }
     private void showStockFinancial(String symbol,ShortPulseEngine.Result r){
-        shellDetail(symbol); stockTabs(symbol,"Finansal",r,detailContext); LinearLayout box=card(); box.setBackgroundColor(NAVY2); box.addView(bold("Finansal Veriler",17,Color.WHITE)); box.addView(txt("Özet   •   Gelir Tablosu   •   Bilanço   •   Nakit Akışı",11,Color.rgb(130,185,255))); box.addView(txt("Son fiyat   "+money(r.price,symbol),13,Color.WHITE)); box.addView(txt("Günlük değişim   "+String.format(Locale.US,"%+.2f%%",r.changePct),13,r.changePct>=0?GREEN:RED)); box.addView(txt("Teknik güven   %"+(int)r.confidence,13,Color.WHITE)); box.addView(txt("Finansal oranlar veri kaynağı doğrulandıkça bu ekrana eklenecek.",11,Color.rgb(160,180,200))); content.addView(box);
+        shellDetail(symbol); stockTabs(symbol,"Finansal",r,detailContext);
+        LinearLayout head=card();head.setBackgroundColor(NAVY2);head.addView(bold("Finansal Veriler",18,Color.WHITE));head.addView(txt("Özet     Gelir Tablosu     Bilanço     Nakit Akışı",11,Color.rgb(120,180,255)));content.addView(head);spacer(6);
+        String[][] rows={{"Piyasa Değeri","—"},{"F/K","—"},{"PD/DD","—"},{"FD/FAVÖK","—"},{"Hisse Başına Kâr","—"},{"Temettü Verimi","—"},{"Özsermaye Kârlılığı","—"},{"Net Kâr","—"},{"Ciro","—"},{"Büyüme","—"},{"Sektör","—"},{"52 Hafta Düşük / Yüksek","—"}};
+        LinearLayout table=card();table.setBackgroundColor(NAVY2);
+        for(int i=0;i<rows.length;i++){LinearLayout row=new LinearLayout(this);TextView k=txt(rows[i][0],12,Color.rgb(175,198,216)),v=bold(rows[i][1],12,Color.WHITE);v.setGravity(Gravity.END);row.addView(k,new LinearLayout.LayoutParams(0,dp(36),1));row.addView(v,new LinearLayout.LayoutParams(0,dp(36),1));table.addView(row);}
+        content.addView(table);spacer(6);
+        LinearLayout market=card();market.setBackgroundColor(NAVY2);market.addView(bold("Piyasa Verisi",14,Color.WHITE));market.addView(txt("Son fiyat   "+money(r.price,symbol),12,Color.WHITE));market.addView(txt("Günlük değişim   "+String.format(Locale.US,"%+.2f%%",r.changePct),12,r.changePct>=0?GREEN:RED));market.addView(txt("Teknik güven   %"+(int)r.confidence,12,Color.WHITE));content.addView(market);
     }
 
     private void showStockTechnical(String symbol,ShortPulseEngine.Result r){
