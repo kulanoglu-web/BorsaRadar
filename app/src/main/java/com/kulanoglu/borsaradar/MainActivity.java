@@ -80,7 +80,8 @@ public class MainActivity extends Activity {
     private String detailSymbol="";
     private ShortPulseEngine.Result detailResult=null;
     private CatalystContextEngine.Result detailContext=null;
-    private final AtomicInteger scanDone=new AtomicInteger(0), scanFailed=new AtomicInteger(0);\n    private final AtomicInteger detailRequestGeneration=new AtomicInteger(0);\n
+    private final AtomicInteger scanDone=new AtomicInteger(0), scanFailed=new AtomicInteger(0);
+    private final AtomicInteger detailRequestGeneration=new AtomicInteger(0);
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -145,7 +146,8 @@ public class MainActivity extends Activity {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(NAVY);
         LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL); top.setPadding(dp(14),dp(8),dp(14),dp(5)); top.setBackgroundColor(NAVY);
-        Button back=button("‹",NAVY2); back.setTextSize(24); back.setPadding(0,0,0,0); back.setOnClickListener(v->{detailRequestGeneration.incrementAndGet();showPortfolio();});\n        TextView brand=bold("BORSA RADAR",16,Color.WHITE); brand.setPadding(dp(6),0,0,0);
+        Button back=button("‹",NAVY2); back.setTextSize(24); back.setPadding(0,0,0,0); back.setOnClickListener(v->{detailRequestGeneration.incrementAndGet();showPortfolio();});
+        TextView brand=bold("BORSA RADAR",16,Color.WHITE); brand.setPadding(dp(6),0,0,0);
         TextView ticker=bold(symbol,17,Color.WHITE); ticker.setGravity(Gravity.END); ticker.setPadding(0,0,0,0);
         top.addView(back,new LinearLayout.LayoutParams(dp(44),dp(38))); top.addView(brand,new LinearLayout.LayoutParams(0,dp(38),1)); top.addView(ticker,new LinearLayout.LayoutParams(0,dp(38),1));
         root.addView(top);
@@ -218,16 +220,13 @@ public class MainActivity extends Activity {
 
     private TextView signalBanner(ShortPulseEngine.Result s) {
         int color=s.recommendation.contains("SAT")||s.recommendation.contains("RİSK")||s.recommendation.contains("KOVALAMA")?RED:s.recommendation.contains("AL")?GREEN:AMBER;
-        String confidence=s.confidence>=75?"Yüksek güven":s.confidence>=55?"Orta güven":"Düşük güven"; TextView v=bold(s.recommendation+"  •  Pulse "+fmt(s.score)+"
-"+confidence+"  •  "+s.horizonText,18,Color.WHITE); v.setGravity(Gravity.CENTER); v.setBackgroundColor(color); v.setPadding(dp(12),dp(10),dp(12),dp(10)); return v;
+        String confidence=s.confidence>=75?"Yüksek güven":s.confidence>=55?"Orta güven":"Düşük güven"; TextView v=bold(s.recommendation+"  •  Pulse "+fmt(s.score)+"\\n"+confidence+"  •  "+s.horizonText,18,Color.WHITE); v.setGravity(Gravity.CENTER); v.setBackgroundColor(color); v.setPadding(dp(12),dp(10),dp(12),dp(10)); return v;
     }
 
     private TextView contextBanner(CatalystContextEngine.Result c) {
         int color=!c.hasContext?Color.GRAY:c.technicalConflict?PURPLE:c.positiveCatalyst?GREEN:c.negativeCatalyst?RED:AMBER;
         String title=!c.hasContext?"BAĞLAM VERİSİ YETERSİZ":c.technicalConflict?"TEKNİK / HABER ÇELİŞKİSİ":c.positiveCatalyst?"POZİTİF KATALİZÖR":c.negativeCatalyst?"NEGATİF KATALİZÖR":"HABER BAĞLAMI NÖTR";
-        TextView v=bold(title+"  •  Haber "+fmt(c.newsScore)+"/8
-"+c.note+"
-"+c.coverage,14,Color.WHITE); v.setBackgroundColor(color); v.setPadding(dp(12),dp(10),dp(12),dp(10)); return v;
+        TextView v=bold(title+"  •  Haber "+fmt(c.newsScore)+"/8\\n"+c.note+"\\n"+c.coverage,14,Color.WHITE); v.setBackgroundColor(color); v.setPadding(dp(12),dp(10),dp(12),dp(10)); return v;
     }
 
     private void refreshPortfolio() {
