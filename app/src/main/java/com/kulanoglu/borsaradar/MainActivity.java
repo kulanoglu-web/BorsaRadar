@@ -230,7 +230,7 @@ public class MainActivity extends Activity {
     }
 
     private void stockTabs(String symbol,String active,ShortPulseEngine.Result r,CatalystContextEngine.Result cx){
-        LinearLayout tabs=new LinearLayout(this); String[] names={"Genel","Grafik","Haber","KAP","Finansal","Teknik","Hedef/Risk"};
+        LinearLayout tabs=new LinearLayout(this); String[] names={"Genel","Grafik","Haber","KAP","Finansal","Teknik","Hedef"};
         for(String t:names){Button b=button(t,t.equals(active)?Color.rgb(25,105,220):NAVY);b.setTextSize(10);b.setAllCaps(false);tabs.addView(b,new LinearLayout.LayoutParams(0,dp(38),1));
             if(t.equals("Genel"))b.setOnClickListener(v->showStockGeneral(symbol,r,cx)); else if(t.equals("Grafik"))b.setOnClickListener(v->analyzeStock(symbol,detailTimeframe)); else if(t.equals("Haber")||t.equals("KAP"))b.setOnClickListener(v->showStockNews(symbol,r,cx)); else if(t.equals("Finansal"))b.setOnClickListener(v->showStockFinancial(symbol,r)); else if(t.equals("Teknik"))b.setOnClickListener(v->showStockTechnical(symbol,r)); else b.setOnClickListener(v->showStockRisk(symbol,r));}
         content.addView(tabs);
@@ -255,7 +255,7 @@ public class MainActivity extends Activity {
         box.addView(txt("Güven   %"+(int)r.confidence,13,Color.WHITE)); box.addView(txt("Zaman dilimi   "+ChartTimeframes.label(detailTimeframe),12,Color.rgb(170,195,215))); content.addView(box);
     }
     private void showStockRisk(String symbol,ShortPulseEngine.Result r){
-        shellDetail(symbol); stockTabs(symbol,"Hedef/Risk",r,detailContext);
+        shellDetail(symbol); stockTabs(symbol,"Hedef",r,detailContext);
         LinearLayout box=card(); box.setBackgroundColor(NAVY2); box.addView(bold("Hedef & Risk",17,Color.WHITE));
         box.addView(txt("Mevcut fiyat   "+money(r.price,symbol),13,Color.WHITE)); box.addView(txt("Sinyal güveni   %"+(int)r.confidence,13,Color.WHITE));
         box.addView(txt("Hedef, stop ve risk/ödül seviyeleri doğrulanmış fiyat yapısından hesaplanarak burada gösterilecek.",12,Color.rgb(180,200,218))); content.addView(box);
@@ -473,7 +473,7 @@ public class MainActivity extends Activity {
         LinearLayout profile=card(); profile.setBackgroundColor(NAVY2); profile.addView(bold("BorsaRadar",18,Color.WHITE)); profile.addView(txt("Piyasa araçları ve uygulama ayarları",12,Color.rgb(170,195,215))); content.addView(profile); spacer(6);
         String[] items={"Piyasa Takvimi","Sektörler","Favorilerim","Alarmlar","Hisse Karşılaştırma","Döviz / Altın / Emtia","Ekonomik Veriler","Ayarlar","Destek","Hakkında"};
         for(String item:items){Button b=button(item+"   ›",NAVY2);b.setGravity(Gravity.LEFT|Gravity.CENTER_VERTICAL);b.setAllCaps(false);content.addView(b,new LinearLayout.LayoutParams(-1,dp(46)));spacer(2);}
-        Button strategy=button("Strateji Seçimi",Color.rgb(25,105,220)); strategy.setOnClickListener(v->showBaskets()); content.addView(strategy);
+        Button strategy=button("Strateji Seçimi",Color.rgb(25,105,220)); strategy.setOnClickListener(v->showBaskets()); content.addView(strategy); spacer(4); Button exit=button("Çıkış Yap",RED); content.addView(exit);
     }
 
     private void showBaskets() {
