@@ -506,7 +506,13 @@ public class MainActivity extends Activity {
         LinearLayout tfRow=new LinearLayout(this); tfRow.setOrientation(LinearLayout.HORIZONTAL); tfRow.setGravity(Gravity.CENTER); tfRow.setPadding(0,dp(3),0,dp(3));
         final int[] compactIdx={5,3,7,8,9,10,11}; final String[] compactLabels={"1G","1H","1A","3A","6A","1Y","2Y"};
         for(int k=0;k<compactIdx.length;k++){final int idx=compactIdx[k];Button b=button(compactLabels[k],idx==detailTimeframe?GREEN:NAVY2);b.setAllCaps(false);b.setTextSize(12);b.setPadding(dp(2),0,dp(2),0);b.setOnClickListener(v->{if(idx!=detailTimeframe)analyzeStock(symbol,idx);});tfRow.addView(b,new LinearLayout.LayoutParams(0,dp(38),1));}
-        content.addView(tfRow);\n        LinearLayout indicators=new LinearLayout(this); indicators.setGravity(Gravity.CENTER); String[] inds={"RSI","MACD","Stoch","CCI","BB"}; for(String in:inds){Button ib=button(in,NAVY2);ib.setTextSize(10);ib.setAllCaps(false);indicators.addView(ib,new LinearLayout.LayoutParams(0,dp(34),1));} content.addView(indicators);\n\n        if(chart==null||chart.size()<2){
+        content.addView(tfRow);
+        LinearLayout indicators=new LinearLayout(this); indicators.setGravity(Gravity.CENTER);
+        String[] inds={"RSI","MACD","Stoch","CCI","BB"};
+        for(String in:inds){Button ib=button(in,NAVY2);ib.setTextSize(10);ib.setAllCaps(false);indicators.addView(ib,new LinearLayout.LayoutParams(0,dp(34),1));}
+        content.addView(indicators);
+
+        if(chart==null||chart.size()<2){
             TextView empty=txt(ChartTimeframes.label(detailTimeframe)+" verisi yüklenemedi. Başka zaman diliminden veri gösterilmedi.",12,Color.rgb(255,120,120)); empty.setPadding(dp(10),dp(18),dp(10),dp(18)); content.addView(empty);
         }else{
             content.addView(new PriceChartView(this,chart,ChartTimeframes.label(detailTimeframe).toUpperCase(Locale.ROOT)),new LinearLayout.LayoutParams(-1,dp(365)));
