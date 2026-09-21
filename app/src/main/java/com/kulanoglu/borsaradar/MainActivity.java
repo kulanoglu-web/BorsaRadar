@@ -137,7 +137,7 @@ public class MainActivity extends Activity {
         LinearLayout nav=new LinearLayout(this); nav.setOrientation(LinearLayout.HORIZONTAL); nav.setPadding(dp(4),dp(3),dp(4),dp(4)); nav.setBackgroundColor(Color.rgb(7,27,46));
         Button home=button("⌂\nAna Sayfa",NAVY2), markets=button("▥\nPiyasalar",NAVY2), radar=button("◎\nRadar",NAVY2), portfolio=button("▣\nPortföy",NAVY2), more=button("•••\nDiğer",NAVY2);
         Button[] ns={home,markets,radar,portfolio,more}; for(Button b:ns){b.setTextSize(10);b.setAllCaps(false);nav.addView(b,new LinearLayout.LayoutParams(0,dp(52),1));}
-        home.setOnClickListener(v->showDashboard()); markets.setOnClickListener(v->singleStockDialog()); radar.setOnClickListener(v->showRadar()); portfolio.setOnClickListener(v->showPortfolio()); more.setOnClickListener(v->showBaskets()); root.addView(nav);
+        home.setOnClickListener(v->showDashboard()); markets.setOnClickListener(v->singleStockDialog()); radar.setOnClickListener(v->showRadar()); portfolio.setOnClickListener(v->showPortfolio()); more.setOnClickListener(v->showMore()); root.addView(nav);
         setContentView(root);
     }
 
@@ -466,6 +466,14 @@ public class MainActivity extends Activity {
         add.setOnClickListener(v->portfolioDialog(owned,symbol));
         refresh.setOnClickListener(v->analyzeStock(symbol,detailTimeframe));
         next.setOnClickListener(v->{if(!nextSymbol.equals(symbol))analyzeStock(nextSymbol,detailTimeframe);});
+    }
+
+    private void showMore() {
+        shell("Diğer");
+        LinearLayout profile=card(); profile.setBackgroundColor(NAVY2); profile.addView(bold("BorsaRadar",18,Color.WHITE)); profile.addView(txt("Piyasa araçları ve uygulama ayarları",12,Color.rgb(170,195,215))); content.addView(profile); spacer(6);
+        String[] items={"Piyasa Takvimi","Sektörler","Favorilerim","Alarmlar","Hisse Karşılaştırma","Döviz / Altın / Emtia","Ekonomik Veriler","Ayarlar","Destek","Hakkında"};
+        for(String item:items){Button b=button(item+"   ›",NAVY2);b.setGravity(Gravity.LEFT|Gravity.CENTER_VERTICAL);b.setAllCaps(false);content.addView(b,new LinearLayout.LayoutParams(-1,dp(46)));spacer(2);}
+        Button strategy=button("Strateji Seçimi",Color.rgb(25,105,220)); strategy.setOnClickListener(v->showBaskets()); content.addView(strategy);
     }
 
     private void showBaskets() {
