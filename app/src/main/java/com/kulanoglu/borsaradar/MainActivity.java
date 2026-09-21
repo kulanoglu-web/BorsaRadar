@@ -241,7 +241,7 @@ public class MainActivity extends Activity {
         LinearLayout quick=card(); quick.setBackgroundColor(NAVY2); quick.addView(bold("Hızlı Bilgiler",15,Color.WHITE)); quick.addView(txt("F/K   —        PD/DD   —        Temettü   —        Beta   —",12,Color.rgb(180,205,222))); quick.addView(txt("Teknik sinyal, fiyat hareketi ve haber bağlamı birlikte değerlendirilir.",12,Color.rgb(180,200,218))); if(cx!=null)quick.addView(txt("Haber bağlamı: "+cx.note,12,Color.WHITE)); content.addView(quick);
     }
     private void showStockNews(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx){
-        shellDetail(symbol); stockTabs(symbol,"Haber",r,cx); LinearLayout box=card(); box.setBackgroundColor(NAVY2); box.addView(bold("Haber & KAP",17,Color.WHITE));
+        shellDetail(symbol); stockTabs(symbol,"Haber",r,cx); LinearLayout box=card(); box.setBackgroundColor(NAVY2); box.addView(bold("Haber & KAP",17,Color.WHITE)); box.addView(txt("Tümü   •   KAP   •   Medya   •   Analist",11,Color.rgb(130,185,255)));
         if(cx==null)box.addView(txt("Haber/KAP bağlamı henüz yüklenmedi. Grafik ekranından yenileyebilirsin.",12,Color.rgb(180,200,218))); else {box.addView(txt(cx.note,13,Color.WHITE)); box.addView(txt("Kapsam: "+cx.coverage+"   •   Haber skoru "+fmt(cx.newsScore)+"/8",12,Color.rgb(170,195,215)));} content.addView(box);
     }
     private void showStockFinancial(String symbol,ShortPulseEngine.Result r){
