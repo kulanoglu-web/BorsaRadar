@@ -18,6 +18,12 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Prepare CI signing
+        env:
+          BORSARADAR_KEYSTORE_B64: ${{ secrets.BORSARADAR_KEYSTORE_B64 }}
+        run: |
+          mkdir -p .ci
+          echo "$BORSARADAR_KEYSTORE_B64" | base64 --decode > .ci/borsaradar-final.keystore
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug --console=plain
       - name: Boot emulator, install and capture
