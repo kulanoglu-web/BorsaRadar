@@ -1,0 +1,1 @@
+Compile repair: removed literal escaped newline sequences accidentally written into MainActivity Java source.
