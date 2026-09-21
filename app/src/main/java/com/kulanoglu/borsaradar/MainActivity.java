@@ -331,6 +331,7 @@ public class MainActivity extends Activity {
         if(!sameSymbol){detailResult=null;detailContext=null;}
         final String selectedSymbol=symbol;
         final int selectedTimeframe=detailTimeframe;
+        final int requestGeneration=detailRequestGeneration.incrementAndGet();
         shell(selectedSymbol+" • analiz");
         boolean instantRendered=false;
         List<MarketDataService.Candle> instantChart=DetailedChartController.cached(selectedSymbol,selectedTimeframe);
