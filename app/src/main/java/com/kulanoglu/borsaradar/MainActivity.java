@@ -80,7 +80,7 @@ public class MainActivity extends Activity {
     private String detailSymbol="";
     private ShortPulseEngine.Result detailResult=null;
     private CatalystContextEngine.Result detailContext=null;
-    private final AtomicInteger scanDone=new AtomicInteger(0), scanFailed=new AtomicInteger(0);
+    private final AtomicInteger scanDone=new AtomicInteger(0), scanFailed=new AtomicInteger(0);\n    private final AtomicInteger detailRequestGeneration=new AtomicInteger(0);
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -368,7 +368,7 @@ public class MainActivity extends Activity {
                         if(chart==null||chart.size()<2)try{chart=DetailedChartController.fetch(selectedSymbol,selectedTimeframe);}catch(Exception ignored){chart=null;}
                         final CatalystContextEngine.Result safeCx=cx;
                         final List<MarketDataService.Candle> safeChart=chart;
-                        if(selectedSymbol.equals(detailSymbol))detailContext=safeCx;
+                        if(requestGeneration==detailRequestGeneration.get() && selectedSymbol.equals(detailSymbol) && selectedTimeframe==detailTimeframe)detailContext=safeCx;
                         main.post(()->{
                             if(selectedSymbol.equals(detailSymbol) && selectedTimeframe==detailTimeframe)
                                 renderStockDetail(selectedSymbol,r,safeCx,safeChart);
