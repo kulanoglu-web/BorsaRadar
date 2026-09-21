@@ -369,58 +369,45 @@ public class MainActivity extends Activity {
         final String selectedSymbol=symbol;
         final int selectedTimeframe=detailTimeframe;
         final int requestGeneration=detailRequestGeneration.incrementAndGet();
+
         shellDetail(selectedSymbol);
-        boolean instantRendered=false;
-        List<MarketDataService.Candle> instantChart=DetailedChartController.cached(selectedSymbol,selectedTimeframe);
-        if(sameSymbol && detailResult!=null && instantChart!=null && instantChart.size()>=2){
-            renderStockDetail(selectedSymbol,detailResult,detailContext,instantChart);
-            instantRendered=true;
-        }
-        if(!instantRendered){
-            List<MarketDataService.Candle> instantAnalysis=MarketDataService.cachedSeries(selectedSymbol,"1mo","1d");
-            if(instantAnalysis!=null && instantAnalysis.size()>=15){
-                try{
-                    ShortPulseEngine.Result cachedResult=ShortPulseEngine.analyze(instantAnalysis);
-                    detailResult=cachedResult;
-                    // Zaman dilimi değiştiğinde 1 aylık analiz serisini grafik olarak ASLA kullanma.
-                    // Aksi halde seçili buton değişse bile eski/yanlış periyot ekranda kalıyordu.
-                    if(instantChart!=null&&instantChart.size()>=2){
-                        renderStockDetail(selectedSymbol,cachedResult,sameSymbol?detailContext:null,instantChart);
-                        instantRendered=true;
-                    }
-                }catch(Exception ignored){}
-            }
-        }
-        if(!instantRendered)content.addView(txt("Fiyat ve teknik görünüm yükleniyor…",15,NAVY));
-        final boolean hadInstant=instantRendered;
+        content.addView(txt(ChartTimeframes.label(selectedTimeframe)+" grafik verisi yükleniyor…",14,Color.rgb(170,195,215)));
+
+        final ShortPulseEngine.Result previousResult=sameSymbol?detailResult:null;
         io.execute(()->{
             try{
-                // Hızlı ilk çizim: yalnızca kısa günlük seri. Haber ve seçili grafik bekletmez.
-                List<MarketDataService.Candle> base=MarketDataService.fetchDaily(selectedSymbol,"1mo");
-                ShortPulseEngine.Result r=ShortPulseEngine.analyze(base);
-                detailResult=r;
-                prefetchAdjacent(selectedSymbol);
-                if(!hadInstant)main.post(()->{if(selectedSymbol.equals(detailSymbol) && selectedTimeframe==detailTimeframe){ List<MarketDataService.Candle> initialChart=DetailedChartController.cached(selectedSymbol,selectedTimeframe); if(initialChart!=null&&initialChart.size()>=2) renderStockDetail(selectedSymbol,r,null,initialChart); else { shell(selectedSymbol+" • "+ChartTimeframes.label(selectedTimeframe)); content.addView(txt(ChartTimeframes.label(selectedTimeframe)+" grafik verisi yükleniyor…",15,NAVY)); } }});
+                // Seçili grafik ve analiz verisini aynı iş içinde yükle. İç içe executor yok:
+                // tek iş parçacıklı executor kullanılsa bile grafik isteği artık kilitlenmez.
+                List<MarketDataService.Candle> chart=null;
+                try{chart=DetailedChartController.cached(selectedSymbol,selectedTimeframe);}catch(Exception ignored){}
+                if(chart==null||chart.size()<2) chart=DetailedChartController.fetch(selectedSymbol,selectedTimeframe);
 
-                // Ağır verileri ekran açıldıktan sonra arka planda tamamla.
-                io.execute(()->{
-                    try{
-                        CatalystContextEngine.Result cx=selectedSymbol.equals(detailSymbol)?detailContext:null;
-                        if(cx==null)try{cx=CatalystContextEngine.analyze(selectedSymbol,r.score);}catch(Exception ignored){cx=null;}
-                        List<MarketDataService.Candle> chart;
-                        chart=DetailedChartController.cached(selectedSymbol,selectedTimeframe);
-                        if(chart==null||chart.size()<2)try{chart=DetailedChartController.fetch(selectedSymbol,selectedTimeframe);}catch(Exception ignored){chart=null;}
-                        final CatalystContextEngine.Result safeCx=cx;
-                        final List<MarketDataService.Candle> safeChart=chart;
-                        if(requestGeneration==detailRequestGeneration.get() && selectedSymbol.equals(detailSymbol) && selectedTimeframe==detailTimeframe)detailContext=safeCx;
-                        main.post(()->{
-                            if(selectedSymbol.equals(detailSymbol) && selectedTimeframe==detailTimeframe)
-                                renderStockDetail(selectedSymbol,r,safeCx,safeChart);
-                        });
-                    }catch(Exception ignored){}
+                ShortPulseEngine.Result r=previousResult;
+                if(r==null){
+                    List<MarketDataService.Candle> base=MarketDataService.cachedSeries(selectedSymbol,"1mo","1d");
+                    if(base==null||base.size()<15) base=MarketDataService.fetchDaily(selectedSymbol,"1mo");
+                    r=ShortPulseEngine.analyze(base);
+                }
+                final ShortPulseEngine.Result safeResult=r;
+                final List<MarketDataService.Candle> safeChart=chart;
+
+                CatalystContextEngine.Result cx=detailContext;
+                if(cx==null)try{cx=CatalystContextEngine.analyze(selectedSymbol,safeResult.score);}catch(Exception ignored){}
+                final CatalystContextEngine.Result safeCx=cx;
+
+                main.post(()->{
+                    if(requestGeneration!=detailRequestGeneration.get()||!selectedSymbol.equals(detailSymbol)||selectedTimeframe!=detailTimeframe)return;
+                    detailResult=safeResult; detailContext=safeCx;
+                    renderStockDetail(selectedSymbol,safeResult,safeCx,safeChart);
+                    prefetchAdjacent(selectedSymbol);
                 });
             }catch(Exception e){
-                main.post(()->{if(selectedSymbol.equals(detailSymbol) && selectedTimeframe==detailTimeframe){shell(selectedSymbol+" • analiz");content.addView(txt("Veri alınamadı: "+e.getMessage(),15,RED));}});
+                final String msg=e.getMessage()==null?"veri alınamadı":e.getMessage();
+                main.post(()->{
+                    if(requestGeneration!=detailRequestGeneration.get()||!selectedSymbol.equals(detailSymbol)||selectedTimeframe!=detailTimeframe)return;
+                    shellDetail(selectedSymbol);
+                    content.addView(txt(ChartTimeframes.label(selectedTimeframe)+" verisi alınamadı: "+msg,14,RED));
+                });
             }
         });
     }
