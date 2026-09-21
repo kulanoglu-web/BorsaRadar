@@ -429,7 +429,7 @@ public class MainActivity extends Activity {
     private RadarItem findRadarItem(String symbol){String n=MarketDataService.normalizeSymbol(symbol);synchronized(radarResults){for(RadarItem x:radarResults)if(MarketDataService.normalizeSymbol(x.symbol).equals(n))return x;}return null;}
 
     private void renderStockDetail(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx,List<MarketDataService.Candle> chart) {
-        shellDetail(symbol);
+        shellDetail(symbol);\n        stockTabs(symbol,"Grafik",r,cx);
         Holding owned=findHolding(symbol);
         MarketDataService.Spot live=MarketDataService.latestSpot(symbol);
         double shownPrice=live!=null&&live.price>0?live.price:r.price;
