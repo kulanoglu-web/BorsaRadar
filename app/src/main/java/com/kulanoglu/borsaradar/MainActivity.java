@@ -264,9 +264,24 @@ public class MainActivity extends Activity {
     }
     private void showStockGeneral(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx){
         shellDetail(symbol); stockTabs(symbol,"Genel",r,cx);
-        LinearLayout signal=card(); signal.setBackgroundColor(NAVY2); signal.addView(bold("Hisse Detayı • Genel",17,Color.WHITE)); signal.addView(bold(r.recommendation+"   •   Güven %"+(int)r.confidence,18,r.recommendation.contains("AL")?GREEN:r.recommendation.contains("SAT")?RED:AMBER)); signal.addView(txt("Değişim "+String.format(Locale.US,"%+.2f%%",r.changePct)+"   •   Pulse "+fmt(r.score),13,Color.rgb(190,210,225))); content.addView(signal);
-        LinearLayout quick=card(); quick.setBackgroundColor(NAVY2); quick.addView(bold("Hızlı Bilgiler",15,Color.WHITE)); quick.addView(txt("F/K   —        PD/DD   —        Temettü   —        Beta   —",12,Color.rgb(180,205,222))); quick.addView(txt("Teknik sinyal, fiyat hareketi ve haber bağlamı birlikte değerlendirilir.",12,Color.rgb(180,200,218))); if(cx!=null)quick.addView(txt("Haber bağlamı: "+cx.note,12,Color.WHITE)); content.addView(quick); LinearLayout links=new LinearLayout(this); Button technical=button("Teknik Analiz",Color.rgb(25,105,220)), risk=button("Hedef Fiyat & Risk",NAVY2); links.addView(technical,new LinearLayout.LayoutParams(0,dp(42),1)); links.addView(risk,new LinearLayout.LayoutParams(0,dp(42),1)); content.addView(links); technical.setOnClickListener(v->showStockTechnical(symbol,r)); risk.setOnClickListener(v->showStockRisk(symbol,r));
+        int sigColor=r.recommendation.contains("AL")?GREEN:(r.recommendation.contains("SAT")||r.recommendation.contains("RİSK")?RED:AMBER);
+        LinearLayout head=card();head.setBackgroundColor(NAVY2);
+        LinearLayout priceRow=new LinearLayout(this);priceRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout left=new LinearLayout(this);left.setOrientation(LinearLayout.VERTICAL);left.addView(bold(symbol,22,Color.WHITE));left.addView(txt("BIST • Hisse Detayı",11,Color.rgb(160,185,205)));
+        LinearLayout right=new LinearLayout(this);right.setOrientation(LinearLayout.VERTICAL);right.setGravity(Gravity.END);right.addView(bold(money(r.price,symbol),23,Color.WHITE));right.addView(bold(String.format(Locale.US,"%+.2f%%",r.changePct),13,r.changePct>=0?GREEN:RED));
+        priceRow.addView(left,new LinearLayout.LayoutParams(0,-2,1));priceRow.addView(right,new LinearLayout.LayoutParams(-2,-2));head.addView(priceRow);content.addView(head);spacer(6);
+
+        LinearLayout stats=card();stats.setBackgroundColor(NAVY2);stats.addView(bold("Günlük Görünüm",14,Color.WHITE));
+        stats.addView(txt("Pulse "+fmt(r.score)+"     Güven %"+(int)r.confidence+"     Ufuk "+r.horizonText,12,Color.rgb(180,205,222)));
+        LinearLayout signals=new LinearLayout(this);Button buy=button("AL",GREEN),hold=button("TUT",AMBER),sell=button("SAT",RED);signals.addView(buy,new LinearLayout.LayoutParams(0,dp(40),1));signals.addView(hold,new LinearLayout.LayoutParams(0,dp(40),1));signals.addView(sell,new LinearLayout.LayoutParams(0,dp(40),1));stats.addView(signals);
+        TextView current=bold("Aktif sinyal: "+r.recommendation,13,sigColor);stats.addView(current);content.addView(stats);spacer(6);
+
+        content.addView(bold("Hızlı Bilgiler",15,Color.WHITE));LinearLayout q1=new LinearLayout(this),q2=new LinearLayout(this);
+        String[] q={"F/K\n—","PD/DD\n—","Temettü\n—","Beta\n—"};for(int i=0;i<4;i++){LinearLayout x=card();x.setBackgroundColor(NAVY2);TextView t=bold(q[i],12,Color.WHITE);t.setGravity(Gravity.CENTER);x.addView(t);(i<2?q1:q2).addView(x,new LinearLayout.LayoutParams(0,dp(58),1));}content.addView(q1);content.addView(q2);spacer(6);
+        if(cx!=null){LinearLayout news=card();news.setBackgroundColor(NAVY2);news.addView(bold("Haber / KAP Özeti",14,Color.WHITE));news.addView(txt(cx.note,12,Color.rgb(180,205,222)));content.addView(news);spacer(6);}
+        LinearLayout links=new LinearLayout(this);Button technical=button("Teknik Analiz",Color.rgb(25,105,220)),risk=button("Hedef Fiyat & Risk",PURPLE);links.addView(technical,new LinearLayout.LayoutParams(0,dp(44),1));links.addView(risk,new LinearLayout.LayoutParams(0,dp(44),1));content.addView(links);technical.setOnClickListener(v->showStockTechnical(symbol,r));risk.setOnClickListener(v->showStockRisk(symbol,r));
     }
+
     private void showStockNews(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx){
         shellDetail(symbol); stockTabs(symbol,"Haber",r,cx); LinearLayout box=card(); box.setBackgroundColor(NAVY2); box.addView(bold("Haber & KAP",17,Color.WHITE)); box.addView(txt("Tümü   •   KAP   •   Medya   •   Analist",11,Color.rgb(130,185,255)));
         if(cx==null)box.addView(txt("Haber/KAP bağlamı henüz yüklenmedi. Grafik ekranından yenileyebilirsin.",12,Color.rgb(180,200,218))); else {box.addView(txt(cx.note,13,Color.WHITE)); box.addView(txt("Kapsam: "+cx.coverage+"   •   Haber skoru "+fmt(cx.newsScore)+"/8",12,Color.rgb(170,195,215)));} content.addView(box);
