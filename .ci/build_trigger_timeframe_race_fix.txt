@@ -1,0 +1,1 @@
+Fix selected timeframe race: generation guard, no 1mo analysis fallback rendered as selected chart, detail shell stays dark.
