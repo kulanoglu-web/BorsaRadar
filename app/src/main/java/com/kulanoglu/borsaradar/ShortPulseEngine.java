@@ -86,8 +86,8 @@ public final class ShortPulseEngine {
         if(trap)s-=2.2;
         r.score=s;
 
-        if(trap || (breakout && stretched)) r.recommendation="KOVALAMA / BEKLE";
-        else if(r.earlyBreakout && s>=3.0) r.recommendation="ERKEN AL / KIRILIM ÖNCESİ";
+        if(trap || (breakout && stretched) || fastRun) r.recommendation="KIRILIM BAŞLADI / KOVALAMA";
+        else if(r.earlyBreakout && s>=3.0) r.recommendation="KIRILIM ÖNCESİ / İZLE";
         else if(s>=4.8 && !stretched) r.recommendation="AL";
         else if(s>=2.7) r.recommendation="KADEMELİ AL / İZLE";
         else if(s<=-2.8) r.recommendation="SAT / RİSKİ AZALT";
