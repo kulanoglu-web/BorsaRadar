@@ -382,9 +382,12 @@ public class MainActivity extends Activity {
                 try{
                     ShortPulseEngine.Result cachedResult=ShortPulseEngine.analyze(instantAnalysis);
                     detailResult=cachedResult;
-                    List<MarketDataService.Candle> shownChart=instantChart!=null&&instantChart.size()>=2?instantChart:instantAnalysis;
-                    renderStockDetail(selectedSymbol,cachedResult,sameSymbol?detailContext:null,shownChart);
-                    instantRendered=true;
+                    // Zaman dilimi değiştiğinde 1 aylık analiz serisini grafik olarak ASLA kullanma.
+                    // Aksi halde seçili buton değişse bile eski/yanlış periyot ekranda kalıyordu.
+                    if(instantChart!=null&&instantChart.size()>=2){
+                        renderStockDetail(selectedSymbol,cachedResult,sameSymbol?detailContext:null,instantChart);
+                        instantRendered=true;
+                    }
                 }catch(Exception ignored){}
             }
         }
