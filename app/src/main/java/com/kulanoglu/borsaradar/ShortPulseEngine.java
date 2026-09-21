@@ -47,7 +47,8 @@ public final class ShortPulseEngine {
         double range=Math.max(1e-9,last.high-last.low);
         double upperWick=last.high-Math.max(last.open,last.close);
         r.stretchPct=e20==0?0:(r.price/e20-1)*100;
-        boolean fastRun=r.changePct>=5.0 || roc3>=8.0;\n        boolean stretched=r.stretchPct>8.0 || rsi7>74 || fastRun;
+        boolean fastRun=r.changePct>=5.0 || roc3>=8.0;
+        boolean stretched=r.stretchPct>8.0 || rsi7>74 || fastRun;
         boolean trap=(upperWick/range>0.58 && rv>1.35) || (rsi7>80 && breakout);
 
         double early=0;
@@ -59,7 +60,8 @@ public final class ShortPulseEngine {
         if(acceleration) early+=0.9;
         if(rv>=1.05 && rv<=2.4) early+=0.65;
         if(tightToTrend) early+=0.65;
-        if(stretched) early-=1.6;\n        if(fastRun) early-=1.4;
+        if(stretched) early-=1.6;
+        if(fastRun) early-=1.4;
         if(trap) early-=2.0;
         r.earlyBreakScore=early;
         r.earlyBreakout=!breakout && early>=4.0;
@@ -82,7 +84,8 @@ public final class ShortPulseEngine {
         if(r.earlyBreakout)s+=1.35;
         else if(nearBreak)s+=0.55;
         if(acceleration)s+=0.45;
-        if(stretched)s-=1.45;\n        if(fastRun)s-=1.25;
+        if(stretched)s-=1.45;
+        if(fastRun)s-=1.25;
         if(trap)s-=2.2;
         r.score=s;
 
