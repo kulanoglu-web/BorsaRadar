@@ -1,0 +1,1 @@
+Dedicated dark stock-detail screen + locked 1A/3A/6A/1Y/2Y candle windows. UI-only stabilization pass; indicator engine unchanged.
