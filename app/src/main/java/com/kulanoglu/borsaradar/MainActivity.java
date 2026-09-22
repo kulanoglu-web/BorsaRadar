@@ -237,18 +237,30 @@ public class MainActivity extends Activity {
     }
 
     private void stockTabs(String symbol,String active,ShortPulseEngine.Result r,CatalystContextEngine.Result cx){
-        LinearLayout tabs=new LinearLayout(this); String[] names={"Genel","Grafik","Haber","KAP","Finansal","Teknik","Hedef"};
-        for(String t:names){Button b=button(t,t.equals(active)?Color.rgb(25,105,220):NAVY);b.setTextSize(10);b.setAllCaps(false);tabs.addView(b,new LinearLayout.LayoutParams(0,dp(38),1));
-            if(t.equals("Genel"))b.setOnClickListener(v->showStockGeneral(symbol,r,cx)); else if(t.equals("Grafik"))b.setOnClickListener(v->analyzeStock(symbol,detailTimeframe)); else if(t.equals("Haber")||t.equals("KAP"))b.setOnClickListener(v->showStockNews(symbol,r,cx)); else if(t.equals("Finansal"))b.setOnClickListener(v->showStockFinancial(symbol,r)); else if(t.equals("Teknik"))b.setOnClickListener(v->showStockTechnical(symbol,r)); else b.setOnClickListener(v->showStockRisk(symbol,r));}
-        content.addView(tabs);
+        LinearLayout tabs=new LinearLayout(this); tabs.setGravity(Gravity.CENTER);
+        String[] names={"Genel","Grafik","Haber","KAP","Finansal"};
+        for(String t:names){
+            Button x=button(t,t.equals(active)?BLUE:NAVY); x.setTextSize(9); x.setAllCaps(false);
+            tabs.addView(x,new LinearLayout.LayoutParams(0,dp(34),1));
+            if(t.equals("Genel"))x.setOnClickListener(v->showStockGeneral(symbol,r,cx));
+            else if(t.equals("Grafik"))x.setOnClickListener(v->analyzeStock(symbol,detailTimeframe));
+            else if(t.equals("Haber")||t.equals("KAP"))x.setOnClickListener(v->showStockNews(symbol,r,cx));
+            else x.setOnClickListener(v->showStockFinancial(symbol,r));
+        }
+        content.addView(tabs); spacer(4);
     }
+
     private void showStockGeneral(String symbol,ShortPulseEngine.Result r,CatalystContextEngine.Result cx){
         shellDetail(symbol);stockTabs(symbol,"Genel",r,cx);int sigColor=r.recommendation.contains("AL")?GREEN:(r.recommendation.contains("SAT")||r.recommendation.contains("RİSK")?RED:AMBER);
         LinearLayout head=card();LinearLayout pr=new LinearLayout(this);pr.setGravity(Gravity.CENTER_VERTICAL);LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);l.addView(bold(symbol,20,Color.WHITE));l.addView(txt("BIST100  •  Hisse Detayı",10,Color.rgb(145,175,198)));LinearLayout rr=new LinearLayout(this);rr.setOrientation(LinearLayout.VERTICAL);rr.setGravity(Gravity.END);rr.addView(bold(money(r.price,symbol),22,Color.WHITE));TextView ch=bold(String.format(Locale.US,"%+.2f%%",r.changePct),12,r.changePct>=0?GREEN:RED);ch.setGravity(Gravity.END);rr.addView(ch);pr.addView(l,new LinearLayout.LayoutParams(0,dp(50),1));pr.addView(rr,new LinearLayout.LayoutParams(0,dp(50),1));head.addView(pr);head.addView(txt("Bugün  •  "+new java.text.SimpleDateFormat("dd.MM.yyyy HH:mm",Locale.getDefault()).format(new java.util.Date()),10,Color.rgb(135,165,190)));content.addView(head);spacer(5);
         LinearLayout quick=card();String[] q={"AÇILIŞ\n—","YÜKSEK\n—","DÜŞÜK\n—","HACİM\n—"};for(String x:q){TextView t=bold(x,10,Color.WHITE);t.setGravity(Gravity.CENTER);quick.addView(t,new LinearLayout.LayoutParams(0,dp(45),1));}quick.setOrientation(LinearLayout.HORIZONTAL);content.addView(quick);spacer(5);
         LinearLayout signals=new LinearLayout(this);String[] sn={"AL","TUT","SAT"};int[] sc={GREEN,AMBER,RED};for(int i=0;i<3;i++){Button x=button(sn[i],r.recommendation.contains(sn[i])?sc[i]:NAVY2);x.setTextSize(11);signals.addView(x,new LinearLayout.LayoutParams(0,dp(38),1));}content.addView(signals);spacer(6);
         LinearLayout info=card();info.addView(bold("Hızlı Bilgiler",13,Color.WHITE));LinearLayout vals=new LinearLayout(this);String[] iv={"F/K\n—","PD/DD\n—","Temettü\n—","Beta\n—"};for(String x:iv){TextView t=bold(x,10,Color.WHITE);t.setGravity(Gravity.CENTER);vals.addView(t,new LinearLayout.LayoutParams(0,dp(45),1));}info.addView(vals);content.addView(info);spacer(5);
-        LinearLayout ranges=card();ranges.addView(bold("Fiyat Aralıkları",12,Color.WHITE));ranges.addView(txt("Günlük aralık     —────────●────────—",11,Color.rgb(165,195,215)));ranges.addView(txt("52 hafta           —────────●────────—",11,Color.rgb(165,195,215)));content.addView(ranges);spacer(5);
+        LinearLayout ranges=card();ranges.addView(bold("Fiyat Aralıkları",12,Color.WHITE));ranges.addView(txt("Günlük aralık     —────────●────────—",11,Color.rgb(165,195,215)));ranges.addView(txt("52 hafta           —────────●────────—",11,Color.rgb(165,195,215)));content.addView(ranges);spacer(6);
+        LinearLayout deep=new LinearLayout(this);
+        Button tech=button("Teknik Analiz",BLUE), risk=button("Hedef Fiyat & Risk",NAVY2);
+        tech.setOnClickListener(v->showStockTechnical(symbol,r)); risk.setOnClickListener(v->showStockRisk(symbol,r));
+        deep.addView(tech,new LinearLayout.LayoutParams(0,dp(40),1)); deep.addView(risk,new LinearLayout.LayoutParams(0,dp(40),1)); content.addView(deep);spacer(5);
         LinearLayout state=card();state.addView(bold("Teknik Görünüm",12,Color.WHITE));state.addView(bold(r.recommendation+"   •   Güven %"+(int)r.confidence,14,sigColor));state.addView(txt("Pulse "+fmt(r.score)+"  •  "+r.horizonText,10,Color.rgb(165,195,215)));content.addView(state);spacer(5);
         LinearLayout links=new LinearLayout(this);Button technical=button("Teknik Analiz",Color.rgb(25,105,220)),risk=button("Hedef Fiyat & Risk",Color.rgb(62,75,130));links.addView(technical,new LinearLayout.LayoutParams(0,dp(40),1));links.addView(risk,new LinearLayout.LayoutParams(0,dp(40),1));content.addView(links);technical.setOnClickListener(v->showStockTechnical(symbol,r));risk.setOnClickListener(v->showStockRisk(symbol,r));
     }
