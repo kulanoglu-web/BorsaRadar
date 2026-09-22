@@ -104,6 +104,7 @@ public class MainActivity extends Activity {
 
     private TextView chip(String text,int color) { TextView v=bold(text,10,Color.WHITE); v.setGravity(Gravity.CENTER); v.setPadding(dp(8),dp(3),dp(8),dp(3)); v.setBackground(bg(color,12)); return v; }
 
+    private TextView txt(String text, int sp, int color) {
         TextView v=new TextView(this);
         v.setText(text); v.setTextSize(sp); v.setTextColor(color);
         v.setPadding(dp(8),dp(4),dp(8),dp(4));
