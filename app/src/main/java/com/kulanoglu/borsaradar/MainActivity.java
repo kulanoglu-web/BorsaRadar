@@ -39,7 +39,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MainActivity extends Activity {
     private static final String PREFS = "borsaradar_final";
     private static final int NAVY = Color.rgb(5, 18, 34);
-    private static final int NAVY2 = Color.rgb(11, 31, 53);\n    private static final int PANEL = Color.rgb(12, 34, 59);\n    private static final int BLUE = Color.rgb(36, 118, 255);\n    private static final int MUTED = Color.rgb(137, 163, 188);
+    private static final int NAVY2 = Color.rgb(11, 31, 53);
+    private static final int PANEL = Color.rgb(12, 34, 59);
+    private static final int BLUE = Color.rgb(36, 118, 255);
+    private static final int MUTED = Color.rgb(137, 163, 188);
     private static final int GREEN = Color.rgb(0, 135, 92);
     private static final int RED = Color.rgb(205, 42, 55);
     private static final int AMBER = Color.rgb(225, 145, 0);
@@ -97,7 +100,10 @@ public class MainActivity extends Activity {
 
     private int dp(int x) { return Math.round(x * getResources().getDisplayMetrics().density); }
 
-    private android.graphics.drawable.GradientDrawable bg(int color,int radius) { android.graphics.drawable.GradientDrawable g=new android.graphics.drawable.GradientDrawable(); g.setColor(color); g.setCornerRadius(dp(radius)); return g; }\n\n    private TextView chip(String text,int color) { TextView v=bold(text,10,Color.WHITE); v.setGravity(Gravity.CENTER); v.setPadding(dp(8),dp(3),dp(8),dp(3)); v.setBackground(bg(color,12)); return v; }\n\n    private TextView txt(String text, int sp, int color) {
+    private android.graphics.drawable.GradientDrawable bg(int color,int radius) { android.graphics.drawable.GradientDrawable g=new android.graphics.drawable.GradientDrawable(); g.setColor(color); g.setCornerRadius(dp(radius)); return g; }
+
+    private TextView chip(String text,int color) { TextView v=bold(text,10,Color.WHITE); v.setGravity(Gravity.CENTER); v.setPadding(dp(8),dp(3),dp(8),dp(3)); v.setBackground(bg(color,12)); return v; }
+
         TextView v=new TextView(this);
         v.setText(text); v.setTextSize(sp); v.setTextColor(color);
         v.setPadding(dp(8),dp(4),dp(8),dp(4));
