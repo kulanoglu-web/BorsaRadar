@@ -164,7 +164,7 @@ public class MainActivity extends Activity {
         shell("Ana Sayfa");
         LinearLayout brand=new LinearLayout(this); brand.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout brandText=new LinearLayout(this); brandText.setOrientation(LinearLayout.VERTICAL);
-        brandText.addView(bold("BORSA RADAR",20,Color.WHITE)); brandText.addView(txt("Akıllı piyasa takip merkezi",9,MUTED));
+        LinearLayout logoRow=new LinearLayout(this);logoRow.setGravity(Gravity.CENTER_VERTICAL);TextView mark=bold("BR",12,Color.WHITE);mark.setGravity(Gravity.CENTER);mark.setBackground(bg(BLUE,10));logoRow.addView(mark,new LinearLayout.LayoutParams(dp(30),dp(30)));TextView logoName=bold("  BORSA RADAR",17,Color.WHITE);logoRow.addView(logoName,new LinearLayout.LayoutParams(0,dp(32),1));brandText.addView(logoRow); brandText.addView(txt("Akıllı piyasa takip merkezi",9,MUTED));
         brand.addView(brandText,new LinearLayout.LayoutParams(0,dp(48),1));
         TextView alert=chip("●",BLUE); brand.addView(alert,new LinearLayout.LayoutParams(dp(34),dp(30))); content.addView(brand);
 
