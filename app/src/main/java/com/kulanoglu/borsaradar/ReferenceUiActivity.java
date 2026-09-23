@@ -9,7 +9,8 @@ import android.widget.*;
 
 public class ReferenceUiActivity extends Activity {
  private final int NAVY=Color.rgb(5,18,34), PANEL=Color.rgb(12,34,59), BLUE=Color.rgb(36,118,255), MUTED=Color.rgb(137,163,188), GREEN=Color.rgb(31,191,126), AMBER=Color.rgb(245,158,11), RED=Color.rgb(238,82,83);
- private LinearLayout body; private int screen=0; private String selectedSymbol="THYAO"; private String lastRadarSymbol="THYAO"; private final java.util.concurrent.ExecutorService uiIo=java.util.concurrent.Executors.newSingleThreadExecutor();
+ private LinearLayout body; private int screen=0; private String selectedSymbol="THYAO"; private String lastRadarSymbol="THYAO"; private int radarIndex=0;
+ private final String[] radarSymbols={"THYAO","BIMAS","TCELL","ASELS","KRDMD","PETKM","ENERY","KCHOL","TUPRS","GARAN","AKBNK","YKBNK","SASA"}; private final java.util.concurrent.ExecutorService uiIo=java.util.concurrent.Executors.newSingleThreadExecutor();
  private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
  private android.graphics.drawable.GradientDrawable bg(int c,int r){android.graphics.drawable.GradientDrawable g=new android.graphics.drawable.GradientDrawable();g.setColor(c);g.setCornerRadius(dp(r));return g;}
  private TextView t(String s,int z,int c,boolean b){TextView v=new TextView(this);v.setText(s);v.setTextSize(z);v.setTextColor(c);if(b)v.setTypeface(null,Typeface.BOLD);v.setGravity(Gravity.CENTER_VERTICAL);return v;}
@@ -39,10 +40,10 @@ public class ReferenceUiActivity extends Activity {
   LinearLayout nav=new LinearLayout(this);nav.setPadding(dp(3),dp(4),dp(3),dp(5));nav.setBackgroundColor(Color.rgb(7,27,46));String[] n={"⌂\nAna Sayfa","▥\nPiyasalar","◎\nRadar","▣\nPortföy","•••\nDiğer"};for(int i=0;i<5;i++){TextView v=t(n[i],9,i==0?BLUE:MUTED,i==0);v.setGravity(Gravity.CENTER);final int k=i;v.setOnClickListener(x->{if(k==0)showHome();else if(k==1||k==2)showRadar();else if(k==3)showPortfolio();else showMore();});nav.addView(v,new LinearLayout.LayoutParams(0,dp(50),1));}root.addView(nav);setContentView(root);
  }
 
- private void showDetail(){ screen=3;
+ private void showDetail(){ screen=3; syncRadarIndex();
   LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(NAVY);
   ScrollView sv=new ScrollView(this);body=new LinearLayout(this);body.setOrientation(LinearLayout.VERTICAL);body.setPadding(dp(12),dp(10),dp(12),dp(10));sv.addView(body);root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
-  LinearLayout h=new LinearLayout(this);h.setGravity(Gravity.CENTER_VERTICAL);TextView back=t("‹",24,Color.WHITE,true);back.setOnClickListener(v->showRadar());h.addView(back,new LinearLayout.LayoutParams(dp(30),dp(42)));TextView logo=pill("✈",RED);h.addView(logo,new LinearLayout.LayoutParams(dp(38),dp(38)));LinearLayout nm=new LinearLayout(this);nm.setOrientation(LinearLayout.VERTICAL);nm.addView(t(selectedSymbol,16,Color.WHITE,true));nm.addView(t("Türk Hava Yolları A.Ş.",9,MUTED,false));h.addView(nm,new LinearLayout.LayoutParams(0,dp(44),1));h.addView(t("＋  ★",18,Color.rgb(245,178,43),true),new LinearLayout.LayoutParams(dp(70),dp(42)));body.addView(h);
+  LinearLayout h=new LinearLayout(this);h.setGravity(Gravity.CENTER_VERTICAL);TextView back=t("‹",24,Color.WHITE,true);back.setOnClickListener(v->showRadar());h.addView(back,new LinearLayout.LayoutParams(dp(30),dp(42))); TextView prev=t("‹",20,MUTED,true);prev.setGravity(Gravity.CENTER);prev.setOnClickListener(v->moveRadar(-1));h.addView(prev,new LinearLayout.LayoutParams(dp(28),dp(42)));TextView logo=pill("✈",RED);h.addView(logo,new LinearLayout.LayoutParams(dp(38),dp(38)));LinearLayout nm=new LinearLayout(this);nm.setOrientation(LinearLayout.VERTICAL);nm.addView(t(selectedSymbol,16,Color.WHITE,true));nm.addView(t("Türk Hava Yolları A.Ş.",9,MUTED,false));h.addView(nm,new LinearLayout.LayoutParams(0,dp(44),1));h.addView(t("＋ ★",17,Color.rgb(245,178,43),true),new LinearLayout.LayoutParams(dp(58),dp(42))); TextView next=t("›",20,MUTED,true);next.setGravity(Gravity.CENTER);next.setOnClickListener(v->moveRadar(1));h.addView(next,new LinearLayout.LayoutParams(dp(28),dp(42)));body.addView(h);
   body.addView(t("277,20 ₺",27,Color.WHITE,true));body.addView(t("+4,90  (+1,80%)",14,GREEN,true));body.addView(t("15.09.2026 14:32",9,MUTED,false));gap(7);
   LinearLayout tabs=new LinearLayout(this);String[] ts={"Genel","Grafik","Haber","KAP","Finansal"};for(int i=0;i<5;i++){TextView x=t(ts[i],10,i==0?Color.WHITE:MUTED,i==0);x.setGravity(Gravity.CENTER);final int k=i;x.setOnClickListener(v->{if(k==0)showDetail();else if(k==1)showChart();else if(k==2||k==3)showNews();else showFinancial();});tabs.addView(x,new LinearLayout.LayoutParams(0,dp(34),1));}body.addView(tabs);gap(8);
   LinearLayout stats=new LinearLayout(this);String[] ss={"Açılış\n274,00","Yüksek\n278,40","Düşük\n272,60","Hacim\n8,4M","Piyasa Değeri\n382,1 Mr ₺"};for(String s:ss){TextView x=t(s,9,Color.WHITE,false);x.setGravity(Gravity.CENTER);stats.addView(x,new LinearLayout.LayoutParams(0,dp(48),1));}body.addView(stats);gap(8);
@@ -144,6 +145,9 @@ public class ReferenceUiActivity extends Activity {
   LinearLayout root=detailRoot();body.addView(t("Diğer",20,Color.WHITE,true));gap(8);LinearLayout profile=card();profile.addView(t("EK   Erdogan Kulanoglu",15,Color.WHITE,true));profile.addView(t("Pro Hesap",10,BLUE,true));body.addView(profile);gap(8);
   String[] items={"Piyasa Takvimi","Sektörler","Favorilerim","Alarmlar","Hisse Karşılaştırma","Döviz / Altın / Emtia","Ekonomik Veriler","Ayarlar","Yardım & Destek","Hakkında"};for(String s:items){TextView v=t(s+"   ›",12,Color.WHITE,false);v.setPadding(dp(12),0,dp(12),0);v.setBackground(bg(PANEL,8));v.setOnClickListener(x->Toast.makeText(this,s+" açılacak",Toast.LENGTH_SHORT).show());body.addView(v,new LinearLayout.LayoutParams(-1,dp(42)));gap(3);}TextView out=pill("Çıkış Yap",RED);body.addView(out,new LinearLayout.LayoutParams(-1,dp(42)));nav(root,4);setContentView(root);
  }
+
+ private void syncRadarIndex(){for(int i=0;i<radarSymbols.length;i++)if(radarSymbols[i].equals(selectedSymbol)){radarIndex=i;return;}}
+ private void moveRadar(int delta){syncRadarIndex();radarIndex=(radarIndex+delta+radarSymbols.length)%radarSymbols.length;selectedSymbol=radarSymbols[radarIndex];lastRadarSymbol=selectedSymbol;showDetail();}
 
  private void showAddStockDialog(){
   LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(dp(20),dp(8),dp(20),0);
