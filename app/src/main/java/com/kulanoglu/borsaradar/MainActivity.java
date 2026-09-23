@@ -144,7 +144,7 @@ public class MainActivity extends Activity {
         LinearLayout nav=new LinearLayout(this); nav.setOrientation(LinearLayout.HORIZONTAL); nav.setPadding(dp(5),dp(4),dp(5),dp(5)); nav.setBackgroundColor(Color.rgb(7,27,46));
         Button home=button("⌂\nAna Sayfa",page.equals("Ana Sayfa")?Color.rgb(16,48,78):NAVY2), markets=button("▥\nPiyasalar",page.equals("Piyasalar")?Color.rgb(16,48,78):NAVY2), radar=button("◎\nRadar",page.contains("Radar")?Color.rgb(16,48,78):NAVY2), portfolio=button("▣\nPortföy",page.equals("Portföy")?Color.rgb(16,48,78):NAVY2), more=button("•••\nDiğer",page.equals("Diğer")?Color.rgb(16,48,78):NAVY2);
         Button[] ns={home,markets,radar,portfolio,more}; String[] pages={"Ana Sayfa","Piyasalar","Radar Taraması","Portföy","Diğer"}; for(int i=0;i<ns.length;i++){Button b=ns[i];b.setTextSize(10);b.setAllCaps(false); if(page.equals(pages[i])||(i==2&&page.contains("Radar"))){b.setTextColor(Color.rgb(83,158,255));} nav.addView(b,new LinearLayout.LayoutParams(0,dp(44),1));}
-        home.setOnClickListener(v->showDashboard()); markets.setOnClickListener(v->singleStockDialog()); radar.setOnClickListener(v->showRadar()); portfolio.setOnClickListener(v->showPortfolio()); more.setOnClickListener(v->showMore()); root.addView(nav);
+        home.setOnClickListener(v->showDashboard()); markets.setOnClickListener(v->showDashboard()); radar.setOnClickListener(v->showDashboard()); portfolio.setOnClickListener(v->showDashboard()); more.setOnClickListener(v->showDashboard()); root.addView(nav);
         setContentView(root);
     }
 
@@ -161,7 +161,7 @@ public class MainActivity extends Activity {
         ScrollView sv=new ScrollView(this); sv.setFillViewport(true); sv.setBackgroundColor(NAVY);
         content=new LinearLayout(this); content.setOrientation(LinearLayout.VERTICAL); content.setPadding(dp(7),dp(3),dp(7),dp(9)); content.setBackgroundColor(NAVY);
         sv.addView(content); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
-        LinearLayout nav=new LinearLayout(this); nav.setBackgroundColor(Color.rgb(7,27,46)); Button home=button("⌂\nAna Sayfa",NAVY2),markets=button("▥\nPiyasalar",NAVY2),radar=button("◎\nRadar",NAVY2),portfolio=button("▣\nPortföy",NAVY2),more=button("•••\nDiğer",NAVY2); Button[] ns={home,markets,radar,portfolio,more}; for(Button b:ns){b.setTextSize(9);b.setAllCaps(false);nav.addView(b,new LinearLayout.LayoutParams(0,dp(44),1));} home.setOnClickListener(v->showDashboard());markets.setOnClickListener(v->singleStockDialog());radar.setOnClickListener(v->showRadar());portfolio.setOnClickListener(v->showPortfolio());more.setOnClickListener(v->showMore());root.addView(nav);
+        LinearLayout nav=new LinearLayout(this); nav.setBackgroundColor(Color.rgb(7,27,46)); Button home=button("⌂\nAna Sayfa",NAVY2),markets=button("▥\nPiyasalar",NAVY2),radar=button("◎\nRadar",NAVY2),portfolio=button("▣\nPortföy",NAVY2),more=button("•••\nDiğer",NAVY2); Button[] ns={home,markets,radar,portfolio,more}; for(Button b:ns){b.setTextSize(9);b.setAllCaps(false);nav.addView(b,new LinearLayout.LayoutParams(0,dp(44),1));} home.setOnClickListener(v->showDashboard());markets.setOnClickListener(v->showDashboard());radar.setOnClickListener(v->showDashboard());portfolio.setOnClickListener(v->showDashboard());more.setOnClickListener(v->showDashboard());root.addView(nav);
         setContentView(root);
     }
 
@@ -174,7 +174,7 @@ public class MainActivity extends Activity {
         TextView alert=chip("●",BLUE); brand.addView(alert,new LinearLayout.LayoutParams(dp(34),dp(30))); content.addView(brand);
 
         TextView search=txt("⌕   Hisse, endeks veya şirket ara",12,Color.rgb(190,207,222));
-        search.setPadding(dp(12),dp(10),dp(12),dp(10)); search.setBackground(bg(PANEL,12)); search.setOnClickListener(v->singleStockDialog()); content.addView(search); spacer(8);
+        search.setPadding(dp(12),dp(10),dp(12),dp(10)); search.setBackground(bg(PANEL,12)); search.setOnClickListener(v->{}); content.addView(search); spacer(8);
 
         LinearLayout exchange=new LinearLayout(this);
         String[] ex={"BIST","Almanya","ABD","Tümü"};
@@ -188,17 +188,17 @@ public class MainActivity extends Activity {
         Button[] sb=new Button[4]; for(int i=0;i<4;i++){sb[i]=button(st[i],cols[i]);sb[i].setGravity(Gravity.START|Gravity.CENTER_VERTICAL);sb[i].setTextSize(10);sb[i].setAllCaps(false);}
         row1.addView(sb[0],new LinearLayout.LayoutParams(0,dp(58),1));row1.addView(sb[1],new LinearLayout.LayoutParams(0,dp(58),1));
         row2.addView(sb[2],new LinearLayout.LayoutParams(0,dp(58),1));row2.addView(sb[3],new LinearLayout.LayoutParams(0,dp(58),1));content.addView(row1);content.addView(row2);
-        sb[0].setOnClickListener(v->showRadar());for(int i=1;i<4;i++)sb[i].setOnClickListener(v->showBaskets()); spacer(10);
+        for(int i=0;i<4;i++)sb[i].setOnClickListener(v->{}); spacer(10);
 
         LinearLayout title=new LinearLayout(this);title.setGravity(Gravity.CENTER_VERTICAL);title.addView(bold("Günün Öne Çıkanları",14,Color.WHITE),new LinearLayout.LayoutParams(0,dp(28),1));
-        TextView see=txt("Tümünü Gör  ›",10,BLUE);see.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);see.setOnClickListener(v->showRadar());title.addView(see,new LinearLayout.LayoutParams(0,dp(28),1));content.addView(title);
-        LinearLayout featured=card();String[] demo={"THYAO","BIMAS","TCELL"};for(String s:demo){RadarItem ri=findRadarItem(s);LinearLayout rr=new LinearLayout(this);rr.setGravity(Gravity.CENTER_VERTICAL);TextView n=bold(s,12,Color.WHITE);rr.addView(n,new LinearLayout.LayoutParams(0,dp(32),1));String pv=ri!=null?money(ri.price,s):"—";TextView p=bold(pv,11,Color.WHITE);p.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);rr.addView(p,new LinearLayout.LayoutParams(0,dp(32),1));String sig=ri!=null?ri.recommendation:"İZLE";int cc=sig.contains("AL")?GREEN:sig.contains("SAT")?RED:AMBER;TextView q=chip(sig,cc);rr.addView(q,new LinearLayout.LayoutParams(dp(78),dp(27)));final String fs=s;rr.setOnClickListener(v->analyzeStock(fs));featured.addView(rr);}content.addView(featured); spacer(9);
+        TextView see=txt("Tümünü Gör  ›",10,BLUE);see.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);see.setOnClickListener(v->{});title.addView(see,new LinearLayout.LayoutParams(0,dp(28),1));content.addView(title);
+        LinearLayout featured=card();String[] demo={"THYAO","BIMAS","TCELL"};for(String s:demo){RadarItem ri=findRadarItem(s);LinearLayout rr=new LinearLayout(this);rr.setGravity(Gravity.CENTER_VERTICAL);TextView n=bold(s,12,Color.WHITE);rr.addView(n,new LinearLayout.LayoutParams(0,dp(32),1));String pv=ri!=null?money(ri.price,s):"—";TextView p=bold(pv,11,Color.WHITE);p.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);rr.addView(p,new LinearLayout.LayoutParams(0,dp(32),1));String sig=ri!=null?ri.recommendation:"İZLE";int cc=sig.contains("AL")?GREEN:sig.contains("SAT")?RED:AMBER;TextView q=chip(sig,cc);rr.addView(q,new LinearLayout.LayoutParams(dp(78),dp(27)));final String fs=s;rr.setOnClickListener(v->{});featured.addView(rr);}content.addView(featured); spacer(9);
 
         content.addView(bold("Piyasa Özeti",14,Color.WHITE)); spacer(4);
         LinearLayout markets=new LinearLayout(this);String[] names={"BIST 100","DAX","S&P 500","NASDAQ"};String[] syms={"XU100.IS","^GDAXI","^GSPC","^IXIC"};
-        for(int i=0;i<4;i++){LinearLayout mc=card();mc.setPadding(dp(7),dp(6),dp(7),dp(6));mc.addView(bold(names[i],9,Color.WHITE));MarketDataService.Spot sp=MarketDataService.latestSpot(syms[i]);mc.addView(bold(sp!=null&&sp.price>0?fmt(sp.price):"—",11,Color.WHITE));mc.addView(txt(sp!=null?"Güncel":"Veri bekleniyor",8,sp!=null?GREEN:MUTED));final String ms=syms[i];mc.setOnClickListener(v->analyzeStock(ms));markets.addView(mc,new LinearLayout.LayoutParams(0,dp(64),1));}content.addView(markets); spacer(9);
+        for(int i=0;i<4;i++){LinearLayout mc=card();mc.setPadding(dp(7),dp(6),dp(7),dp(6));mc.addView(bold(names[i],9,Color.WHITE));MarketDataService.Spot sp=MarketDataService.latestSpot(syms[i]);mc.addView(bold(sp!=null&&sp.price>0?fmt(sp.price):"—",11,Color.WHITE));mc.addView(txt(sp!=null?"Güncel":"Veri bekleniyor",8,sp!=null?GREEN:MUTED));final String ms=syms[i];mc.setOnClickListener(v->{});markets.addView(mc,new LinearLayout.LayoutParams(0,dp(64),1));}content.addView(markets); spacer(9);
 
-        LinearLayout news=card();LinearLayout nr=new LinearLayout(this);nr.setGravity(Gravity.CENTER_VERTICAL);TextView dot=chip("●",RED);nr.addView(dot,new LinearLayout.LayoutParams(dp(34),dp(28)));LinearLayout nt=new LinearLayout(this);nt.setOrientation(LinearLayout.VERTICAL);nt.addView(bold("Son Dakika",12,Color.WHITE));nt.addView(txt("KAP ve önemli piyasa gelişmeleri",9,MUTED));nr.addView(nt,new LinearLayout.LayoutParams(0,dp(42),1));TextView arrow=bold("›",19,BLUE);arrow.setGravity(Gravity.CENTER);nr.addView(arrow,new LinearLayout.LayoutParams(dp(28),dp(42)));news.addView(nr);news.setOnClickListener(v->showRadar());content.addView(news);
+        LinearLayout news=card();LinearLayout nr=new LinearLayout(this);nr.setGravity(Gravity.CENTER_VERTICAL);TextView dot=chip("●",RED);nr.addView(dot,new LinearLayout.LayoutParams(dp(34),dp(28)));LinearLayout nt=new LinearLayout(this);nt.setOrientation(LinearLayout.VERTICAL);nt.addView(bold("Son Dakika",12,Color.WHITE));nt.addView(txt("KAP ve önemli piyasa gelişmeleri",9,MUTED));nr.addView(nt,new LinearLayout.LayoutParams(0,dp(42),1));TextView arrow=bold("›",19,BLUE);arrow.setGravity(Gravity.CENTER);nr.addView(arrow,new LinearLayout.LayoutParams(dp(28),dp(42)));news.addView(nr);news.setOnClickListener(v->{});content.addView(news);
         if(scanRunning){spacer(4);ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);bar.setMax(ALL_SYMBOLS.length);bar.setProgress(scanDone.get());content.addView(bar);}
     }
 
