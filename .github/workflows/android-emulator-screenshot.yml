@@ -46,12 +46,6 @@ jobs:
             adb exec-out screencap -p > emulator-artifacts/01-home.png
             test -s emulator-artifacts/01-home.png
             file emulator-artifacts/01-home.png
-            adb shell input tap 520 365
-            sleep 1
-            adb shell input text THYAO
-            adb shell input keyevent 66
-            sleep 8
-            adb exec-out screencap -p > emulator-artifacts/03-detail-graph.png
             adb shell input tap 535 2160
             sleep 2
             adb exec-out screencap -p > emulator-artifacts/02-radar.png
