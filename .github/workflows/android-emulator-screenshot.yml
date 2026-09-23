@@ -56,6 +56,11 @@ jobs:
             sleep 2
             adb exec-out screencap -p > emulator-artifacts/04-detail-chart.png
             test -s emulator-artifacts/04-detail-chart.png
+            adb shell am force-stop com.kulanoglu.borsaradar.finalapp
+            adb shell am start -n com.kulanoglu.borsaradar.finalapp/com.kulanoglu.borsaradar.ReferenceUiActivity --es screen news
+            sleep 2
+            adb exec-out screencap -p > emulator-artifacts/05-news-kap.png
+            test -s emulator-artifacts/05-news-kap.png
             adb shell input keyevent 4
             sleep 1
             adb shell input tap 535 2160
