@@ -46,7 +46,7 @@ jobs:
             adb exec-out screencap -p > emulator-artifacts/01-home.png
             test -s emulator-artifacts/01-home.png
             file emulator-artifacts/01-home.png
-            adb shell input tap 300 930
+            adb shell input tap 150 520
             sleep 2
             adb exec-out screencap -p > emulator-artifacts/03-detail-general.png
             test -s emulator-artifacts/03-detail-general.png
