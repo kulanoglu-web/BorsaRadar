@@ -14,7 +14,8 @@ public class ReferenceUiActivity extends Activity {
  private android.graphics.drawable.GradientDrawable bg(int c,int r){android.graphics.drawable.GradientDrawable g=new android.graphics.drawable.GradientDrawable();g.setColor(c);g.setCornerRadius(dp(r));return g;}
  private TextView t(String s,int z,int c,boolean b){TextView v=new TextView(this);v.setText(s);v.setTextSize(z);v.setTextColor(c);if(b)v.setTypeface(null,Typeface.BOLD);v.setGravity(Gravity.CENTER_VERTICAL);return v;}
  private LinearLayout card(){LinearLayout v=new LinearLayout(this);v.setOrientation(LinearLayout.VERTICAL);v.setPadding(dp(12),dp(10),dp(12),dp(10));v.setBackground(bg(PANEL,12));return v;}
- private void gap(int h){Space s=new Space(this);body.addView(s,new LinearLayout.LayoutParams(1,dp(h)));}\n private TextView pill(String s,int color){TextView v=t(s,10,Color.WHITE,true);v.setGravity(Gravity.CENTER);v.setBackground(bg(color,9));v.setPadding(dp(8),0,dp(8),0);return v;}
+ private void gap(int h){Space s=new Space(this);body.addView(s,new LinearLayout.LayoutParams(1,dp(h)));}
+ private TextView pill(String s,int color){TextView v=t(s,10,Color.WHITE,true);v.setGravity(Gravity.CENTER);v.setBackground(bg(color,9));v.setPadding(dp(8),0,dp(8),0);return v;}
  @Override public void onCreate(Bundle b){super.onCreate(b);showHome();}
  private void showHome(){
   LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(NAVY);
