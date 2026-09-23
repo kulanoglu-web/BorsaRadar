@@ -8,7 +8,7 @@ import android.view.Gravity;
 import android.widget.*;
 
 public class ReferenceUiActivity extends Activity {
- private final int NAVY=Color.rgb(5,18,34), PANEL=Color.rgb(12,34,59), BLUE=Color.rgb(36,118,255), MUTED=Color.rgb(137,163,188), GREEN=Color.rgb(31,191,126), RED=Color.rgb(238,82,83);
+ private final int NAVY=Color.rgb(5,18,34), PANEL=Color.rgb(12,34,59), BLUE=Color.rgb(36,118,255), MUTED=Color.rgb(137,163,188), GREEN=Color.rgb(31,191,126), AMBER=Color.rgb(245,158,11), RED=Color.rgb(238,82,83);
  private LinearLayout body; private int screen=0;
  private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
  private android.graphics.drawable.GradientDrawable bg(int c,int r){android.graphics.drawable.GradientDrawable g=new android.graphics.drawable.GradientDrawable();g.setColor(c);g.setCornerRadius(dp(r));return g;}
