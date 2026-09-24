@@ -181,7 +181,7 @@ if portfolio_anchor in s and 'private void showMore()' not in s:
     more='''    private void showMore() {
         shell("Diğer");
         LinearLayout profile=card();profile.addView(bold("BorsaRadar",19,Color.WHITE));profile.addView(txt("Piyasa araçları ve uygulama seçenekleri",13,Color.rgb(164,181,202)));content.addView(profile);spacer(8);
-        for(String m:new String[]{"Piyasa Takvimi","Sektörler","Favorilerim","Alarmlar","Hisse Karşılaştırma","Döviz / Altın / Emtia","Ekonomik Veriler","Ayarlar","Yardım & Destek","Hakkında","Çıkış Yap"}){Button b=button(m,NAVY2);b.setGravity(Gravity.LEFT|Gravity.CENTER_VERTICAL);content.addView(b,new LinearLayout.LayoutParams(-1,dp(50)));}
+        content.addView(bold("BorsaRadar V3.0.1",16,Color.WHITE));content.addView(txt("V18 • build 31",12,Color.LTGRAY));spacer(10);for(String m:new String[]{"Piyasa Takvimi","Sektörler","Favorilerim","Alarmlar","Hisse Karşılaştırma","Döviz / Altın / Emtia","Ekonomik Veriler","Ayarlar","Yardım & Destek","Hakkında","Çıkış Yap"}){Button b=button(m,NAVY2);b.setGravity(Gravity.LEFT|Gravity.CENTER_VERTICAL);content.addView(b,new LinearLayout.LayoutParams(-1,dp(50)));}
     }
 
 '''
@@ -226,7 +226,7 @@ portfolio_method='    private void showPortfolio() {'
 if portfolio_method in s and 'private void showMore()' not in s:
     more='''    private void showMore() {
         shell("Diğer"); LinearLayout profile=card();profile.addView(bold("BorsaRadar",20,Color.WHITE));profile.addView(txt("Piyasa araçları ve uygulama seçenekleri",13,Color.rgb(164,181,202)));content.addView(profile);spacer(8);
-        for(String item:new String[]{"Piyasa Takvimi","Sektörler","Favorilerim","Alarmlar","Hisse Karşılaştırma","Döviz / Altın / Emtia","Ekonomik Veriler","Ayarlar","Yardım & Destek","Hakkında","Çıkış Yap"}){Button b=button(item,NAVY2);content.addView(b,new LinearLayout.LayoutParams(-1,dp(50)));spacer(4);}
+        content.addView(bold("BorsaRadar V3.0.1",16,Color.WHITE));content.addView(txt("V18 • build 31",12,Color.LTGRAY));spacer(10);for(String item:new String[]{"Piyasa Takvimi","Sektörler","Favorilerim","Alarmlar","Hisse Karşılaştırma","Döviz / Altın / Emtia","Ekonomik Veriler","Ayarlar","Yardım & Destek","Hakkında","Çıkış Yap"}){Button b=button(item,NAVY2);content.addView(b,new LinearLayout.LayoutParams(-1,dp(50)));spacer(4);}
     }
 
 '''
