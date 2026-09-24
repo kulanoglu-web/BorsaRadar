@@ -19,6 +19,10 @@ public final class ShortPulseEngine {
     }
 
     public static Result analyze(List<MarketDataService.Candle> x) {
+        return analyze(x, "");
+    }
+
+    public static Result analyze(List<MarketDataService.Candle> x, String symbol) {
         if(x==null || x.size()<15) throw new IllegalArgumentException("En az 15 işlem günü gerekli");
         int end=x.size()-1;
         Result r=new Result();
@@ -75,6 +79,17 @@ public final class ShortPulseEngine {
         r.chaseRisk=stretched || trap;
 
         double s=0;
+        String normalized=symbol==null?"":symbol.toUpperCase(Locale.ROOT);
+        boolean bist=normalized.endsWith(".IS") || (!normalized.contains(".") && !normalized.isEmpty());
+        boolean germany=normalized.endsWith(".DE");
+        // Market calibration: BIST gets slightly stricter volume/flow confirmation,
+        // Germany rewards cleaner trend efficiency, US rewards ATR-normalized momentum.
+        double brtvBuy=germany?18.0:22.0;
+        double brtvSell=germany?-22.0:-25.0;
+        double brmBuy=bist?1.20:(germany?0.95:1.05);
+        double brmSell=bist?-1.20:(germany?-0.95:-1.05);
+        double brhBuy=bist?8.0:6.0;
+        double brhSell=bist?-12.0:-10.0;
         if(e3>e5)s+=0.7;else s-=0.7;
         if(e5>e8)s+=0.9;else s-=0.9;
         if(e8>e12)s+=0.7;else s-=0.7;
@@ -84,9 +99,9 @@ public final class ShortPulseEngine {
         if(rv>1.05)s+=0.65; else if(rv<0.65)s-=0.4;
         if(cmf>0.04)s+=0.75; else if(cmf<-0.08)s-=0.8;
         if(vp>0.06)s+=0.65; else if(vp<-0.10)s-=0.7;
-        if(r.brtv>22)s+=0.55; else if(r.brtv<-25)s-=0.7;
-        if(r.brm>1.10)s+=0.60; else if(r.brm<-1.10)s-=0.65;
-        if(r.brh>6)s+=0.65; else if(r.brh<-10)s-=0.7;
+        if(r.brtv>brtvBuy)s+=0.55; else if(r.brtv<brtvSell)s-=0.7;
+        if(r.brm>brmBuy)s+=0.60; else if(r.brm<brmSell)s-=0.65;
+        if(r.brh>brhBuy)s+=0.65; else if(r.brh<brhSell)s-=0.7;
         // Gerçekleşmiş kırılıma daha az puan; hazırlık evresine bonus.
         if(breakout && !stretched)s+=0.45;
         if(r.earlyBreakout)s+=1.35;
