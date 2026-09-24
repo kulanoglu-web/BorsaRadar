@@ -25,7 +25,9 @@ public final class MarketDataService {
     private static final Map<String,Long> HOST_LAST_REQUEST=new ConcurrentHashMap<>();
     private static final Map<String,Cache> CACHE=new ConcurrentHashMap<>();
     private static final Map<String,Spot> SPOT_CACHE=new ConcurrentHashMap<>();
-    private static final ExecutorService AUX_IO=Executors.newFixedThreadPool(4);
+    private static final ExecutorService AUX_IO=Executors.newFixedThreadPool(8);
+    private static final String[] DATA_SOURCE_PLAN={"Yahoo-1","Yahoo-2","Google Finance","Stooq","Alpha Vantage","FMP","Twelve Data","Finnhub","Massive","KAP/BIST"};
+    private static final Map<String,Long> SOURCE_COOLDOWN=new ConcurrentHashMap<>();
     private MarketDataService(){}
 
     public static final class Candle {
@@ -67,6 +69,10 @@ public final class MarketDataService {
 
     public static Spot latestSpot(String inputSymbol){String symbol=normalizeSymbol(inputSymbol);Spot s=SPOT_CACHE.get(symbol);if(s!=null&&System.currentTimeMillis()-s.at<120_000L)return s;return null;}
     public static String sourceFor(String inputSymbol,String range,String interval){Cache c=CACHE.get(normalizeSymbol(inputSymbol)+"|"+range+"|"+interval);return c==null?"":c.source;}
+    public static String[] dataSourcePlan(){return DATA_SOURCE_PLAN.clone();}
+    private static boolean sourceReady(String name){Long until=SOURCE_COOLDOWN.get(name);return until==null||System.currentTimeMillis()>=until;}
+    private static void sourceFailed(String name){SOURCE_COOLDOWN.put(name,System.currentTimeMillis()+60_000L);}
+    private static void sourceOk(String name){SOURCE_COOLDOWN.remove(name);}
 
     public static String normalizeSymbol(String input){
         if(input==null)return "";String s=input.trim().toUpperCase();
@@ -90,7 +96,9 @@ public final class MarketDataService {
         for(int attempt=0;attempt<2;attempt++){
             String host=hosts[(start+attempt)%2];
             String u="https://"+host+"/v8/finance/chart/"+encodedSymbol+"?range="+range+"&interval="+interval+"&includePrePost=false&events=div%2Csplits";
-            try{return fetchYahooJson(u,symbol,host);}catch(Exception e){last=new Exception("Yahoo "+host+" "+symbol+" "+range+"/"+interval+": "+e.getMessage(),e);}
+            String sourceName=host.startsWith("query1")?"Yahoo-1":"Yahoo-2";
+            if(!sourceReady(sourceName))continue;
+            try{List<Candle> data=fetchYahooJson(u,symbol,host);sourceOk(sourceName);return data;}catch(Exception e){sourceFailed(sourceName);last=new Exception("Yahoo "+host+" "+symbol+" "+range+"/"+interval+": "+e.getMessage(),e);}
         }
         throw last==null?new Exception("Yahoo veri alınamadı: "+symbol+" "+range+"/"+interval):last;
     }
@@ -105,7 +113,7 @@ public final class MarketDataService {
     private static int rangeDays(String range){if(range==null)return 0;String r=range.toLowerCase(Locale.US);try{if(r.endsWith("d"))return Integer.parseInt(r.substring(0,r.length()-1));if(r.endsWith("mo"))return Integer.parseInt(r.substring(0,r.length()-2))*23;if(r.endsWith("y"))return Integer.parseInt(r.substring(0,r.length()-1))*252;}catch(Exception ignored){}return 0;}
     private static String toStooqSymbol(String yahoo){String s=yahoo.toLowerCase(Locale.US);if(s.endsWith(".is"))return s.substring(0,s.length()-3)+".tr";if(s.endsWith(".de"))return s;if(s.startsWith("^")||s.contains("="))return s.replace("^","").replace("=x","");if(!s.contains("."))return s+".us";return s;}
 
-    private static void scheduleGoogleSpot(String inputSymbol,String normalized){Spot old=SPOT_CACHE.get(normalized);long now=System.currentTimeMillis();if(old!=null&&now-old.at<90_000L)return;AUX_IO.execute(()->{try{double p=fetchGoogleFinanceSpot(inputSymbol,normalized);if(p>0)SPOT_CACHE.put(normalized,new Spot(p,"Google Finance",System.currentTimeMillis()));}catch(Exception ignored){}});}
+    private static void scheduleGoogleSpot(String inputSymbol,String normalized){if(!sourceReady("Google Finance"))return;Spot old=SPOT_CACHE.get(normalized);long now=System.currentTimeMillis();if(old!=null&&now-old.at<90_000L)return;AUX_IO.execute(()->{try{double p=fetchGoogleFinanceSpot(inputSymbol,normalized);if(p>0){SPOT_CACHE.put(normalized,new Spot(p,"Google Finance",System.currentTimeMillis()));sourceOk("Google Finance");}}catch(Exception ignored){sourceFailed("Google Finance");}});}
     private static double fetchGoogleFinanceSpot(String input,String normalized)throws Exception{String quote=googleQuote(input,normalized);String body=httpGet("https://www.google.com/finance/quote/"+quote,"www.google.com",2500,3500,"text/html,*/*");Pattern[] pats={Pattern.compile("data-last-price=\\\"([0-9.,]+)\\\""),Pattern.compile("class=\\\"YMlKec fxKbKc\\\"[^>]*>(?:[^0-9]*)([0-9.,]+)<")};for(Pattern p:pats){Matcher m=p.matcher(body);if(m.find()){String n=m.group(1).replace(",","");try{return Double.parseDouble(n);}catch(Exception ignored){}}}throw new Exception("Google Finance fiyatı bulunamadı");}
     private static String googleQuote(String input,String normalized){String n=normalized.toUpperCase(Locale.US);if(n.endsWith(".IS"))return n.substring(0,n.length()-3)+":IST";if(n.endsWith(".DE"))return n.substring(0,n.length()-3)+":ETR";String raw=input==null?"":input.toUpperCase(Locale.US);if(raw.startsWith("NYSE:"))return raw.substring(5)+":NYSE";return n+":NASDAQ";}
 
