@@ -27,6 +27,8 @@ public final class MarketDataService {
     private static final Map<String,Spot> SPOT_CACHE=new ConcurrentHashMap<>();
     private static final Map<String,String> LAST_GOOD_SOURCE=new ConcurrentHashMap<>();
     private static final Map<String,Long> SOURCE_LATENCY_MS=new ConcurrentHashMap<>();
+    private static final Map<String,Integer> SOURCE_SUCCESS=new ConcurrentHashMap<>();
+    private static final Map<String,Integer> SOURCE_FAILURE=new ConcurrentHashMap<>();
     private static final ExecutorService AUX_IO=Executors.newFixedThreadPool(8);
     private static final String[] DATA_SOURCE_PLAN={"Yahoo-1","Yahoo-2","Google Finance","Stooq","Alpha Vantage","FMP","Twelve Data","Finnhub","Massive","KAP/BIST"};
     private static final Map<String,Long> SOURCE_COOLDOWN=new ConcurrentHashMap<>();
@@ -75,10 +77,14 @@ public final class MarketDataService {
     public static String lastGoodSource(String inputSymbol){String s=LAST_GOOD_SOURCE.get(normalizeSymbol(inputSymbol));return s==null?"":s;}
     public static int healthySourceCount(){int n=0;for(String s:DATA_SOURCE_PLAN)if(sourceReady(s))n++;return n;}
     private static boolean sourceReady(String name){Long until=SOURCE_COOLDOWN.get(name);return until==null||System.currentTimeMillis()>=until;}
-    private static void sourceFailed(String name){SOURCE_COOLDOWN.put(name,System.currentTimeMillis()+60_000L);}
+    private static void sourceFailed(String name){SOURCE_COOLDOWN.put(name,System.currentTimeMillis()+60_000L);SOURCE_FAILURE.put(name,SOURCE_FAILURE.getOrDefault(name,0)+1);}
     private static void sourceOk(String name){SOURCE_COOLDOWN.remove(name);}
-    private static void sourceOk(String name,long ms){SOURCE_COOLDOWN.remove(name);SOURCE_LATENCY_MS.put(name,ms);}
+    private static void sourceOk(String name,long ms){SOURCE_COOLDOWN.remove(name);SOURCE_LATENCY_MS.put(name,ms);SOURCE_SUCCESS.put(name,SOURCE_SUCCESS.getOrDefault(name,0)+1);}
     public static long sourceLatencyMs(String name){Long v=SOURCE_LATENCY_MS.get(name);return v==null?-1L:v;}
+    public static int sourceSuccessCount(String name){return SOURCE_SUCCESS.getOrDefault(name,0);}
+    public static int sourceFailureCount(String name){return SOURCE_FAILURE.getOrDefault(name,0);}
+    public static double sourceReliability(String name){int ok=sourceSuccessCount(name),bad=sourceFailureCount(name),n=ok+bad;return n==0?0.5:(double)ok/n;}
+    public static String sourceHealthSummary(){StringBuilder b=new StringBuilder();for(String s:DATA_SOURCE_PLAN){if(b.length()>0)b.append(" | ");b.append(s).append(":").append(sourceReady(s)?"OK":"WAIT").append(",").append((int)Math.round(sourceReliability(s)*100)).append("%");long ms=sourceLatencyMs(s);if(ms>=0)b.append(",").append(ms).append("ms");}return b.toString();}
 
     public static String normalizeSymbol(String input){
         if(input==null)return "";String s=input.trim().toUpperCase();
