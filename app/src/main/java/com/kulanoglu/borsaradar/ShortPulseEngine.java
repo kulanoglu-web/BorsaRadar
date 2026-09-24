@@ -13,6 +13,7 @@ public final class ShortPulseEngine {
     public static final class Result {
         public double price, changePct, score, confidence, relativeVolume, atrPct, stopReference;
         public double earlyBreakScore, stretchPct;
+        public double brtv, brm, brh;
         public boolean earlyBreakout, breakout, chaseRisk;
         public String recommendation, explanation, horizonText, momentumText, flowText, trendText, phaseText;
     }
@@ -31,6 +32,11 @@ public final class ShortPulseEngine {
         double rv=relVol(x,10,end), atr7=atr(x,7,end), atr14=atr(x,14,end);
         double eff=efficiency(x,10,end), vp=volumePressure(x,10,end), cmf=cmf(x,12,end);
         r.relativeVolume=rv; r.atrPct=r.price==0?0:atr7/r.price*100;
+        // BorsaRadar custom indicators: BRTV trend efficiency, BRM ATR-adjusted momentum, BRH volume direction pressure.
+        r.brtv=eff*100.0;
+        double atrPctSafe=Math.max(0.25,r.atrPct);
+        r.brm=(0.55*roc3+0.30*roc5+0.15*accel)/atrPctSafe;
+        r.brh=vp*100.0;
 
         double hi10=highestHigh(x,10,end-1);
         double hi20=highestHigh(x,20,end-1);
@@ -78,7 +84,9 @@ public final class ShortPulseEngine {
         if(rv>1.05)s+=0.65; else if(rv<0.65)s-=0.4;
         if(cmf>0.04)s+=0.75; else if(cmf<-0.08)s-=0.8;
         if(vp>0.06)s+=0.65; else if(vp<-0.10)s-=0.7;
-        if(eff>0.22)s+=0.55; else if(eff<-0.25)s-=0.7;
+        if(r.brtv>22)s+=0.55; else if(r.brtv<-25)s-=0.7;
+        if(r.brm>1.10)s+=0.60; else if(r.brm<-1.10)s-=0.65;
+        if(r.brh>6)s+=0.65; else if(r.brh<-10)s-=0.7;
         // Gerçekleşmiş kırılıma daha az puan; hazırlık evresine bonus.
         if(breakout && !stretched)s+=0.45;
         if(r.earlyBreakout)s+=1.35;
@@ -109,7 +117,7 @@ public final class ShortPulseEngine {
         r.phaseText=fastRun?"HAREKET BAŞLAMIŞ":r.earlyBreakout?"KIRILIM HAZIRLIĞI":breakout?(stretched?"GEÇ / UZAMIŞ":"KIRILIM TEYİDİ"):(nearBreak?"SIKIŞMA / EŞİĞE YAKIN":"NORMAL");
         r.explanation=String.format(Locale.US,
                 "%s • erken %.1f/6 • EMA20 uzaklık %.1f%% • RSI7 %.1f • ROC3 %.1f%% (ivme %.1f) • RelVol x%.2f • CMF %.2f • ATR sıkışma %.2f%s",
-                r.phaseText,early,r.stretchPct,rsi7,roc3,accel,rv,cmf,atr14==0?1:atr7/atr14,trap?" • TUZAK RİSKİ":fastRun?" • GEÇ GİRİŞ RİSKİ":"");
+                r.phaseText,early,r.stretchPct,rsi7,roc3,accel,rv,cmf,atr14==0?1:atr7/atr14,trap?" • TUZAK RİSKİ":fastRun?" • GEÇ GİRİŞ RİSKİ":"") + String.format(Locale.US," • BRTV %.1f • BRM %.2f • BRH %.1f",r.brtv,r.brm,r.brh);
         return r;
     }
 
