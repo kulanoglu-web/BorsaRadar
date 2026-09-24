@@ -8,6 +8,8 @@ public final class BacktestEngine {
     public static final class Result {
         public int trades, wins, losses;
         public double netPct, maxDrawdownPct, winRate, avgTradePct;
+        public double customSignalReturnPct, customWinRate;
+        public int customSignals, customWins;
         public String summary;
     }
 
@@ -28,11 +30,23 @@ public final class BacktestEngine {
         boolean in = false;
         double entry = 0, stop = 0, highest = 0;
         double tradeSum = 0;
+        double customReturnSum=0;
+        int customSignals=0,customWins=0;
 
         for (int i = 60; i < x.size(); i++) {
             List<MarketDataService.Candle> slice = x.subList(0, i + 1);
             IndicatorEngine.Snapshot s = IndicatorEngine.analyze(slice);
             double price = x.get(i).close;
+
+            // BRTV/BRM/BRH forward validation: only information available up to day i is used.
+            try {
+                ShortPulseEngine.Result pulse=ShortPulseEngine.analyze(slice, symbolFromSlice(x));
+                if((pulse.recommendation.contains("AL") || pulse.earlyBreakout) && i+5<x.size()){
+                    double future=x.get(i+5).close;
+                    double forward=price==0?0:(future/price-1.0)*100.0;
+                    customReturnSum+=forward; customSignals++; if(forward>0)customWins++;
+                }
+            } catch(Exception ignored) {}
 
             if (!in) {
                 if (("AL".equals(s.signal) || "ERKEN".equals(s.signal)) && !s.trap) {
@@ -64,11 +78,22 @@ public final class BacktestEngine {
         r.maxDrawdownPct = maxDd * 100.0;
         r.winRate = r.trades == 0 ? 0 : (100.0 * r.wins / r.trades);
         r.avgTradePct = r.trades == 0 ? 0 : (100.0 * tradeSum / r.trades);
+        r.customSignals=customSignals; r.customWins=customWins;
+        r.customWinRate=customSignals==0?0:100.0*customWins/customSignals;
+        r.customSignalReturnPct=customSignals==0?0:customReturnSum/customSignals;
         r.summary = "İşlem " + r.trades
                 + " • Kazanma %" + IndicatorEngine.fmt(r.winRate)
                 + " • Net %" + IndicatorEngine.fmt(r.netPct)
                 + " • MaxDD %" + IndicatorEngine.fmt(r.maxDrawdownPct)
-                + " • Ort. işlem %" + IndicatorEngine.fmt(r.avgTradePct);
+                + " • Ort. işlem %" + IndicatorEngine.fmt(r.avgTradePct)
+                + " • BR sinyal " + r.customSignals
+                + " • BR başarı %" + IndicatorEngine.fmt(r.customWinRate)
+                + " • BR 5g ort. %" + IndicatorEngine.fmt(r.customSignalReturnPct);
         return r;
+    }
+    private static String symbolFromSlice(List<MarketDataService.Candle> x){
+        if(x==null||x.isEmpty())return "";
+        String s=x.get(x.size()-1).symbol;
+        return s==null?"":s;
     }
 }
