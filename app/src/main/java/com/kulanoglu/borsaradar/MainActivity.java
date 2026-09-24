@@ -428,8 +428,8 @@ public class MainActivity extends Activity {
         LinearLayout titleRow=new LinearLayout(this);titleRow.setGravity(Gravity.CENTER_VERTICAL);titleRow.addView(bold("Radar Taraması",17,Color.WHITE),new LinearLayout.LayoutParams(0,dp(34),1));TextView search=bold("⌕",18,Color.WHITE);search.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);titleRow.addView(search,new LinearLayout.LayoutParams(dp(36),dp(34)));content.addView(titleRow);
         LinearLayout filters=new LinearLayout(this);String[] fs={"Tümü","AL Sinyali","İzle","SAT"};for(int i=0;i<fs.length;i++){Button q=button(fs[i],i==0?BLUE:NAVY2);q.setTextSize(10);filters.addView(q,new LinearLayout.LayoutParams(0,dp(34),1));}content.addView(filters);spacer(5);
         LinearLayout selectors=new LinearLayout(this);String[] ss={"BIST100 ▼","Tüm Sektörler ▼","Teknik+Temel ▼"};for(String x:ss){Button q=button(x,NAVY2);q.setTextSize(9);selectors.addView(q,new LinearLayout.LayoutParams(0,dp(34),1));}content.addView(selectors);spacer(6);
-        Button scan=button(scanRunning?"Taranıyor  "+scanDone.get()+"/"+ALL_SYMBOLS.length:"Tüm BIST\u0027i Tara",BLUE);scan.setEnabled(!scanRunning);scan.setOnClickListener(v->scanRadar());content.addView(scan,new LinearLayout.LayoutParams(-1,dp(42)));spacer(7);
-        if(scanRunning){ProgressBar pb=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);pb.setMax(ALL_SYMBOLS.length);pb.setProgress(scanDone.get());content.addView(pb);}
+        String[] activeUniverse=symbolsForMarket(); String marketLabel=selectedMarket==Market.BIST?"BIST":selectedMarket==Market.GERMANY?"Almanya":selectedMarket==Market.USA?"ABD":"Tüm Borsalar"; Button scan=button(scanRunning?"Taranıyor  "+scanDone.get()+"/"+activeUniverse.length:marketLabel+" Tara",BLUE);scan.setEnabled(!scanRunning);scan.setOnClickListener(v->scanRadar());content.addView(scan,new LinearLayout.LayoutParams(-1,dp(42)));spacer(7);
+        if(scanRunning){ProgressBar pb=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);pb.setMax(activeUniverse.length);pb.setProgress(scanDone.get());content.addView(pb);}
         if(!radarResults.isEmpty()){
             List<RadarItem> snap=new ArrayList<>(radarResults);snap.sort((x,y)->Double.compare(y.score,x.score));int buy=0,hold=0,risk=0;for(RadarItem x:snap){if(x.recommendation.contains("AL"))buy++;else if(x.recommendation.contains("SAT")||x.recommendation.contains("RİSK"))risk++;else hold++;}
             LinearLayout stats=card();stats.setOrientation(LinearLayout.HORIZONTAL);String[] st={"AL\n"+buy,"İZLE\n"+hold,"SAT\n"+risk,"TOPLAM\n"+snap.size()};int[] co={GREEN,AMBER,RED,Color.WHITE};for(int i=0;i<st.length;i++){TextView v=bold(st[i],11,co[i]);v.setGravity(Gravity.CENTER);stats.addView(v,new LinearLayout.LayoutParams(0,dp(46),1));}content.addView(stats);spacer(6);
@@ -440,19 +440,20 @@ public class MainActivity extends Activity {
     private void scanRadar() {
         if(scanRunning)return;
         scanRunning=true; scanDone.set(0); scanFailed.set(0); scanBuffer.clear();
+        final String[] scanUniverse=symbolsForMarket();
         showRadar();
-        for(String sym:ALL_SYMBOLS)io.execute(()->{
+        for(String sym:scanUniverse)io.execute(()->{
             try{
                 List<MarketDataService.Candle>d=MarketDataService.fetchDaily(sym,"1mo");
                 ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);
                 scanBuffer.add(new RadarItem(sym,r));
             }catch(Exception e){scanFailed.incrementAndGet();}
             int done=scanDone.incrementAndGet();
-            if(done>=ALL_SYMBOLS.length){
+            if(done>=scanUniverse.length){
                 List<RadarItem> sorted;
                 synchronized(scanBuffer){sorted=new ArrayList<>(scanBuffer);}
                 sorted.sort((x,y)->Double.compare(y.score,x.score));
-                int minCoverage=Math.max(20,ALL_SYMBOLS.length/4);if(sorted.size()>=minCoverage){synchronized(radarResults){radarResults.clear();radarResults.addAll(sorted);}saveRadarCache();getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putLong("radar_ts",System.currentTimeMillis()).apply();}
+                int minCoverage=Math.max(3,scanUniverse.length/4);if(sorted.size()>=minCoverage){synchronized(radarResults){radarResults.clear();radarResults.addAll(sorted);}saveRadarCache();getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putLong("radar_ts",System.currentTimeMillis()).apply();}
                 scanRunning=false;main.post(()->{if(sorted.size()<minCoverage)Toast.makeText(this,"Yeni tarama yeterli kapsama ulaşmadı; önceki radar sonuçları korundu.",Toast.LENGTH_LONG).show();showRadar();});
             }else if(done%50==0)main.post(this::showRadar);
         });
