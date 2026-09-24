@@ -10,6 +10,8 @@ public final class BacktestEngine {
         public double netPct, maxDrawdownPct, winRate, avgTradePct;
         public double customSignalReturnPct, customWinRate;
         public int customSignals, customWins;
+        public String bestProfile="BALANCED";
+        public double fastScore, balancedScore, confirmedScore;
         public String summary;
     }
 
@@ -81,6 +83,13 @@ public final class BacktestEngine {
         r.customSignals=customSignals; r.customWins=customWins;
         r.customWinRate=customSignals==0?0:100.0*customWins/customSignals;
         r.customSignalReturnPct=customSignals==0?0:customReturnSum/customSignals;
+        ProfileTest fast=testProfile(x,ShortPulseEngine.Profile.FAST);
+        ProfileTest balanced=testProfile(x,ShortPulseEngine.Profile.BALANCED);
+        ProfileTest confirmed=testProfile(x,ShortPulseEngine.Profile.CONFIRMED);
+        r.fastScore=fast.score(); r.balancedScore=balanced.score(); r.confirmedScore=confirmed.score();
+        if(r.fastScore>=r.balancedScore && r.fastScore>=r.confirmedScore)r.bestProfile="FAST";
+        else if(r.confirmedScore>=r.fastScore && r.confirmedScore>=r.balancedScore)r.bestProfile="CONFIRMED";
+        else r.bestProfile="BALANCED";
         r.summary = "İşlem " + r.trades
                 + " • Kazanma %" + IndicatorEngine.fmt(r.winRate)
                 + " • Net %" + IndicatorEngine.fmt(r.netPct)
@@ -88,9 +97,33 @@ public final class BacktestEngine {
                 + " • Ort. işlem %" + IndicatorEngine.fmt(r.avgTradePct)
                 + " • BR sinyal " + r.customSignals
                 + " • BR başarı %" + IndicatorEngine.fmt(r.customWinRate)
-                + " • BR 5g ort. %" + IndicatorEngine.fmt(r.customSignalReturnPct);
+                + " • BR 5g ort. %" + IndicatorEngine.fmt(r.customSignalReturnPct)
+                + " • En iyi profil " + r.bestProfile
+                + " [F " + IndicatorEngine.fmt(r.fastScore)
+                + " / B " + IndicatorEngine.fmt(r.balancedScore)
+                + " / C " + IndicatorEngine.fmt(r.confirmedScore) + "]";
         return r;
     }
+    private static final class ProfileTest {
+        int signals,wins; double sum;
+        double score(){if(signals<2)return -999;double win=100.0*wins/signals,avg=sum/signals;return avg*2.0+win/20.0-Math.max(0,3-signals);}
+    }
+    private static ProfileTest testProfile(List<MarketDataService.Candle>x,ShortPulseEngine.Profile profile){
+        ProfileTest t=new ProfileTest();String symbol=symbolFromSlice(x);
+        for(int i=60;i+5<x.size();i++){
+            try{
+                List<MarketDataService.Candle>slice=x.subList(0,i+1);
+                ShortPulseEngine.Result p=ShortPulseEngine.analyze(slice,symbol,profile);
+                if("AL".equals(p.recommendation)||p.earlyBreakout){
+                    double price=x.get(i).close,future=x.get(i+5).close;
+                    double ret=price==0?0:(future/price-1.0)*100.0;
+                    t.signals++;t.sum+=ret;if(ret>0)t.wins++;
+                }
+            }catch(Exception ignored){}
+        }
+        return t;
+    }
+
     private static String symbolFromSlice(List<MarketDataService.Candle> x){
         if(x==null||x.isEmpty())return "";
         String s=x.get(x.size()-1).symbol;
