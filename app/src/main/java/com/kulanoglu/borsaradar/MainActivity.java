@@ -445,7 +445,7 @@ public class MainActivity extends Activity {
         for(String sym:scanUniverse)io.execute(()->{
             try{
                 List<MarketDataService.Candle>d=MarketDataService.fetchDaily(sym,"1mo");
-                ShortPulseEngine.Result r=ShortPulseEngine.analyze(d);
+                ShortPulseEngine.Result r=ShortPulseEngine.analyze(d,sym);
                 scanBuffer.add(new RadarItem(sym,r));
             }catch(Exception e){scanFailed.incrementAndGet();}
             int done=scanDone.incrementAndGet();
