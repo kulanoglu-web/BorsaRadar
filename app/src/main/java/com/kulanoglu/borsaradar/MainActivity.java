@@ -49,6 +49,51 @@ public class MainActivity extends Activity {
     private static final int PURPLE = Color.rgb(104, 76, 190);
     private static final int BG = Color.rgb(244, 247, 251);
     private static final String[] ALL_SYMBOLS = BistUniverse.symbols(true);
+    private static final String[] GERMANY_SYMBOLS = {"SAP.DE","SIE.DE","ALV.DE","DTE.DE","MBG.DE","BMW.DE","BAS.DE","IFX.DE","ADS.DE","DBK.DE","RWE.DE","MUV2.DE","VOW3.DE","HEN3.DE","BEI.DE","FRE.DE","HEI.DE","MTX.DE","QIA.DE","SY1.DE"};
+    private static final String[] USA_SYMBOLS = {"AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","AVGO","AMD","NFLX","JPM","V","MA","COST","WMT","KO","PEP","XOM","JNJ","ORCL"};
+    private enum Market { BIST, GERMANY, USA, ALL }
+    private Market selectedMarket = Market.BIST;
+
+    private String[] symbolsForMarket() {
+        if (selectedMarket == Market.GERMANY) return GERMANY_SYMBOLS;
+        if (selectedMarket == Market.USA) return USA_SYMBOLS;
+        if (selectedMarket == Market.ALL) {
+            String[] all = new String[ALL_SYMBOLS.length + GERMANY_SYMBOLS.length + USA_SYMBOLS.length];
+            System.arraycopy(ALL_SYMBOLS,0,all,0,ALL_SYMBOLS.length);
+            System.arraycopy(GERMANY_SYMBOLS,0,all,ALL_SYMBOLS.length,GERMANY_SYMBOLS.length);
+            System.arraycopy(USA_SYMBOLS,0,all,ALL_SYMBOLS.length+GERMANY_SYMBOLS.length,USA_SYMBOLS.length);
+            return all;
+        }
+        return ALL_SYMBOLS;
+    }
+
+    private void selectMarket(Market market) {
+        if (selectedMarket == market) return;
+        selectedMarket = market;
+        detailRequestGeneration.incrementAndGet();
+        detailSymbol = "";
+        detailResult = null;
+        detailContext = null;
+        synchronized (radarResults) { radarResults.clear(); }
+        synchronized (scanBuffer) { scanBuffer.clear(); }
+        scanDone.set(0); scanFailed.set(0); scanRunning = false;
+        showDashboard();
+    }
+
+    private boolean symbolBelongsToSelectedMarket(String symbol) {
+        String n = MarketDataService.normalizeSymbol(symbol);
+        if (selectedMarket == Market.ALL) return true;
+        if (selectedMarket == Market.BIST) return n.endsWith(".IS");
+        if (selectedMarket == Market.GERMANY) return n.endsWith(".DE");
+        return !n.contains(".");
+    }
+
+    private String[] featuredSymbolsForMarket() {
+        if (selectedMarket == Market.GERMANY) return new String[]{"SAP.DE","SIE.DE","ALV.DE"};
+        if (selectedMarket == Market.USA) return new String[]{"NVDA","AAPL","MSFT"};
+        if (selectedMarket == Market.ALL) return new String[]{"THYAO","SAP.DE","NVDA"};
+        return new String[]{"THYAO","BIMAS","TCELL"};
+    }
     private static final String[] DIVIDEND_POOL = {
             "AKBNK","ANHYT","AYGAZ","BIMAS","CCOLA","DOAS","ENJSA","ENKAI","EREGL",
             "FROTO","GARAN","ISCTR","ISDMR","KCHOL","MGROS","SAHOL","SISE","TCELL",
@@ -173,7 +218,8 @@ public class MainActivity extends Activity {
 
         LinearLayout exchange=new LinearLayout(this);
         String[] ex={"BIST","Almanya","ABD","Tümü"};
-        for(int i=0;i<ex.length;i++){TextView x=chip(ex[i],i==0?BLUE:PANEL);x.setGravity(Gravity.CENTER);exchange.addView(x,new LinearLayout.LayoutParams(0,dp(30),1));}
+        Market[] exMarkets={Market.BIST,Market.GERMANY,Market.USA,Market.ALL};
+        for(int i=0;i<ex.length;i++){final Market m=exMarkets[i];TextView x=chip(ex[i],selectedMarket==m?BLUE:PANEL);x.setGravity(Gravity.CENTER);x.setOnClickListener(v->selectMarket(m));exchange.addView(x,new LinearLayout.LayoutParams(0,dp(30),1));}
         content.addView(exchange); spacer(10);
 
         content.addView(bold("Stratejiler",14,Color.WHITE)); spacer(4);
@@ -187,14 +233,14 @@ public class MainActivity extends Activity {
 
         LinearLayout title=new LinearLayout(this);title.setGravity(Gravity.CENTER_VERTICAL);title.addView(bold("Günün Öne Çıkanları",14,Color.WHITE),new LinearLayout.LayoutParams(0,dp(28),1));
         TextView see=txt("Tümünü Gör  ›",10,BLUE);see.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);see.setOnClickListener(v->{});title.addView(see,new LinearLayout.LayoutParams(0,dp(28),1));content.addView(title);
-        LinearLayout featured=card();String[] demo={"THYAO","BIMAS","TCELL"};for(String s:demo){RadarItem ri=findRadarItem(s);LinearLayout rr=new LinearLayout(this);rr.setGravity(Gravity.CENTER_VERTICAL);TextView n=bold(s,12,Color.WHITE);rr.addView(n,new LinearLayout.LayoutParams(0,dp(32),1));String pv=ri!=null?money(ri.price,s):"—";TextView p=bold(pv,11,Color.WHITE);p.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);rr.addView(p,new LinearLayout.LayoutParams(0,dp(32),1));String sig=ri!=null?ri.recommendation:"İZLE";int cc=sig.contains("AL")?GREEN:sig.contains("SAT")?RED:AMBER;TextView q=chip(sig,cc);rr.addView(q,new LinearLayout.LayoutParams(dp(78),dp(27)));final String fs=s;rr.setOnClickListener(v->{});featured.addView(rr);}content.addView(featured); spacer(9);
+        LinearLayout featured=card();String[] demo=featuredSymbolsForMarket();for(String s:demo){RadarItem ri=findRadarItem(s);LinearLayout rr=new LinearLayout(this);rr.setGravity(Gravity.CENTER_VERTICAL);TextView n=bold(s,12,Color.WHITE);rr.addView(n,new LinearLayout.LayoutParams(0,dp(32),1));String pv=ri!=null?money(ri.price,s):"—";TextView p=bold(pv,11,Color.WHITE);p.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);rr.addView(p,new LinearLayout.LayoutParams(0,dp(32),1));String sig=ri!=null?ri.recommendation:"İZLE";int cc=sig.contains("AL")?GREEN:sig.contains("SAT")?RED:AMBER;TextView q=chip(sig,cc);rr.addView(q,new LinearLayout.LayoutParams(dp(78),dp(27)));final String fs=s;rr.setOnClickListener(v->{});featured.addView(rr);}content.addView(featured); spacer(9);
 
         content.addView(bold("Piyasa Özeti",14,Color.WHITE)); spacer(4);
         LinearLayout markets=new LinearLayout(this);String[] names={"BIST 100","DAX","S&P 500","NASDAQ"};String[] syms={"XU100.IS","^GDAXI","^GSPC","^IXIC"};
         for(int i=0;i<4;i++){LinearLayout mc=card();mc.setPadding(dp(7),dp(6),dp(7),dp(6));mc.addView(bold(names[i],9,Color.WHITE));MarketDataService.Spot sp=MarketDataService.latestSpot(syms[i]);mc.addView(bold(sp!=null&&sp.price>0?fmt(sp.price):"—",11,Color.WHITE));mc.addView(txt(sp!=null?"Güncel":"Veri bekleniyor",8,sp!=null?GREEN:MUTED));final String ms=syms[i];mc.setOnClickListener(v->{});markets.addView(mc,new LinearLayout.LayoutParams(0,dp(64),1));}content.addView(markets); spacer(9);
 
         LinearLayout news=card();LinearLayout nr=new LinearLayout(this);nr.setGravity(Gravity.CENTER_VERTICAL);TextView dot=chip("●",RED);nr.addView(dot,new LinearLayout.LayoutParams(dp(34),dp(28)));LinearLayout nt=new LinearLayout(this);nt.setOrientation(LinearLayout.VERTICAL);nt.addView(bold("Son Dakika",12,Color.WHITE));nt.addView(txt("KAP ve önemli piyasa gelişmeleri",9,MUTED));nr.addView(nt,new LinearLayout.LayoutParams(0,dp(42),1));TextView arrow=bold("›",19,BLUE);arrow.setGravity(Gravity.CENTER);nr.addView(arrow,new LinearLayout.LayoutParams(dp(28),dp(42)));news.addView(nr);news.setOnClickListener(v->{});content.addView(news);
-        if(scanRunning){spacer(4);ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);bar.setMax(ALL_SYMBOLS.length);bar.setProgress(scanDone.get());content.addView(bar);}
+        if(scanRunning){spacer(4);ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);bar.setMax(symbolsForMarket().length);bar.setProgress(scanDone.get());content.addView(bar);}
     }
 
     private void showPortfolio() {
