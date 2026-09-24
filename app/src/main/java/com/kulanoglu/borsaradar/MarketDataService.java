@@ -56,9 +56,9 @@ public final class MarketDataService {
         else {
             boolean daily="1d".equals(interval);
             boolean stooqFirst=daily && symbol.endsWith(".IS") && ("6mo".equals(range)||"1y".equals(range)||"2y".equals(range));
-            if(stooqFirst){try{raw=fetchStooqDaily(symbol,range);source="Stooq";}catch(Exception e){last=e;}}
+            if(stooqFirst&&sourceReady("Stooq")){try{long t=System.currentTimeMillis();raw=fetchStooqDaily(symbol,range);source="Stooq";sourceOk("Stooq",System.currentTimeMillis()-t);}catch(Exception e){sourceFailed("Stooq");last=e;}}
             if(raw==null){try{raw=fetchYahoo(symbol,range,interval);source="Yahoo";}catch(Exception e){last=e;}}
-            if(raw==null && daily){try{raw=fetchStooqDaily(symbol,range);source="Stooq";}catch(Exception e){last=e;}}
+            if(raw==null && daily&&sourceReady("Stooq")){try{long t=System.currentTimeMillis();raw=fetchStooqDaily(symbol,range);source="Stooq";sourceOk("Stooq",System.currentTimeMillis()-t);}catch(Exception e){sourceFailed("Stooq");last=e;}}
             if(raw==null){if(cached!=null){raw=new ArrayList<>(cached.data);source=cached.source+"/cache";}else throw last==null?new Exception("Veri alınamadı: "+symbol):last;}
             else {CACHE.put(key,new Cache(now,raw,source));LAST_GOOD_SOURCE.put(symbol,source);}
         }
@@ -96,8 +96,9 @@ public final class MarketDataService {
 
     private static List<Candle> fetchYahoo(String symbol,String range,String interval)throws Exception{
         Exception last=null;
-        int start=Math.floorMod(symbol.hashCode(),2);
         String[] hosts={"query1.finance.yahoo.com","query2.finance.yahoo.com"};
+        long q1=sourceLatencyMs("Yahoo-1"),q2=sourceLatencyMs("Yahoo-2");
+        int start=(q1>=0&&q2>=0)?(q2<q1?1:0):Math.floorMod(symbol.hashCode(),2);
         String encodedSymbol=URLEncoder.encode(symbol,StandardCharsets.UTF_8.name()).replace("+","%20");
         for(int attempt=0;attempt<2;attempt++){
             String host=hosts[(start+attempt)%2];
