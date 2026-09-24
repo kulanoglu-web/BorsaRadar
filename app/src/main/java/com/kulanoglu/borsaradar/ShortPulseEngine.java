@@ -10,6 +10,8 @@ import java.util.Locale;
 public final class ShortPulseEngine {
     private ShortPulseEngine() {}
 
+    public enum Profile { FAST, BALANCED, CONFIRMED }
+
     public static final class Result {
         public double price, changePct, score, confidence, relativeVolume, atrPct, stopReference;
         public double earlyBreakScore, stretchPct;
@@ -19,10 +21,15 @@ public final class ShortPulseEngine {
     }
 
     public static Result analyze(List<MarketDataService.Candle> x) {
-        return analyze(x, "");
+        return analyze(x, "", Profile.BALANCED);
     }
 
     public static Result analyze(List<MarketDataService.Candle> x, String symbol) {
+        return analyze(x, symbol, Profile.BALANCED);
+    }
+
+    public static Result analyze(List<MarketDataService.Candle> x, String symbol, Profile profile) {
+        if(profile==null) profile=Profile.BALANCED;
         if(x==null || x.size()<15) throw new IllegalArgumentException("En az 15 işlem günü gerekli");
         int end=x.size()-1;
         Result r=new Result();
@@ -99,9 +106,12 @@ public final class ShortPulseEngine {
         if(rv>1.05)s+=0.65; else if(rv<0.65)s-=0.4;
         if(cmf>0.04)s+=0.75; else if(cmf<-0.08)s-=0.8;
         if(vp>0.06)s+=0.65; else if(vp<-0.10)s-=0.7;
-        if(r.brtv>brtvBuy)s+=0.55; else if(r.brtv<brtvSell)s-=0.7;
-        if(r.brm>brmBuy)s+=0.60; else if(r.brm<brmSell)s-=0.65;
-        if(r.brh>brhBuy)s+=0.65; else if(r.brh<brhSell)s-=0.7;
+        double wTrend=profile==Profile.FAST?0.35:profile==Profile.CONFIRMED?0.80:0.55;
+        double wMomentum=profile==Profile.FAST?0.90:profile==Profile.CONFIRMED?0.45:0.60;
+        double wVolume=profile==Profile.FAST?0.45:profile==Profile.CONFIRMED?0.90:0.65;
+        if(r.brtv>brtvBuy)s+=wTrend; else if(r.brtv<brtvSell)s-=wTrend+0.15;
+        if(r.brm>brmBuy)s+=wMomentum; else if(r.brm<brmSell)s-=wMomentum+0.05;
+        if(r.brh>brhBuy)s+=wVolume; else if(r.brh<brhSell)s-=wVolume+0.05;
         // Gerçekleşmiş kırılıma daha az puan; hazırlık evresine bonus.
         if(breakout && !stretched)s+=0.45;
         if(r.earlyBreakout)s+=1.35;
@@ -112,18 +122,20 @@ public final class ShortPulseEngine {
         if(trap)s-=2.2;
         r.score=s;
 
+        double buyThreshold=profile==Profile.FAST?4.15:profile==Profile.CONFIRMED?5.25:4.8;
+        double watchThreshold=profile==Profile.FAST?2.25:profile==Profile.CONFIRMED?3.15:2.7;
         if(trap || (breakout && stretched) || fastRun) r.recommendation="KIRILIM BAŞLADI / KOVALAMA";
         else if(r.earlyBreakout && s>=3.0) r.recommendation="KIRILIM ÖNCESİ / İZLE";
-        else if(s>=4.8 && !stretched) r.recommendation="AL";
-        else if(s>=2.7) r.recommendation="KADEMELİ AL / İZLE";
+        else if(s>=buyThreshold && !stretched) r.recommendation="AL";
+        else if(s>=watchThreshold) r.recommendation="KADEMELİ AL / İZLE";
         else if(s<=-2.8) r.recommendation="SAT / RİSKİ AZALT";
         else if(s<=-1.3) r.recommendation="ZAYIF / BEKLE";
         else r.recommendation="TUT / NÖTR";
 
         r.confidence=Math.max(30,Math.min(92,46+Math.abs(s)*5.4+Math.max(0,early)*3.0+(rv>1.05?3:0)-(stretched?7:0)-(trap?12:0)));
         if(r.earlyBreakout)r.horizonText="kırılım hazırlığı • 1–5 işlem günü";
-        else if(s>=4.8)r.horizonText="1–3 işlem günü";
-        else if(s>=2.7)r.horizonText="3–7 işlem günü";
+        else if(s>=buyThreshold)r.horizonText=profile==Profile.FAST?"1–2 işlem günü":profile==Profile.CONFIRMED?"3–7 işlem günü":"1–3 işlem günü";
+        else if(s>=watchThreshold)r.horizonText=profile==Profile.FAST?"1–5 işlem günü":"3–7 işlem günü";
         else r.horizonText="en fazla 10 işlem günü";
         r.stopReference=Math.max(0,r.price-1.8*atr7);
         r.momentumText=acceleration?"ivmeleniyor":roc3>0&&roc5>0?"pozitif":roc3<0&&roc5<0?"negatif":"karışık";
@@ -132,7 +144,7 @@ public final class ShortPulseEngine {
         r.phaseText=fastRun?"HAREKET BAŞLAMIŞ":r.earlyBreakout?"KIRILIM HAZIRLIĞI":breakout?(stretched?"GEÇ / UZAMIŞ":"KIRILIM TEYİDİ"):(nearBreak?"SIKIŞMA / EŞİĞE YAKIN":"NORMAL");
         r.explanation=String.format(Locale.US,
                 "%s • erken %.1f/6 • EMA20 uzaklık %.1f%% • RSI7 %.1f • ROC3 %.1f%% (ivme %.1f) • RelVol x%.2f • CMF %.2f • ATR sıkışma %.2f%s",
-                r.phaseText,early,r.stretchPct,rsi7,roc3,accel,rv,cmf,atr14==0?1:atr7/atr14,trap?" • TUZAK RİSKİ":fastRun?" • GEÇ GİRİŞ RİSKİ":"") + String.format(Locale.US," • BRTV %.1f • BRM %.2f • BRH %.1f",r.brtv,r.brm,r.brh);
+                r.phaseText,early,r.stretchPct,rsi7,roc3,accel,rv,cmf,atr14==0?1:atr7/atr14,trap?" • TUZAK RİSKİ":fastRun?" • GEÇ GİRİŞ RİSKİ":"") + String.format(Locale.US," • BRTV %.1f • BRM %.2f • BRH %.1f • %s",r.brtv,r.brm,r.brh,profile.name());
         return r;
     }
 
