@@ -1,4 +1,5 @@
 name: Build BorsaRadar current APK
+# build-trigger: 2026-09-24-v2
 on:
   workflow_dispatch:
   push:
