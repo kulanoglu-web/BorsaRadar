@@ -21,10 +21,14 @@ public final class BacktestEngine {
         if("TUPRS".equals(s)||"TUPRS.IS".equals(s)){
             Result r=new Result(); r.summary="TUPRS genel optimizasyon/backtest havuzundan hariç"; return r;
         }
-        return run(x);
+        return runInternal(s,x);
     }
 
     public static Result run(List<MarketDataService.Candle> x) {
+        return runInternal(symbolFromSlice(x),x);
+    }
+
+    private static Result runInternal(String symbol,List<MarketDataService.Candle> x) {
         Result r = new Result();
         if (x==null || x.size() < 90) { r.summary = "Backtest için yetersiz veri"; return r; }
 
@@ -42,7 +46,7 @@ public final class BacktestEngine {
 
             // BRTV/BRM/BRH forward validation: only information available up to day i is used.
             try {
-                ShortPulseEngine.Result pulse=ShortPulseEngine.analyze(slice, symbolFromSlice(x));
+                ShortPulseEngine.Result pulse=ShortPulseEngine.analyze(slice, symbol);
                 if((pulse.recommendation.contains("AL") || pulse.earlyBreakout) && i+5<x.size()){
                     double future=x.get(i+5).close;
                     double forward=price==0?0:(future/price-1.0)*100.0;
@@ -83,9 +87,9 @@ public final class BacktestEngine {
         r.customSignals=customSignals; r.customWins=customWins;
         r.customWinRate=customSignals==0?0:100.0*customWins/customSignals;
         r.customSignalReturnPct=customSignals==0?0:customReturnSum/customSignals;
-        ProfileTest fast=testProfile(x,ShortPulseEngine.Profile.FAST);
-        ProfileTest balanced=testProfile(x,ShortPulseEngine.Profile.BALANCED);
-        ProfileTest confirmed=testProfile(x,ShortPulseEngine.Profile.CONFIRMED);
+        ProfileTest fast=testProfile(symbol,x,ShortPulseEngine.Profile.FAST);
+        ProfileTest balanced=testProfile(symbol,x,ShortPulseEngine.Profile.BALANCED);
+        ProfileTest confirmed=testProfile(symbol,x,ShortPulseEngine.Profile.CONFIRMED);
         r.fastScore=fast.score(); r.balancedScore=balanced.score(); r.confirmedScore=confirmed.score();
         if(r.fastScore>=r.balancedScore && r.fastScore>=r.confirmedScore)r.bestProfile="FAST";
         else if(r.confirmedScore>=r.fastScore && r.confirmedScore>=r.balancedScore)r.bestProfile="CONFIRMED";
@@ -108,8 +112,8 @@ public final class BacktestEngine {
         int signals,wins; double sum;
         double score(){if(signals<2)return -999;double win=100.0*wins/signals,avg=sum/signals;return avg*2.0+win/20.0-Math.max(0,3-signals);}
     }
-    private static ProfileTest testProfile(List<MarketDataService.Candle>x,ShortPulseEngine.Profile profile){
-        ProfileTest t=new ProfileTest();String symbol=symbolFromSlice(x);
+    private static ProfileTest testProfile(String symbol,List<MarketDataService.Candle>x,ShortPulseEngine.Profile profile){
+        ProfileTest t=new ProfileTest();
         for(int i=60;i+5<x.size();i++){
             try{
                 List<MarketDataService.Candle>slice=x.subList(0,i+1);
