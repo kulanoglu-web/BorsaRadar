@@ -84,6 +84,8 @@ public final class MarketDataService {
     public static int sourceSuccessCount(String name){return SOURCE_SUCCESS.getOrDefault(name,0);}
     public static int sourceFailureCount(String name){return SOURCE_FAILURE.getOrDefault(name,0);}
     public static double sourceReliability(String name){int ok=sourceSuccessCount(name),bad=sourceFailureCount(name),n=ok+bad;return n==0?0.5:(double)ok/n;}
+    private static double sourceRouteScore(String name){long ms=sourceLatencyMs(name);double speed=ms<0?0.45:Math.max(0.05,1.0-Math.min(ms,5000L)/5000.0);double reliability=sourceReliability(name);return reliability*0.65+speed*0.35;}
+    public static String preferredSource(){String best="";double score=-1;for(String s:DATA_SOURCE_PLAN){if(!sourceReady(s))continue;double v=sourceRouteScore(s);if(v>score){score=v;best=s;}}return best;}
     public static String sourceHealthSummary(){StringBuilder b=new StringBuilder();for(String s:DATA_SOURCE_PLAN){if(b.length()>0)b.append(" | ");b.append(s).append(":").append(sourceReady(s)?"OK":"WAIT").append(",").append((int)Math.round(sourceReliability(s)*100)).append("%");long ms=sourceLatencyMs(s);if(ms>=0)b.append(",").append(ms).append("ms");}return b.toString();}
 
     public static String normalizeSymbol(String input){
@@ -104,7 +106,8 @@ public final class MarketDataService {
         Exception last=null;
         String[] hosts={"query1.finance.yahoo.com","query2.finance.yahoo.com"};
         long q1=sourceLatencyMs("Yahoo-1"),q2=sourceLatencyMs("Yahoo-2");
-        int start=(q1>=0&&q2>=0)?(q2<q1?1:0):Math.floorMod(symbol.hashCode(),2);
+        double s1=sourceRouteScore("Yahoo-1"),s2=sourceRouteScore("Yahoo-2");
+        int start=(q1>=0||q2>=0)?(s2>s1?1:0):Math.floorMod(symbol.hashCode(),2);
         String encodedSymbol=URLEncoder.encode(symbol,StandardCharsets.UTF_8.name()).replace("+","%20");
         for(int attempt=0;attempt<2;attempt++){
             String host=hosts[(start+attempt)%2];
