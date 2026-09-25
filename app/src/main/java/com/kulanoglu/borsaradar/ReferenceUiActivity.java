@@ -19,12 +19,12 @@ public class ReferenceUiActivity extends Activity {
  private final String[] germanyRadarSymbols={"SAP.DE","SIE.DE","ALV.DE","DTE.DE","MBG.DE","BMW.DE","BAS.DE","IFX.DE","ADS.DE","DBK.DE","RWE.DE","MUV2.DE","VOW3.DE","HEN3.DE","BEI.DE","FRE.DE","HEI.DE","MTX.DE","QIA.DE","SY1.DE"};
  private final String[] usaRadarSymbols={"AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","AVGO","AMD","NFLX","JPM","V","MA","COST","WMT","KO","PEP","XOM","JNJ","ORCL"};
  private String[] radarUniverse(){if("Almanya".equals(selectedMarket))return germanyRadarSymbols;if("ABD".equals(selectedMarket))return usaRadarSymbols;if("Tümü".equals(selectedMarket)){String[] all=new String[radarSymbols.length+germanyRadarSymbols.length+usaRadarSymbols.length];System.arraycopy(radarSymbols,0,all,0,radarSymbols.length);System.arraycopy(germanyRadarSymbols,0,all,radarSymbols.length,germanyRadarSymbols.length);System.arraycopy(usaRadarSymbols,0,all,radarSymbols.length+germanyRadarSymbols.length,usaRadarSymbols.length);return all;}
- private String[][] featuredForMarket(){
+ return radarSymbols;\n }\n private String[][] featuredForMarket(){
   if("Almanya".equals(selectedMarket))return new String[][]{{"SAP.DE","","",""},{"SIE.DE","","",""},{"ALV.DE","","",""}};
   if("ABD".equals(selectedMarket))return new String[][]{{"NVDA","","",""},{"AAPL","","",""},{"MSFT","","",""}};
   if("Tümü".equals(selectedMarket))return new String[][]{{"THYAO","","",""},{"SAP.DE","","",""},{"NVDA","","",""}};
   return new String[][]{{"THYAO","","",""},{"BIMAS","","",""},{"TCELL","","",""}};
- }return radarSymbols;} private TextView livePrice,liveChange,liveTime,chartPrice,chartChange,computedSignal,valueHistory,paperValue,technicalRows,technicalSummary,targetRiskData,financialData,chartInfo,homeMarketSummary; private LinearLayout featuredContainer; private LinearLayout horizonSignals; private LinearLayout liveStats; private final java.util.concurrent.ExecutorService uiIo=java.util.concurrent.Executors.newFixedThreadPool(4);
+ } private TextView livePrice,liveChange,liveTime,chartPrice,chartChange,computedSignal,valueHistory,paperValue,technicalRows,technicalSummary,targetRiskData,financialData,chartInfo,homeMarketSummary; private LinearLayout featuredContainer; private LinearLayout horizonSignals; private LinearLayout liveStats; private final java.util.concurrent.ExecutorService uiIo=java.util.concurrent.Executors.newFixedThreadPool(4);
  private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
  private android.graphics.drawable.GradientDrawable bg(int c,int r){android.graphics.drawable.GradientDrawable g=new android.graphics.drawable.GradientDrawable();g.setColor(c);g.setCornerRadius(dp(r));return g;}
  private TextView t(String s,int z,int c,boolean b){TextView v=new TextView(this);v.setText(s);v.setTextSize(z);v.setTextColor(c);if(b)v.setTypeface(null,Typeface.BOLD);v.setGravity(Gravity.CENTER_VERTICAL);return v;}
