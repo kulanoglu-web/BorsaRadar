@@ -29,18 +29,16 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          s=Path('app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java').read_text(encoding='utf-8')
-          d=Path('app/src/main/java/com/kulanoglu/borsaradar/DetailedChartController.java').read_text(encoding='utf-8')
-          t=Path('app/src/main/java/com/kulanoglu/borsaradar/ChartTimeframes.java').read_text(encoding='utf-8')
+          s=Path('app/src/main/java/com/kulanoglu/borsaradar/ReferenceUiActivity.java').read_text(encoding='utf-8')
           checks={
-            'radar manual scan':'Tüm BIST' in s and 'scanRadar()' in s,
-            'radar cache':'saveRadarCache()' in s and 'loadRadarCache()' in s,
-            'portfolio persistence':'savePortfolio()' in s and 'loadPortfolio()' in s,
-            'unified detail':'renderStockDetail(' in s and 'detailTimeframe' in s,
-            'live spot':'latestSpot(symbol)' in s,
-            'adjacent navigation':'adjacentSymbol(' in s,
-            'chart controller':'DetailedChartController.fetch' in s and 'fetchSeries' in d,
-            'timeframes':'2 yıl' in t and '5 dk' in t,
+            'manual radar':'TARAMAYI BAŞLAT' in s and 'loadRadarRows()' in s,
+            'market radar cache':'saveRadarCache(' in s and 'loadRadarCache(' in s,
+            'live spot':'latestSpot(' in s,
+            'technical indicators':'loadTechnicalIndicators()' in s and 'BRTV' in s and 'BRM' in s and 'BRH' in s,
+            'dynamic target risk':'loadTargetRisk()' in s,
+            'financial snapshot':'loadFinancialSnapshot()' in s,
+            'live home':'loadFeaturedHome()' in s and 'loadHomeMarketSummary()' in s,
+            'chart timeframes':'"1G","1H","1A","3A","6A","1Y","2Y"' in s,
           }
           for k,v in checks.items(): print(k,v)
           if not all(checks.values()): raise SystemExit('Production source verification FAILED')
