@@ -19,7 +19,9 @@ public class ReferenceUiActivity extends Activity {
  private final String[] germanyRadarSymbols={"SAP.DE","SIE.DE","ALV.DE","DTE.DE","MBG.DE","BMW.DE","BAS.DE","IFX.DE","ADS.DE","DBK.DE","RWE.DE","MUV2.DE","VOW3.DE","HEN3.DE","BEI.DE","FRE.DE","HEI.DE","MTX.DE","QIA.DE","SY1.DE"};
  private final String[] usaRadarSymbols={"AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","AVGO","AMD","NFLX","JPM","V","MA","COST","WMT","KO","PEP","XOM","JNJ","ORCL"};
  private String[] radarUniverse(){if("Almanya".equals(selectedMarket))return germanyRadarSymbols;if("ABD".equals(selectedMarket))return usaRadarSymbols;if("Tümü".equals(selectedMarket)){String[] all=new String[radarSymbols.length+germanyRadarSymbols.length+usaRadarSymbols.length];System.arraycopy(radarSymbols,0,all,0,radarSymbols.length);System.arraycopy(germanyRadarSymbols,0,all,radarSymbols.length,germanyRadarSymbols.length);System.arraycopy(usaRadarSymbols,0,all,radarSymbols.length+germanyRadarSymbols.length,usaRadarSymbols.length);return all;}
- return radarSymbols;\n }\n private String[][] featuredForMarket(){
+ return radarSymbols;
+ }
+ private String[][] featuredForMarket(){
   if("Almanya".equals(selectedMarket))return new String[][]{{"SAP.DE","","",""},{"SIE.DE","","",""},{"ALV.DE","","",""}};
   if("ABD".equals(selectedMarket))return new String[][]{{"NVDA","","",""},{"AAPL","","",""},{"MSFT","","",""}};
   if("Tümü".equals(selectedMarket))return new String[][]{{"THYAO","","",""},{"SAP.DE","","",""},{"NVDA","","",""}};
@@ -220,10 +222,12 @@ public class ReferenceUiActivity extends Activity {
  private void showLiveChart(String period,java.util.List<MarketDataService.Candle>d){
   if(d==null||d.size()<2)return;LinearLayout root=detailRoot();LinearLayout h=new LinearLayout(this);TextView back=t("‹",24,Color.WHITE,true);back.setOnClickListener(v->showChart());h.addView(back,new LinearLayout.LayoutParams(dp(32),dp(42)));h.addView(t(selectedSymbol+" • "+period,17,Color.WHITE,true),new LinearLayout.LayoutParams(0,dp(42),1));body.addView(h);PriceChartView chart=new PriceChartView(this,d,period);body.addView(chart,new LinearLayout.LayoutParams(-1,dp(430)));TextView tech=pill("Teknik Analiz",BLUE);tech.setOnClickListener(v->showTechnical());body.addView(tech,new LinearLayout.LayoutParams(-1,dp(44)));nav(root,0);setContentView(root);
  }
- private String companyName(String s){if("BIMAS".equals(s))return "BİM Birleşik Mağazalar A.Ş.";if("TCELL".equals(s))return "Turkcell İletişim Hizmetleri A.Ş.";if("ASELS".equals(s))return "ASELSAN Elektronik Sanayi ve Ticaret A.Ş.";if("KRDMD".equals(s))return "Kardemir D";if("PETKM".equals(s))return "Petkim Petrokimya Holding A.Ş.";if("KCHOL".equals(s))return "Koç Holding A.Ş.";if("TUPRS".equals(s))return "Tüpraş";if("GARAN".equals(s))return "Garanti BBVA";if("AKBNK".equals(s))return "Akbank";if("YKBNK".equals(s))return "Yapı Kredi";if("SASA".equals(s))return "SASA Polyester";if("NVDA".equals(s))return "NVIDIA Corporation";return "Türk Hava Yolları A.Ş.";}\n
+ private String companyName(String s){if("BIMAS".equals(s))return "BİM Birleşik Mağazalar A.Ş.";if("TCELL".equals(s))return "Turkcell İletişim Hizmetleri A.Ş.";if("ASELS".equals(s))return "ASELSAN Elektronik Sanayi ve Ticaret A.Ş.";if("KRDMD".equals(s))return "Kardemir D";if("PETKM".equals(s))return "Petkim Petrokimya Holding A.Ş.";if("KCHOL".equals(s))return "Koç Holding A.Ş.";if("TUPRS".equals(s))return "Tüpraş";if("GARAN".equals(s))return "Garanti BBVA";if("AKBNK".equals(s))return "Akbank";if("YKBNK".equals(s))return "Yapı Kredi";if("SASA".equals(s))return "SASA Polyester";if("NVDA".equals(s))return "NVIDIA Corporation";return "Türk Hava Yolları A.Ş.";}
+
  private static String encRadar(String s){try{return android.util.Base64.encodeToString((s==null?"":s).getBytes("UTF-8"),android.util.Base64.NO_WRAP);}catch(Exception e){return "";}}
  private static String decRadar(String s){try{return new String(android.util.Base64.decode(s,android.util.Base64.NO_WRAP),"UTF-8");}catch(Exception e){return "";}}
-  private void saveRadarCache(String market,java.util.List<String[]> rows){java.util.ArrayList<String[]> keep=new java.util.ArrayList<>(cachedRadarRows);cachedRadarRows.clear();cachedRadarRows.addAll(rows);saveRadarCache(market);cachedRadarRows.clear();cachedRadarRows.addAll(keep);}\nprivate void saveRadarCache(String market){
+  private void saveRadarCache(String market,java.util.List<String[]> rows){java.util.ArrayList<String[]> keep=new java.util.ArrayList<>(cachedRadarRows);cachedRadarRows.clear();cachedRadarRows.addAll(rows);saveRadarCache(market);cachedRadarRows.clear();cachedRadarRows.addAll(keep);}
+private void saveRadarCache(String market){
   if(market==null)return;java.util.ArrayList<String[]> rows=radarCacheByMarket.get(market);if(rows==null)rows=cachedRadarRows;
   StringBuilder b=new StringBuilder();for(String[] r:rows){if(b.length()>0)b.append("\n");for(int i=0;i<r.length;i++){if(i>0)b.append(".");b.append(encRadar(r[i]));}}
   getSharedPreferences("borsaradar",MODE_PRIVATE).edit().putString("radar_rows_"+market,b.toString()).putBoolean("scanDone_"+market,!rows.isEmpty()).apply();
