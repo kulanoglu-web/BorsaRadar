@@ -14,7 +14,7 @@ public final class ShortPulseEngine {
 
     public static final class Result {
         public double price, changePct, score, confidence, relativeVolume, atrPct, stopReference;
-        public double earlyBreakScore, stretchPct, rsi7, roc3, roc5, acceleration, cmf, efficiency, volumePressure, ema20GapPct, atrCompression, trendStrength, flowStrength, momentumStrength, bollingerPosition, macdValue, stochastic, supportDistancePct, resistanceDistancePct, riskScore, qualityScore, brx, brq, brf, regimeScore, reversalScore, breakoutQuality;
+        public double earlyBreakScore, stretchPct, rsi7, roc3, roc5, acceleration, cmf, efficiency, volumePressure, ema20GapPct, atrCompression, trendStrength, flowStrength, momentumStrength, bollingerPosition, macdValue, stochastic, supportDistancePct, resistanceDistancePct, riskScore, qualityScore, brx, brq, brf, regimeScore, reversalScore, breakoutQuality, profitProbability;
         public double brtv, brm, brh;
         public boolean earlyBreakout, breakout, chaseRisk;
         public String recommendation, explanation, horizonText, momentumText, flowText, trendText, phaseText;
@@ -147,6 +147,7 @@ public final class ShortPulseEngine {
         r.regimeScore=Math.max(-100,Math.min(100,(e20>e50?30:-30)+(e50>e200?25:-25)+eff*35+(cmf*20)));
         r.reversalScore=Math.max(0,Math.min(100,(rsi7<42?18:0)+(accel>0?22:0)+(roc3>0?18:0)+(vp>0?18:0)+(cmf>0?14:0)+(r.price>e5?10:0)));
         r.breakoutQuality=Math.max(0,Math.min(100,(nearBreak?22:0)+(miniBreak?18:0)+(compression?18:0)+(constructiveFlow?18:0)+(rv>1.05?14:0)+(emaStack?10:0)-(stretched?25:0)-(trap?35:0)));
+        r.profitProbability=Math.max(5,Math.min(95,50 + r.trendStrength*.10 + r.flowStrength*.10 + r.momentumStrength*.09 + (r.qualityScore-50)*.16 + (r.regimeScore*.08) + (r.breakoutQuality-50)*.10 + (r.reversalScore-50)*.06 - (r.riskScore-35)*.14));
         r.brf=Math.max(-100,Math.min(100,(r.resistanceDistancePct<=3?20:0)+(r.earlyBreakout?35:0)+(r.breakout?25:0)-(r.chaseRisk?45:0)+(r.cmf*80)+(r.acceleration*3)));
         r.riskScore=Math.max(0,Math.min(100,(stretched?22:0)+(trap?32:0)+(fastRun?18:0)+(r.atrPct>5?12:0)+(r.flowStrength<-20?10:0)+(r.momentumStrength<-25?10:0)));
         r.qualityScore=Math.max(0,Math.min(100,50+r.trendStrength*0.18+r.flowStrength*0.14+r.momentumStrength*0.12-r.riskScore*0.22));
