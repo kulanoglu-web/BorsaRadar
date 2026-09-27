@@ -14,7 +14,7 @@ public final class ShortPulseEngine {
 
     public static final class Result {
         public double price, changePct, score, confidence, relativeVolume, atrPct, stopReference;
-        public double earlyBreakScore, stretchPct, rsi7, roc3, roc5, acceleration, cmf, efficiency, volumePressure, ema20GapPct, atrCompression, trendStrength, flowStrength, momentumStrength, bollingerPosition, macdValue, stochastic, supportDistancePct, resistanceDistancePct, riskScore, qualityScore;
+        public double earlyBreakScore, stretchPct, rsi7, roc3, roc5, acceleration, cmf, efficiency, volumePressure, ema20GapPct, atrCompression, trendStrength, flowStrength, momentumStrength, bollingerPosition, macdValue, stochastic, supportDistancePct, resistanceDistancePct, riskScore, qualityScore, brx, brq, brf;
         public double brtv, brm, brh;
         public boolean earlyBreakout, breakout, chaseRisk;
         public String recommendation, explanation, horizonText, momentumText, flowText, trendText, phaseText;
@@ -127,6 +127,9 @@ public final class ShortPulseEngine {
         if(r.flowStrength>20)s+=0.35; else if(r.flowStrength<-25)s-=0.45;
         if(r.momentumStrength>25)s+=0.30; else if(r.momentumStrength<-30)s-=0.40;
         if(r.macdValue>0)s+=0.25; else s-=0.20;
+        if(r.brx>25)s+=0.30; else if(r.brx<-30)s-=0.35;
+        if(r.brq>62)s+=0.25; else if(r.brq<35)s-=0.25;
+        if(r.brf>30)s+=0.35; else if(r.brf<-30)s-=0.35;
         if(r.stochastic>=35&&r.stochastic<=78)s+=0.20; else if(r.stochastic>90)s-=0.35;
         if(r.bollingerPosition>=40&&r.bollingerPosition<=80)s+=0.20; else if(r.bollingerPosition>95)s-=0.35;
         if(e20>e50)s+=0.30; else s-=0.30;
@@ -136,6 +139,9 @@ public final class ShortPulseEngine {
         if(stretched)s-=1.45;
         if(fastRun)s-=1.25;
         if(trap)s-=2.2;
+        r.brx=Math.max(-100,Math.min(100,r.trendStrength*0.35+r.momentumStrength*0.35+r.flowStrength*0.30));
+        r.brq=Math.max(0,Math.min(100,50+r.brtv*0.16+r.brm*7+r.brh*0.10+(r.relativeVolume-1)*12-r.atrPct*1.5));
+        r.brf=Math.max(-100,Math.min(100,(r.resistanceDistancePct<=3?20:0)+(r.earlyBreakout?35:0)+(r.breakout?25:0)-(r.chaseRisk?45:0)+(r.cmf*80)+(r.acceleration*3)));
         r.riskScore=Math.max(0,Math.min(100,(stretched?22:0)+(trap?32:0)+(fastRun?18:0)+(r.atrPct>5?12:0)+(r.flowStrength<-20?10:0)+(r.momentumStrength<-25?10:0)));
         r.qualityScore=Math.max(0,Math.min(100,50+r.trendStrength*0.18+r.flowStrength*0.14+r.momentumStrength*0.12-r.riskScore*0.22));
         r.score=s;
@@ -163,7 +169,7 @@ public final class ShortPulseEngine {
         r.phaseText=fastRun?"HAREKET BAŞLAMIŞ":r.earlyBreakout?"KIRILIM HAZIRLIĞI":breakout?(stretched?"GEÇ / UZAMIŞ":"KIRILIM TEYİDİ"):(nearBreak?"SIKIŞMA / EŞİĞE YAKIN":"NORMAL");
         r.explanation=String.format(Locale.US,
                 "%s • erken %.1f/6 • EMA20 uzaklık %.1f%% • RSI7 %.1f • ROC3 %.1f%% (ivme %.1f) • RelVol x%.2f • CMF %.2f • ATR sıkışma %.2f%s",
-                r.phaseText,early,r.stretchPct,rsi7,roc3,accel,rv,cmf,atr14==0?1:atr7/atr14,trap?" • TUZAK RİSKİ":fastRun?" • GEÇ GİRİŞ RİSKİ":"") + String.format(Locale.US," • BRTV %.1f • BRM %.2f • BRH %.1f • Trend %.0f • Akış %.0f • Momentum %.0f • BB %.0f • Stoch %.0f • Kalite %.0f • Risk %.0f • %s",r.brtv,r.brm,r.brh,r.trendStrength,r.flowStrength,r.momentumStrength,r.bollingerPosition,r.stochastic,r.qualityScore,r.riskScore,profile.name());
+                r.phaseText,early,r.stretchPct,rsi7,roc3,accel,rv,cmf,atr14==0?1:atr7/atr14,trap?" • TUZAK RİSKİ":fastRun?" • GEÇ GİRİŞ RİSKİ":"") + String.format(Locale.US," • BRTV %.1f • BRM %.2f • BRH %.1f • Trend %.0f • Akış %.0f • Momentum %.0f • BB %.0f • Stoch %.0f • BRX %.0f • BRQ %.0f • BRF %.0f • Kalite %.0f • Risk %.0f • %s",r.brtv,r.brm,r.brh,r.trendStrength,r.flowStrength,r.momentumStrength,r.bollingerPosition,r.stochastic,r.brx,r.brq,r.brf,r.qualityScore,r.riskScore,profile.name());
         return r;
     }
 
