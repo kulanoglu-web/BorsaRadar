@@ -8,8 +8,8 @@ public final class BacktestEngine {
     public static final class Result {
         public int trades, wins, losses;
         public double netPct, maxDrawdownPct, winRate, avgTradePct;
-        public double customSignalReturnPct, customWinRate;
-        public int customSignals, customWins;
+        public double customSignalReturnPct, customWinRate, custom2dReturnPct, custom10dReturnPct, custom20dReturnPct, profitFactor, expectancyPct;
+        public int customSignals, customWins, custom2dWins, custom10dWins, custom20dWins;
         public String bestProfile="BALANCED";
         public double fastScore, balancedScore, confirmedScore;
         public String summary;
@@ -36,7 +36,7 @@ public final class BacktestEngine {
         boolean in = false;
         double entry = 0, stop = 0, highest = 0;
         double tradeSum = 0;
-        double customReturnSum=0;
+        double customReturnSum=0, custom2Sum=0, custom10Sum=0, custom20Sum=0, grossWin=0, grossLoss=0;
         int customSignals=0,customWins=0;
 
         for (int i = 60; i < x.size(); i++) {
@@ -51,6 +51,9 @@ public final class BacktestEngine {
                     double future=x.get(i+5).close;
                     double forward=price==0?0:(future/price-1.0)*100.0;
                     customReturnSum+=forward; customSignals++; if(forward>0)customWins++;
+                    if(i+2<x.size()){double z=(x.get(i+2).close/price-1)*100;custom2Sum+=z;if(z>0)r.custom2dWins++;}
+                    if(i+10<x.size()){double z=(x.get(i+10).close/price-1)*100;custom10Sum+=z;if(z>0)r.custom10dWins++;}
+                    if(i+20<x.size()){double z=(x.get(i+20).close/price-1)*100;custom20Sum+=z;if(z>0)r.custom20dWins++;}
                 }
             } catch(Exception ignored) {}
 
@@ -69,7 +72,7 @@ public final class BacktestEngine {
                 if (exit || i == x.size() - 1) {
                     double ret = (price - entry) / entry;
                     capital *= (1.0 + ret);
-                    tradeSum += ret;
+                    tradeSum += ret; if(ret>0)grossWin+=ret;else grossLoss+=-ret;
                     r.trades++;
                     if (ret > 0) r.wins++; else r.losses++;
                     in = false;
@@ -87,6 +90,8 @@ public final class BacktestEngine {
         r.customSignals=customSignals; r.customWins=customWins;
         r.customWinRate=customSignals==0?0:100.0*customWins/customSignals;
         r.customSignalReturnPct=customSignals==0?0:customReturnSum/customSignals;
+        r.custom2dReturnPct=customSignals==0?0:custom2Sum/customSignals; r.custom10dReturnPct=customSignals==0?0:custom10Sum/customSignals; r.custom20dReturnPct=customSignals==0?0:custom20Sum/customSignals;
+        r.profitFactor=grossLoss==0?(grossWin>0?99:0):grossWin/grossLoss; r.expectancyPct=r.avgTradePct;
         ProfileTest fast=testProfile(symbol,x,ShortPulseEngine.Profile.FAST);
         ProfileTest balanced=testProfile(symbol,x,ShortPulseEngine.Profile.BALANCED);
         ProfileTest confirmed=testProfile(symbol,x,ShortPulseEngine.Profile.CONFIRMED);
@@ -101,7 +106,11 @@ public final class BacktestEngine {
                 + " • Ort. işlem %" + IndicatorEngine.fmt(r.avgTradePct)
                 + " • BR sinyal " + r.customSignals
                 + " • BR başarı %" + IndicatorEngine.fmt(r.customWinRate)
-                + " • BR 5g ort. %" + IndicatorEngine.fmt(r.customSignalReturnPct)
+                + " • BR 2g %" + IndicatorEngine.fmt(r.custom2dReturnPct)
+                + " • BR 5g %" + IndicatorEngine.fmt(r.customSignalReturnPct)
+                + " • BR 10g %" + IndicatorEngine.fmt(r.custom10dReturnPct)
+                + " • BR 20g %" + IndicatorEngine.fmt(r.custom20dReturnPct)
+                + " • PF " + IndicatorEngine.fmt(r.profitFactor)
                 + " • En iyi profil " + r.bestProfile
                 + " [F " + IndicatorEngine.fmt(r.fastScore)
                 + " / B " + IndicatorEngine.fmt(r.balancedScore)
@@ -110,7 +119,7 @@ public final class BacktestEngine {
     }
     private static final class ProfileTest {
         int signals,wins; double sum;
-        double score(){if(signals<2)return -999;double win=100.0*wins/signals,avg=sum/signals;return avg*2.0+win/20.0-Math.max(0,3-signals);}
+        double score(){if(signals<3)return -999;double win=100.0*wins/signals,avg=sum/signals;return avg*2.2+win/18.0-Math.max(0,5-signals)*0.4;}
     }
     private static ProfileTest testProfile(String symbol,List<MarketDataService.Candle>x,ShortPulseEngine.Profile profile){
         ProfileTest t=new ProfileTest();
