@@ -34,6 +34,7 @@ public final class MarketDataService {
     private static final String[] DATA_SOURCE_PLAN={"Yahoo-1","Yahoo-2","Google Finance","Stooq","Alpha Vantage","FMP","Twelve Data","Finnhub","Massive","KAP/BIST"};
     private static final String[] ACTIVE_SOURCES={"Yahoo-1","Yahoo-2","Google Finance","Stooq"};
     private static final Map<String,Long> SOURCE_COOLDOWN=new ConcurrentHashMap<>();
+    private static final Map<String,String> SOURCE_LAST_ERROR=new ConcurrentHashMap<>();
     private MarketDataService(){}
 
     public static final class Candle {
@@ -60,7 +61,7 @@ public final class MarketDataService {
         else {
             boolean daily="1d".equals(interval);
             boolean stooqFirst=false; // BIST: Yahoo first; Stooq remains fallback. Stooq .tr coverage is incomplete.
-            if(stooqFirst&&sourceReady("Stooq")){try{long t=System.currentTimeMillis();raw=fetchStooqDaily(symbol,range);source="Stooq";sourceOk("Stooq",System.currentTimeMillis()-t);}catch(Exception e){sourceFailed("Stooq");last=e;}}
+            if(stooqFirst&&sourceReady("Stooq")){try{long t=System.currentTimeMillis();raw=fetchStooqDaily(symbol,range);source="Stooq";sourceOk("Stooq",System.currentTimeMillis()-t);}catch(Exception e){SOURCE_LAST_ERROR.put("Stooq",e.getMessage()==null?e.getClass().getSimpleName():e.getMessage());sourceFailed("Stooq");last=e;}}
             if(raw==null){try{raw=fetchYahoo(symbol,range,interval);source="Yahoo";}catch(Exception e){last=e;}}
             if(raw==null && daily&&sourceReady("Stooq")){try{long t=System.currentTimeMillis();raw=fetchStooqDaily(symbol,range);source="Stooq";sourceOk("Stooq",System.currentTimeMillis()-t);}catch(Exception e){sourceFailed("Stooq");last=e;}}
             if(raw==null){if(cached!=null){raw=new ArrayList<>(cached.data);source=cached.source+"/cache";}else throw last==null?new Exception("Veri alınamadı: "+symbol):last;}
@@ -90,11 +91,13 @@ public final class MarketDataService {
         // A single transient request must not disable a feed for the whole radar scan.
         if(consecutive>=4) SOURCE_COOLDOWN.put(name,System.currentTimeMillis()+15_000L);
     }
-    private static void sourceOk(String name){SOURCE_COOLDOWN.remove(name);SOURCE_CONSECUTIVE_FAILURE.remove(name);}
-    private static void sourceOk(String name,long ms){SOURCE_COOLDOWN.remove(name);SOURCE_CONSECUTIVE_FAILURE.remove(name);SOURCE_LATENCY_MS.put(name,ms);SOURCE_SUCCESS.put(name,SOURCE_SUCCESS.getOrDefault(name,0)+1);}
+    private static void sourceOk(String name){SOURCE_COOLDOWN.remove(name);SOURCE_CONSECUTIVE_FAILURE.remove(name);SOURCE_LAST_ERROR.remove(name);}
+    private static void sourceOk(String name,long ms){SOURCE_COOLDOWN.remove(name);SOURCE_CONSECUTIVE_FAILURE.remove(name);SOURCE_LAST_ERROR.remove(name);SOURCE_LATENCY_MS.put(name,ms);SOURCE_SUCCESS.put(name,SOURCE_SUCCESS.getOrDefault(name,0)+1);}
     public static long sourceLatencyMs(String name){Long v=SOURCE_LATENCY_MS.get(name);return v==null?-1L:v;}
     public static int sourceSuccessCount(String name){return SOURCE_SUCCESS.getOrDefault(name,0);}
     public static int sourceFailureCount(String name){return SOURCE_FAILURE.getOrDefault(name,0);}
+    public static String sourceLastError(String name){String e=SOURCE_LAST_ERROR.get(name);return e==null?"":e;}
+    public static String sourceDiagnostics(){StringBuilder b=new StringBuilder();for(String s:ACTIVE_SOURCES){if(b.length()>0)b.append(" | ");b.append(s).append(": ").append(sourceReady(s)?"hazır":"bekle").append(" ok=").append(sourceSuccessCount(s)).append(" hata=").append(sourceFailureCount(s));String e=sourceLastError(s);if(!e.isEmpty())b.append(" (").append(e).append(")");}return b.toString();}
     public static double sourceReliability(String name){int ok=sourceSuccessCount(name),bad=sourceFailureCount(name),n=ok+bad;return n==0?0.5:(double)ok/n;}
     private static double sourceRouteScore(String name){long ms=sourceLatencyMs(name);double speed=ms<0?0.45:Math.max(0.05,1.0-Math.min(ms,5000L)/5000.0);double reliability=sourceReliability(name);return reliability*0.65+speed*0.35;}
     public static String preferredSource(){String best="";double score=-1;for(String s:ACTIVE_SOURCES){if(!sourceReady(s))continue;double v=sourceRouteScore(s);if(v>score){score=v;best=s;}}return best;}
@@ -126,7 +129,7 @@ public final class MarketDataService {
             String u="https://"+host+"/v8/finance/chart/"+encodedSymbol+"?range="+range+"&interval="+interval+"&includePrePost=false&events=div%2Csplits";
             String sourceName=host.startsWith("query1")?"Yahoo-1":"Yahoo-2";
             if(!sourceReady(sourceName))continue;
-            try{long t=System.currentTimeMillis();List<Candle> data=fetchYahooJson(u,symbol,host);sourceOk(sourceName,System.currentTimeMillis()-t);return data;}catch(Exception e){sourceFailed(sourceName);last=new Exception("Yahoo "+host+" "+symbol+" "+range+"/"+interval+": "+e.getMessage(),e);}
+            try{long t=System.currentTimeMillis();List<Candle> data=fetchYahooJson(u,symbol,host);sourceOk(sourceName,System.currentTimeMillis()-t);return data;}catch(Exception e){SOURCE_LAST_ERROR.put(sourceName,e.getMessage()==null?e.getClass().getSimpleName():e.getMessage());sourceFailed(sourceName);last=new Exception("Yahoo "+host+" "+symbol+" "+range+"/"+interval+": "+e.getMessage(),e);}
         }
         throw last==null?new Exception("Yahoo veri alınamadı: "+symbol+" "+range+"/"+interval):last;
     }
