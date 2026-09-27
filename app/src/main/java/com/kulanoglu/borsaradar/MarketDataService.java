@@ -63,6 +63,7 @@ public final class MarketDataService {
             boolean stooqFirst=false; // BIST: Yahoo first; Stooq remains fallback. Stooq .tr coverage is incomplete.
             if(stooqFirst&&sourceReady("Stooq")){try{long t=System.currentTimeMillis();raw=fetchStooqDaily(symbol,range);source="Stooq";sourceOk("Stooq",System.currentTimeMillis()-t);}catch(Exception e){SOURCE_LAST_ERROR.put("Stooq",e.getMessage()==null?e.getClass().getSimpleName():e.getMessage());sourceFailed("Stooq");last=e;}}
             if(raw==null){try{raw=fetchYahoo(symbol,range,interval);source="Yahoo";}catch(Exception e){last=e;}}
+            if(raw==null && daily && !symbol.endsWith(".IS")){try{long t=System.currentTimeMillis();raw=fetchStooqDaily(symbol,range);source="Stooq";sourceOk("Stooq",System.currentTimeMillis()-t);}catch(Exception e){SOURCE_LAST_ERROR.put("Stooq",e.getMessage()==null?e.getClass().getSimpleName():e.getMessage());sourceFailed("Stooq");last=e;}}
             if(raw==null && daily&&sourceReady("Stooq")){try{long t=System.currentTimeMillis();raw=fetchStooqDaily(symbol,range);source="Stooq";sourceOk("Stooq",System.currentTimeMillis()-t);}catch(Exception e){sourceFailed("Stooq");last=e;}}
             if(raw==null){if(cached!=null){raw=new ArrayList<>(cached.data);source=cached.source+"/cache";}else throw last==null?new Exception("Veri alınamadı: "+symbol):last;}
             else {CACHE.put(key,new Cache(now,raw,source));LAST_GOOD_SOURCE.put(symbol,source);}
@@ -128,7 +129,7 @@ public final class MarketDataService {
             String host=hosts[(start+attempt)%2];
             String u="https://"+host+"/v8/finance/chart/"+encodedSymbol+"?range="+range+"&interval="+interval+"&includePrePost=false&events=div%2Csplits";
             String sourceName=host.startsWith("query1")?"Yahoo-1":"Yahoo-2";
-            if(!sourceReady(sourceName))continue;
+            // Do not globally skip Yahoo during a market scan; US/DE symbols may still work after another symbol failed.
             try{long t=System.currentTimeMillis();List<Candle> data=fetchYahooJson(u,symbol,host);sourceOk(sourceName,System.currentTimeMillis()-t);return data;}catch(Exception e){SOURCE_LAST_ERROR.put(sourceName,e.getMessage()==null?e.getClass().getSimpleName():e.getMessage());sourceFailed(sourceName);last=new Exception("Yahoo "+host+" "+symbol+" "+range+"/"+interval+": "+e.getMessage(),e);}
         }
         throw last==null?new Exception("Yahoo veri alınamadı: "+symbol+" "+range+"/"+interval):last;
@@ -149,5 +150,5 @@ public final class MarketDataService {
     private static String googleQuote(String input,String normalized){String n=normalized.toUpperCase(Locale.US);if(n.endsWith(".IS"))return n.substring(0,n.length()-3)+":IST";if(n.endsWith(".DE"))return n.substring(0,n.length()-3)+":ETR";String raw=input==null?"":input.toUpperCase(Locale.US);if(raw.startsWith("NYSE:"))return raw.substring(5)+":NYSE";return n+":NASDAQ";}
 
     private static String httpGet(String address,String host,int connectMs,int readMs,String accept)throws Exception{perHostPace(host);HttpURLConnection conn=null;try{conn=(HttpURLConnection)new URL(address).openConnection();conn.setConnectTimeout(connectMs);conn.setReadTimeout(readMs);conn.setRequestMethod("GET");conn.setRequestProperty("User-Agent","Mozilla/5.0 (Linux; Android 13) BorsaRadar/3.12");conn.setRequestProperty("Accept",accept);conn.setRequestProperty("Accept-Language","tr-TR,tr;q=0.9,en;q=0.7");int code=conn.getResponseCode();if(code<200||code>=300)throw new Exception(host+" HTTP "+code);StringBuilder sb=new StringBuilder();try(BufferedReader br=new BufferedReader(new InputStreamReader(conn.getInputStream(),StandardCharsets.UTF_8))){String line;while((line=br.readLine())!=null)sb.append(line).append('\n');}return sb.toString();}finally{if(conn!=null)conn.disconnect();}}
-    private static void perHostPace(String host)throws InterruptedException{synchronized(host.intern()){long now=System.currentTimeMillis();Long prev=HOST_LAST_REQUEST.get(host);long wait=prev==null?0L:35L-(now-prev);if(wait>0)Thread.sleep(wait);HOST_LAST_REQUEST.put(host,System.currentTimeMillis());}}
+    private static void perHostPace(String host)throws InterruptedException{synchronized(host.intern()){long now=System.currentTimeMillis();Long prev=HOST_LAST_REQUEST.get(host);long wait=prev==null?0L:120L-(now-prev);if(wait>0)Thread.sleep(wait);HOST_LAST_REQUEST.put(host,System.currentTimeMillis());}}
 }
