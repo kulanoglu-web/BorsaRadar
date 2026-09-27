@@ -14,7 +14,7 @@ public final class ShortPulseEngine {
 
     public static final class Result {
         public double price, changePct, score, confidence, relativeVolume, atrPct, stopReference;
-        public double earlyBreakScore, stretchPct, rsi7, roc3, roc5, acceleration, cmf, efficiency, volumePressure, ema20GapPct, atrCompression, trendStrength, flowStrength, momentumStrength;
+        public double earlyBreakScore, stretchPct, rsi7, roc3, roc5, acceleration, cmf, efficiency, volumePressure, ema20GapPct, atrCompression, trendStrength, flowStrength, momentumStrength, bollingerPosition, macdValue, stochastic, supportDistancePct, resistanceDistancePct, riskScore, qualityScore;
         public double brtv, brm, brh;
         public boolean earlyBreakout, breakout, chaseRisk;
         public String recommendation, explanation, horizonText, momentumText, flowText, trendText, phaseText;
@@ -36,7 +36,7 @@ public final class ShortPulseEngine {
         r.price=x.get(end).close;
         r.changePct=x.get(end-1).close==0?0:(x.get(end).close/x.get(end-1).close-1)*100;
 
-        double e3=ema(x,3,end), e5=ema(x,5,end), e8=ema(x,8,end), e12=ema(x,12,end), e20=ema(x,20,end);
+        double e3=ema(x,3,end), e5=ema(x,5,end), e8=ema(x,8,end), e12=ema(x,12,end), e20=ema(x,20,end), e50=ema(x,50,end), e200=ema(x,200,end);
         double rsi7=rsi(x,7,end), roc3=roc(x,3,end), roc5=roc(x,5,end);
         double prevRoc3=end>=6?roc(x,3,end-3):0;
         double accel=roc3-prevRoc3;
@@ -47,7 +47,15 @@ public final class ShortPulseEngine {
         r.brtv=eff*100.0;
         double atrPctSafe=Math.max(0.25,r.atrPct);
         r.brm=(0.55*roc3+0.30*roc5+0.15*accel)/atrPctSafe;
-        r.brh=vp*100.0; r.trendStrength=Math.max(-100,Math.min(100,eff*100)); r.flowStrength=Math.max(-100,Math.min(100,(cmf*55+vp*45)*100)); r.momentumStrength=Math.max(-100,Math.min(100,(roc3*0.55+roc5*0.30+accel*0.15)*8));
+        r.brh=vp*100.0;
+        double sd20=stddev(x,20,end), bbUpper=e20+2*sd20, bbLower=e20-2*sd20;
+        r.bollingerPosition=(bbUpper==bbLower)?50:Math.max(0,Math.min(100,(r.price-bbLower)/(bbUpper-bbLower)*100));
+        r.macdValue=ema(x,12,end)-ema(x,26,end);
+        r.stochastic=stochastic(x,14,end);
+        double support=lowestLow(x,20,end), resistance=highestHigh(x,20,end-1);
+        r.supportDistancePct=support<=0?0:(r.price/support-1)*100;
+        r.resistanceDistancePct=resistance<=0?0:(resistance/r.price-1)*100;
+        r.trendStrength=Math.max(-100,Math.min(100,eff*100)); r.flowStrength=Math.max(-100,Math.min(100,(cmf*55+vp*45)*100)); r.momentumStrength=Math.max(-100,Math.min(100,(roc3*0.55+roc5*0.30+accel*0.15)*8));
 
         double hi10=highestHigh(x,10,end-1);
         double hi20=highestHigh(x,20,end-1);
@@ -118,11 +126,18 @@ public final class ShortPulseEngine {
         if(r.trendStrength>35)s+=0.35; else if(r.trendStrength<-35)s-=0.45;
         if(r.flowStrength>20)s+=0.35; else if(r.flowStrength<-25)s-=0.45;
         if(r.momentumStrength>25)s+=0.30; else if(r.momentumStrength<-30)s-=0.40;
+        if(r.macdValue>0)s+=0.25; else s-=0.20;
+        if(r.stochastic>=35&&r.stochastic<=78)s+=0.20; else if(r.stochastic>90)s-=0.35;
+        if(r.bollingerPosition>=40&&r.bollingerPosition<=80)s+=0.20; else if(r.bollingerPosition>95)s-=0.35;
+        if(e20>e50)s+=0.30; else s-=0.30;
+        if(e50>e200)s+=0.25; else if(x.size()>=200)s-=0.25;
         else if(nearBreak)s+=0.55;
         if(acceleration)s+=0.45;
         if(stretched)s-=1.45;
         if(fastRun)s-=1.25;
         if(trap)s-=2.2;
+        r.riskScore=Math.max(0,Math.min(100,(stretched?22:0)+(trap?32:0)+(fastRun?18:0)+(r.atrPct>5?12:0)+(r.flowStrength<-20?10:0)+(r.momentumStrength<-25?10:0)));
+        r.qualityScore=Math.max(0,Math.min(100,50+r.trendStrength*0.18+r.flowStrength*0.14+r.momentumStrength*0.12-r.riskScore*0.22));
         r.score=s;
 
         double buyThreshold=profile==Profile.FAST?4.15:profile==Profile.CONFIRMED?5.25:4.8;
@@ -148,7 +163,7 @@ public final class ShortPulseEngine {
         r.phaseText=fastRun?"HAREKET BAŞLAMIŞ":r.earlyBreakout?"KIRILIM HAZIRLIĞI":breakout?(stretched?"GEÇ / UZAMIŞ":"KIRILIM TEYİDİ"):(nearBreak?"SIKIŞMA / EŞİĞE YAKIN":"NORMAL");
         r.explanation=String.format(Locale.US,
                 "%s • erken %.1f/6 • EMA20 uzaklık %.1f%% • RSI7 %.1f • ROC3 %.1f%% (ivme %.1f) • RelVol x%.2f • CMF %.2f • ATR sıkışma %.2f%s",
-                r.phaseText,early,r.stretchPct,rsi7,roc3,accel,rv,cmf,atr14==0?1:atr7/atr14,trap?" • TUZAK RİSKİ":fastRun?" • GEÇ GİRİŞ RİSKİ":"") + String.format(Locale.US," • BRTV %.1f • BRM %.2f • BRH %.1f • Trend %.0f • Akış %.0f • Momentum %.0f • %s",r.brtv,r.brm,r.brh,r.trendStrength,r.flowStrength,r.momentumStrength,profile.name());
+                r.phaseText,early,r.stretchPct,rsi7,roc3,accel,rv,cmf,atr14==0?1:atr7/atr14,trap?" • TUZAK RİSKİ":fastRun?" • GEÇ GİRİŞ RİSKİ":"") + String.format(Locale.US," • BRTV %.1f • BRM %.2f • BRH %.1f • Trend %.0f • Akış %.0f • Momentum %.0f • BB %.0f • Stoch %.0f • Kalite %.0f • Risk %.0f • %s",r.brtv,r.brm,r.brh,r.trendStrength,r.flowStrength,r.momentumStrength,r.bollingerPosition,r.stochastic,r.qualityScore,r.riskScore,profile.name());
         return r;
     }
 
@@ -160,5 +175,8 @@ public final class ShortPulseEngine {
     private static double cmf(List<MarketDataService.Candle>x,int p,int end){int st=Math.max(0,end-p+1);double mfv=0,v=0;for(int i=st;i<=end;i++){MarketDataService.Candle c=x.get(i);double den=c.high-c.low;double m=den==0?0:((c.close-c.low)-(c.high-c.close))/den;mfv+=m*c.volume;v+=c.volume;}return v==0?0:mfv/v;}
     private static double efficiency(List<MarketDataService.Candle>x,int p,int end){int st=Math.max(0,end-p);double path=0;for(int i=st+1;i<=end;i++)path+=Math.abs(x.get(i).close-x.get(i-1).close);return path==0?0:(x.get(end).close-x.get(st).close)/path;}
     private static double volumePressure(List<MarketDataService.Candle>x,int p,int end){int st=Math.max(1,end-p+1);double sig=0,tot=0;for(int i=st;i<=end;i++){double v=x.get(i).volume;sig+=Math.signum(x.get(i).close-x.get(i-1).close)*v;tot+=v;}return tot==0?0:sig/tot;}
+    private static double stddev(List<MarketDataService.Candle>x,int p,int end){int st=Math.max(0,end-p+1),n=0;double m=0;for(int i=st;i<=end;i++){m+=x.get(i).close;n++;}if(n==0)return 0;m/=n;double s=0;for(int i=st;i<=end;i++){double d=x.get(i).close-m;s+=d*d;}return Math.sqrt(s/n);}
+    private static double stochastic(List<MarketDataService.Candle>x,int p,int end){double hi=highestHigh(x,p,end),lo=lowestLow(x,p,end);return hi==lo?50:(x.get(end).close-lo)/(hi-lo)*100;}
+    private static double lowestLow(List<MarketDataService.Candle>x,int p,int end){int st=Math.max(0,end-p+1);double m=Double.MAX_VALUE;for(int i=st;i<=end;i++)m=Math.min(m,x.get(i).low);return m;}
     private static double highestHigh(List<MarketDataService.Candle>x,int p,int end){int st=Math.max(0,end-p+1);double m=-Double.MAX_VALUE;for(int i=st;i<=end;i++)m=Math.max(m,x.get(i).high);return m;}
 }
