@@ -14,7 +14,7 @@ public final class ShortPulseEngine {
 
     public static final class Result {
         public double price, changePct, score, confidence, relativeVolume, atrPct, stopReference;
-        public double earlyBreakScore, stretchPct, rsi7, roc3, roc5, acceleration, cmf, efficiency, volumePressure, ema20GapPct, atrCompression, trendStrength, flowStrength, momentumStrength, bollingerPosition, macdValue, stochastic, supportDistancePct, resistanceDistancePct, riskScore, qualityScore, brx, brq, brf;
+        public double earlyBreakScore, stretchPct, rsi7, roc3, roc5, acceleration, cmf, efficiency, volumePressure, ema20GapPct, atrCompression, trendStrength, flowStrength, momentumStrength, bollingerPosition, macdValue, stochastic, supportDistancePct, resistanceDistancePct, riskScore, qualityScore, brx, brq, brf, regimeScore, reversalScore, breakoutQuality;
         public double brtv, brm, brh;
         public boolean earlyBreakout, breakout, chaseRisk;
         public String recommendation, explanation, horizonText, momentumText, flowText, trendText, phaseText;
@@ -130,6 +130,9 @@ public final class ShortPulseEngine {
         if(r.brx>25)s+=0.30; else if(r.brx<-30)s-=0.35;
         if(r.brq>62)s+=0.25; else if(r.brq<35)s-=0.25;
         if(r.brf>30)s+=0.35; else if(r.brf<-30)s-=0.35;
+        if(r.regimeScore>25)s+=0.30; else if(r.regimeScore<-35)s-=0.40;
+        if(r.reversalScore>=65 && rsi7<55)s+=0.35;
+        if(r.breakoutQuality>=65)s+=0.40; else if(breakout&&r.breakoutQuality<35)s-=0.35;
         if(r.stochastic>=35&&r.stochastic<=78)s+=0.20; else if(r.stochastic>90)s-=0.35;
         if(r.bollingerPosition>=40&&r.bollingerPosition<=80)s+=0.20; else if(r.bollingerPosition>95)s-=0.35;
         if(e20>e50)s+=0.30; else s-=0.30;
@@ -141,6 +144,9 @@ public final class ShortPulseEngine {
         if(trap)s-=2.2;
         r.brx=Math.max(-100,Math.min(100,r.trendStrength*0.35+r.momentumStrength*0.35+r.flowStrength*0.30));
         r.brq=Math.max(0,Math.min(100,50+r.brtv*0.16+r.brm*7+r.brh*0.10+(r.relativeVolume-1)*12-r.atrPct*1.5));
+        r.regimeScore=Math.max(-100,Math.min(100,(e20>e50?30:-30)+(e50>e200?25:-25)+eff*35+(cmf*20)));
+        r.reversalScore=Math.max(0,Math.min(100,(rsi7<42?18:0)+(accel>0?22:0)+(roc3>0?18:0)+(vp>0?18:0)+(cmf>0?14:0)+(r.price>e5?10:0)));
+        r.breakoutQuality=Math.max(0,Math.min(100,(nearBreak?22:0)+(miniBreak?18:0)+(compression?18:0)+(constructiveFlow?18:0)+(rv>1.05?14:0)+(emaStack?10:0)-(stretched?25:0)-(trap?35:0)));
         r.brf=Math.max(-100,Math.min(100,(r.resistanceDistancePct<=3?20:0)+(r.earlyBreakout?35:0)+(r.breakout?25:0)-(r.chaseRisk?45:0)+(r.cmf*80)+(r.acceleration*3)));
         r.riskScore=Math.max(0,Math.min(100,(stretched?22:0)+(trap?32:0)+(fastRun?18:0)+(r.atrPct>5?12:0)+(r.flowStrength<-20?10:0)+(r.momentumStrength<-25?10:0)));
         r.qualityScore=Math.max(0,Math.min(100,50+r.trendStrength*0.18+r.flowStrength*0.14+r.momentumStrength*0.12-r.riskScore*0.22));
