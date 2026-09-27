@@ -1,4 +1,4 @@
-name: Build BorsaRadar v153 Production APK
+name: Build BorsaRadar v154 Production APK
 on:
   push:
     branches: [ main ]
@@ -64,11 +64,11 @@ jobs:
           code=$(cat build-exit-code.txt)
           test "$code" = "0"
       - name: Prepare APK
-        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.12.153.apk
+        run: cp app/build/outputs/apk/release/app-release.apk BorsaRadar-v3.12.154.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: BorsaRadar-v3.12.153-APK
-          path: BorsaRadar-v3.12.153.apk
+          name: BorsaRadar-v3.12.154-APK
+          path: BorsaRadar-v3.12.154.apk
           if-no-files-found: error
           retention-days: 30
 
