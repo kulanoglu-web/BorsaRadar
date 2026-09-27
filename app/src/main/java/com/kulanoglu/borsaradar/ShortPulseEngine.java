@@ -55,7 +55,7 @@ public final class ShortPulseEngine {
         double support=lowestLow(x,20,end), resistance=highestHigh(x,20,end-1);
         r.supportDistancePct=support<=0?0:(r.price/support-1)*100;
         r.resistanceDistancePct=resistance<=0?0:(resistance/r.price-1)*100;
-        r.trendStrength=Math.max(-100,Math.min(100,eff*100)); r.flowStrength=Math.max(-100,Math.min(100,(cmf*55+vp*45)*100)); r.momentumStrength=Math.max(-100,Math.min(100,(roc3*0.55+roc5*0.30+accel*0.15)*8));
+        r.trendStrength=Math.max(-100,Math.min(100,eff*100)); r.flowStrength=Math.max(-100,Math.min(100,cmf*55+vp*45)); r.momentumStrength=Math.max(-100,Math.min(100,(roc3*0.55+roc5*0.30+accel*0.15)*8));
 
         double hi10=highestHigh(x,10,end-1);
         double hi20=highestHigh(x,20,end-1);
