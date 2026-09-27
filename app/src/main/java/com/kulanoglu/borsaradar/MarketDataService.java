@@ -29,6 +29,7 @@ public final class MarketDataService {
     private static final Map<String,Long> SOURCE_LATENCY_MS=new ConcurrentHashMap<>();
     private static final Map<String,Integer> SOURCE_SUCCESS=new ConcurrentHashMap<>();
     private static final Map<String,Integer> SOURCE_FAILURE=new ConcurrentHashMap<>();
+    private static final Map<String,Integer> SOURCE_CONSECUTIVE_FAILURE=new ConcurrentHashMap<>();
     private static final ExecutorService AUX_IO=Executors.newFixedThreadPool(8);
     private static final String[] DATA_SOURCE_PLAN={"Yahoo-1","Yahoo-2","Google Finance","Stooq","Alpha Vantage","FMP","Twelve Data","Finnhub","Massive","KAP/BIST"};
     private static final String[] ACTIVE_SOURCES={"Yahoo-1","Yahoo-2","Google Finance","Stooq"};
@@ -58,7 +59,7 @@ public final class MarketDataService {
         if(cached!=null && now-cached.at<ttl){raw=new ArrayList<>(cached.data);source=cached.source;}
         else {
             boolean daily="1d".equals(interval);
-            boolean stooqFirst=daily && symbol.endsWith(".IS") && ("6mo".equals(range)||"1y".equals(range)||"2y".equals(range));
+            boolean stooqFirst=false; // BIST: Yahoo first; Stooq remains fallback. Stooq .tr coverage is incomplete.
             if(stooqFirst&&sourceReady("Stooq")){try{long t=System.currentTimeMillis();raw=fetchStooqDaily(symbol,range);source="Stooq";sourceOk("Stooq",System.currentTimeMillis()-t);}catch(Exception e){sourceFailed("Stooq");last=e;}}
             if(raw==null){try{raw=fetchYahoo(symbol,range,interval);source="Yahoo";}catch(Exception e){last=e;}}
             if(raw==null && daily&&sourceReady("Stooq")){try{long t=System.currentTimeMillis();raw=fetchStooqDaily(symbol,range);source="Stooq";sourceOk("Stooq",System.currentTimeMillis()-t);}catch(Exception e){sourceFailed("Stooq");last=e;}}
@@ -81,9 +82,16 @@ public final class MarketDataService {
     private static boolean sourceImplemented(String name){for(String s:ACTIVE_SOURCES)if(s.equals(name))return true;return false;}
     public static int healthySourceCount(){int n=0;for(String s:ACTIVE_SOURCES)if(sourceReady(s))n++;return n;}
     private static boolean sourceReady(String name){Long until=SOURCE_COOLDOWN.get(name);return until==null||System.currentTimeMillis()>=until;}
-    private static void sourceFailed(String name){SOURCE_COOLDOWN.put(name,System.currentTimeMillis()+60_000L);SOURCE_FAILURE.put(name,SOURCE_FAILURE.getOrDefault(name,0)+1);}
-    private static void sourceOk(String name){SOURCE_COOLDOWN.remove(name);}
-    private static void sourceOk(String name,long ms){SOURCE_COOLDOWN.remove(name);SOURCE_LATENCY_MS.put(name,ms);SOURCE_SUCCESS.put(name,SOURCE_SUCCESS.getOrDefault(name,0)+1);}
+    private static void sourceFailed(String name){
+        int total=SOURCE_FAILURE.getOrDefault(name,0)+1;
+        SOURCE_FAILURE.put(name,total);
+        int consecutive=SOURCE_CONSECUTIVE_FAILURE.getOrDefault(name,0)+1;
+        SOURCE_CONSECUTIVE_FAILURE.put(name,consecutive);
+        // A single transient request must not disable a feed for the whole radar scan.
+        if(consecutive>=4) SOURCE_COOLDOWN.put(name,System.currentTimeMillis()+15_000L);
+    }
+    private static void sourceOk(String name){SOURCE_COOLDOWN.remove(name);SOURCE_CONSECUTIVE_FAILURE.remove(name);}
+    private static void sourceOk(String name,long ms){SOURCE_COOLDOWN.remove(name);SOURCE_CONSECUTIVE_FAILURE.remove(name);SOURCE_LATENCY_MS.put(name,ms);SOURCE_SUCCESS.put(name,SOURCE_SUCCESS.getOrDefault(name,0)+1);}
     public static long sourceLatencyMs(String name){Long v=SOURCE_LATENCY_MS.get(name);return v==null?-1L:v;}
     public static int sourceSuccessCount(String name){return SOURCE_SUCCESS.getOrDefault(name,0);}
     public static int sourceFailureCount(String name){return SOURCE_FAILURE.getOrDefault(name,0);}
