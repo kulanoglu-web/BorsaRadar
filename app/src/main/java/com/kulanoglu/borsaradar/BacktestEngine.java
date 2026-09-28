@@ -9,7 +9,7 @@ public final class BacktestEngine {
         public int trades, wins, losses;
         public double netPct, maxDrawdownPct, winRate, avgTradePct;
         public double customSignalReturnPct, customWinRate, custom2dReturnPct, custom10dReturnPct, custom20dReturnPct, profitFactor, expectancyPct;
-        public int customSignals, customWins, custom2dWins, custom10dWins, custom20dWins;
+        public int customSignals, customWins, custom2dSignals, custom2dWins, custom10dSignals, custom10dWins, custom20dSignals, custom20dWins;\n        public double custom2dWinRate, custom10dWinRate, custom20dWinRate, calibratedWinRate;
         public String bestProfile="BALANCED";
         public double fastScore, balancedScore, confirmedScore;
         public String summary;
@@ -51,9 +51,9 @@ public final class BacktestEngine {
                     double future=x.get(i+5).close;
                     double forward=price==0?0:(future/price-1.0)*100.0;
                     customReturnSum+=forward; customSignals++; if(forward>0)customWins++;
-                    if(i+2<x.size()){double z=(x.get(i+2).close/price-1)*100;custom2Sum+=z;if(z>0)r.custom2dWins++;}
-                    if(i+10<x.size()){double z=(x.get(i+10).close/price-1)*100;custom10Sum+=z;if(z>0)r.custom10dWins++;}
-                    if(i+20<x.size()){double z=(x.get(i+20).close/price-1)*100;custom20Sum+=z;if(z>0)r.custom20dWins++;}
+                    if(i+2<x.size()){double z=(x.get(i+2).close/price-1)*100;custom2Sum+=z;r.custom2dSignals++;if(z>0)r.custom2dWins++;}
+                    if(i+10<x.size()){double z=(x.get(i+10).close/price-1)*100;custom10Sum+=z;r.custom10dSignals++;if(z>0)r.custom10dWins++;}
+                    if(i+20<x.size()){double z=(x.get(i+20).close/price-1)*100;custom20Sum+=z;r.custom20dSignals++;if(z>0)r.custom20dWins++;}
                 }
             } catch(Exception ignored) {}
 
@@ -90,7 +90,7 @@ public final class BacktestEngine {
         r.customSignals=customSignals; r.customWins=customWins;
         r.customWinRate=customSignals==0?0:100.0*customWins/customSignals;
         r.customSignalReturnPct=customSignals==0?0:customReturnSum/customSignals;
-        r.custom2dReturnPct=customSignals==0?0:custom2Sum/customSignals; r.custom10dReturnPct=customSignals==0?0:custom10Sum/customSignals; r.custom20dReturnPct=customSignals==0?0:custom20Sum/customSignals;
+        r.custom2dReturnPct=r.custom2dSignals==0?0:custom2Sum/r.custom2dSignals; r.custom10dReturnPct=r.custom10dSignals==0?0:custom10Sum/r.custom10dSignals; r.custom20dReturnPct=r.custom20dSignals==0?0:custom20Sum/r.custom20dSignals;\n        r.custom2dWinRate=shrunkRate(r.custom2dWins,r.custom2dSignals);r.custom10dWinRate=shrunkRate(r.custom10dWins,r.custom10dSignals);r.custom20dWinRate=shrunkRate(r.custom20dWins,r.custom20dSignals);r.calibratedWinRate=shrunkRate(customWins,customSignals);
         r.profitFactor=grossLoss==0?(grossWin>0?99:0):grossWin/grossLoss; r.expectancyPct=r.avgTradePct;
         ProfileTest fast=testProfile(symbol,x,ShortPulseEngine.Profile.FAST);
         ProfileTest balanced=testProfile(symbol,x,ShortPulseEngine.Profile.BALANCED);
@@ -117,7 +117,7 @@ public final class BacktestEngine {
                 + " / C " + IndicatorEngine.fmt(r.confirmedScore) + "]";
         return r;
     }
-    private static final class ProfileTest {
+    private static double shrunkRate(int wins,int n){return n==0?0:100.0*(wins+2.0)/(n+4.0);}\n    private static final class ProfileTest {
         int signals,wins; double sum;
         double score(){if(signals<3)return -999;double win=100.0*wins/signals,avg=sum/signals;return avg*2.2+win/18.0-Math.max(0,5-signals)*0.4;}
     }
