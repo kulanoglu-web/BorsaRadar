@@ -25,7 +25,8 @@ jobs:
           mkdir -p /tmp/current-java
           cp app/src/main/java/com/kulanoglu/borsaradar/ShortPulseEngine.java /tmp/current-java/
           cp app/src/main/java/com/kulanoglu/borsaradar/BacktestEngine.java /tmp/current-java/
-          cp app/src/main/java/com/kulanoglu/borsaradar/ReferenceUiActivity.java /tmp/current-java/\n          cp app/src/main/java/com/kulanoglu/borsaradar/MarketDataService.java /tmp/current-java/
+          cp app/src/main/java/com/kulanoglu/borsaradar/ReferenceUiActivity.java /tmp/current-java/
+          cp app/src/main/java/com/kulanoglu/borsaradar/MarketDataService.java /tmp/current-java/
 
           python3 .ci/patch_v31.py
           python3 .ci/patch_v37.py
@@ -80,13 +81,15 @@ jobs:
           python3 .ci/patch_v93_hourly_fake_portfolio_ui.py
           cp /tmp/current-java/ShortPulseEngine.java app/src/main/java/com/kulanoglu/borsaradar/
           cp /tmp/current-java/BacktestEngine.java app/src/main/java/com/kulanoglu/borsaradar/
-          cp /tmp/current-java/ReferenceUiActivity.java app/src/main/java/com/kulanoglu/borsaradar/\n          cp /tmp/current-java/MarketDataService.java app/src/main/java/com/kulanoglu/borsaradar/
+          cp /tmp/current-java/ReferenceUiActivity.java app/src/main/java/com/kulanoglu/borsaradar/
+          cp /tmp/current-java/MarketDataService.java app/src/main/java/com/kulanoglu/borsaradar/
       - name: Apply v94 through v123 production patches
         run: |
           python3 .ci/patch_v94_cross_market_scan_selector.py
           cp /tmp/current-java/ShortPulseEngine.java app/src/main/java/com/kulanoglu/borsaradar/
           cp /tmp/current-java/BacktestEngine.java app/src/main/java/com/kulanoglu/borsaradar/
-          cp /tmp/current-java/ReferenceUiActivity.java app/src/main/java/com/kulanoglu/borsaradar/\n          cp /tmp/current-java/MarketDataService.java app/src/main/java/com/kulanoglu/borsaradar/
+          cp /tmp/current-java/ReferenceUiActivity.java app/src/main/java/com/kulanoglu/borsaradar/
+          cp /tmp/current-java/MarketDataService.java app/src/main/java/com/kulanoglu/borsaradar/
       - name: Fix release build type
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
