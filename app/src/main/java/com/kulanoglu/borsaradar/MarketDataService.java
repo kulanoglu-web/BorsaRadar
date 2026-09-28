@@ -25,6 +25,7 @@ public final class MarketDataService {
     private static final Map<String,Long> HOST_LAST_REQUEST=new ConcurrentHashMap<>();
     private static final Map<String,Cache> CACHE=new ConcurrentHashMap<>();
     private static final Map<String,Spot> SPOT_CACHE=new ConcurrentHashMap<>();
+    private static final Map<String,FundCache> FUND_CACHE=new ConcurrentHashMap<>();
     private static final Map<String,String> LAST_GOOD_SOURCE=new ConcurrentHashMap<>();
     private static final Map<String,Long> SOURCE_LATENCY_MS=new ConcurrentHashMap<>();
     private static final Map<String,Integer> SOURCE_SUCCESS=new ConcurrentHashMap<>();
@@ -48,6 +49,7 @@ public final class MarketDataService {
         Spot(double p,String s,long t){price=p;source=s;at=t;}
     }
     private static final class Cache { final long at; final List<Candle> data; final String source; Cache(long a,List<Candle>d,String s){at=a;data=d;source=s;} }
+    private static final class FundCache { final long at; final Fundamentals data; FundCache(long a,Fundamentals d){at=a;data=d;} }
 
     public static List<Candle> fetchDaily(String symbol,String range)throws Exception{return fetchSeries(symbol,range,"1d",0);}
 
@@ -85,7 +87,7 @@ public final class MarketDataService {
         String u="https://query1.finance.yahoo.com/v7/finance/quote?symbols="+enc;String body=httpGet(u,"query1.finance.yahoo.com",1800,2600,"application/json");
         JSONObject qr=new JSONObject(body).getJSONObject("quoteResponse");JSONArray a=qr.getJSONArray("result");if(a.length()==0)throw new Exception("Temel veri yok");JSONObject q=a.getJSONObject(0);
         double bv=q.optDouble("bookValue",Double.NaN),pb=q.optDouble("priceToBook",Double.NaN),pe=q.optDouble("trailingPE",Double.NaN),eq=q.optDouble("totalStockholderEquity",Double.NaN),ni=q.optDouble("netIncomeToCommon",Double.NaN);
-        if(Double.isNaN(bv)&&Double.isNaN(pb))throw new Exception("Defter değeri/PD-DD yok");return new Fundamentals(bv,pb,pe,eq,ni,"Yahoo Finance");
+        if(Double.isNaN(bv)&&Double.isNaN(pb))throw new Exception("Defter değeri/PD-DD yok");Fundamentals out=new Fundamentals(bv,pb,pe,eq,ni,"Yahoo Finance");FUND_CACHE.put(symbol,new FundCache(now,out));return out;
     }
 
     public static Spot latestSpot(String inputSymbol){String symbol=normalizeSymbol(inputSymbol);Spot s=SPOT_CACHE.get(symbol);if(s!=null&&System.currentTimeMillis()-s.at<120_000L)return s;return null;}
