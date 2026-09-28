@@ -83,7 +83,7 @@ public final class MarketDataService {
         Fundamentals(double bv,double pb,double pe,double eq,double ni,String src){bookValuePerShare=bv;priceToBook=pb;trailingPE=pe;equity=eq;netIncome=ni;source=src;}
     }
     public static Fundamentals fetchFundamentals(String inputSymbol)throws Exception{
-        String symbol=normalizeSymbol(inputSymbol);String enc=URLEncoder.encode(symbol,StandardCharsets.UTF_8.name()).replace("+","%20");
+        String symbol=normalizeSymbol(inputSymbol); long now=System.currentTimeMillis(); FundCache fc=FUND_CACHE.get(symbol); if(fc!=null&&now-fc.at<21600000L)return fc.data;String enc=URLEncoder.encode(symbol,StandardCharsets.UTF_8.name()).replace("+","%20");
         String u="https://query1.finance.yahoo.com/v7/finance/quote?symbols="+enc;String body=httpGet(u,"query1.finance.yahoo.com",1800,2600,"application/json");
         JSONObject qr=new JSONObject(body).getJSONObject("quoteResponse");JSONArray a=qr.getJSONArray("result");if(a.length()==0)throw new Exception("Temel veri yok");JSONObject q=a.getJSONObject(0);
         double bv=q.optDouble("bookValue",Double.NaN),pb=q.optDouble("priceToBook",Double.NaN),pe=q.optDouble("trailingPE",Double.NaN),eq=q.optDouble("totalStockholderEquity",Double.NaN),ni=q.optDouble("netIncomeToCommon",Double.NaN);
