@@ -1,5 +1,5 @@
 name: Build BorsaRadar v157 Production APK
-# build-trigger: 2026-09-28-v157-final
+# build-trigger: 2026-09-28-v157-artifact-fix
 on:
   workflow_dispatch:
   push:
