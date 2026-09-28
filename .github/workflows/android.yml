@@ -91,6 +91,10 @@ jobs:
         run: python3 .ci/patch_v47_release_build.py
       - name: Restore stable signing key
         run: base64 -d .ci/borsaradar-final.keystore.b64 > .ci/borsaradar-final.keystore
+      - name: Disable obsolete MainActivity source
+        run: |
+          mv app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java app/src/main/java/com/kulanoglu/borsaradar/MainActivity.java.disabled
+          sed -i 's/BuildConfig.VERSION_NAME/"3.12.157"/g' app/src/main/java/com/kulanoglu/borsaradar/ReferenceUiActivity.java
       - name: Compile check
         run: gradle --no-daemon :app:compileReleaseJavaWithJavac
       - name: Build signed release APK
