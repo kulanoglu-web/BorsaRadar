@@ -9,7 +9,8 @@ public final class BacktestEngine {
         public int trades, wins, losses;
         public double netPct, maxDrawdownPct, winRate, avgTradePct;
         public double customSignalReturnPct, customWinRate, custom2dReturnPct, custom10dReturnPct, custom20dReturnPct, profitFactor, expectancyPct;
-        public int customSignals, customWins, custom2dSignals, custom2dWins, custom10dSignals, custom10dWins, custom20dSignals, custom20dWins;\n        public double custom2dWinRate, custom10dWinRate, custom20dWinRate, calibratedWinRate;
+        public int customSignals, customWins, custom2dSignals, custom2dWins, custom10dSignals, custom10dWins, custom20dSignals, custom20dWins;
+        public double custom2dWinRate, custom10dWinRate, custom20dWinRate, calibratedWinRate;
         public String bestProfile="BALANCED";
         public double fastScore, balancedScore, confirmedScore;
         public String summary;
@@ -90,7 +91,8 @@ public final class BacktestEngine {
         r.customSignals=customSignals; r.customWins=customWins;
         r.customWinRate=customSignals==0?0:100.0*customWins/customSignals;
         r.customSignalReturnPct=customSignals==0?0:customReturnSum/customSignals;
-        r.custom2dReturnPct=r.custom2dSignals==0?0:custom2Sum/r.custom2dSignals; r.custom10dReturnPct=r.custom10dSignals==0?0:custom10Sum/r.custom10dSignals; r.custom20dReturnPct=r.custom20dSignals==0?0:custom20Sum/r.custom20dSignals;\n        r.custom2dWinRate=shrunkRate(r.custom2dWins,r.custom2dSignals);r.custom10dWinRate=shrunkRate(r.custom10dWins,r.custom10dSignals);r.custom20dWinRate=shrunkRate(r.custom20dWins,r.custom20dSignals);r.calibratedWinRate=shrunkRate(customWins,customSignals);
+        r.custom2dReturnPct=r.custom2dSignals==0?0:custom2Sum/r.custom2dSignals; r.custom10dReturnPct=r.custom10dSignals==0?0:custom10Sum/r.custom10dSignals; r.custom20dReturnPct=r.custom20dSignals==0?0:custom20Sum/r.custom20dSignals;
+        r.custom2dWinRate=shrunkRate(r.custom2dWins,r.custom2dSignals);r.custom10dWinRate=shrunkRate(r.custom10dWins,r.custom10dSignals);r.custom20dWinRate=shrunkRate(r.custom20dWins,r.custom20dSignals);r.calibratedWinRate=shrunkRate(customWins,customSignals);
         r.profitFactor=grossLoss==0?(grossWin>0?99:0):grossWin/grossLoss; r.expectancyPct=r.avgTradePct;
         ProfileTest fast=testProfile(symbol,x,ShortPulseEngine.Profile.FAST);
         ProfileTest balanced=testProfile(symbol,x,ShortPulseEngine.Profile.BALANCED);
@@ -117,7 +119,8 @@ public final class BacktestEngine {
                 + " / C " + IndicatorEngine.fmt(r.confirmedScore) + "]";
         return r;
     }
-    private static double shrunkRate(int wins,int n){return n==0?0:100.0*(wins+2.0)/(n+4.0);}\n    private static final class ProfileTest {
+    private static double shrunkRate(int wins,int n){return n==0?0:100.0*(wins+2.0)/(n+4.0);}
+    private static final class ProfileTest {
         int signals,wins; double sum;
         double score(){if(signals<3)return -999;double win=100.0*wins/signals,avg=sum/signals;return avg*2.2+win/18.0-Math.max(0,5-signals)*0.4;}
     }
