@@ -254,4 +254,7 @@ private void saveRadarCache(String market){
  }
  private void loadRadarCache(String market){
   cachedRadarRows.clear();String raw=getSharedPreferences("borsaradar",MODE_PRIVATE).getString("radar_rows_"+market,"");
-  if(!raw.isEmpty())for(String line:raw.split("\\n")){String[] p=line.split("\\.",-1);String[] r=new String[p.length];for(int i=0;i<p.length;i++)r[i]=decRadar(p[i]);cachedRadarRows.add(r);}\n  radarCacheByMarket.put(market,new java.util.ArrayList<>(cachedRadarRows));scanDone=!cachedRadarRows.isEmpty();scanDoneByMarket.put(market,scanDone);\n }\n}\n
+  if(!raw.isEmpty())for(String line:raw.split("\\n")){String[] p=line.split("\\.",-1);String[] r=new String[p.length];for(int i=0;i<p.length;i++)r[i]=decRadar(p[i]);cachedRadarRows.add(r);}
+  radarCacheByMarket.put(market,new java.util.ArrayList<>(cachedRadarRows));scanDone=!cachedRadarRows.isEmpty();scanDoneByMarket.put(market,scanDone);
+ }
+}
