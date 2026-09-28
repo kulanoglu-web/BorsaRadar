@@ -21,8 +21,8 @@ public class ReferenceUiActivity extends Activity {
  private final String[] germanyRadarSymbols=universeCodes(GlobalStockUniverse.GERMANY,true);
  private final String[] usaRadarSymbols=universeCodes(GlobalStockUniverse.USA,false);
  private String[] universeCodes(String[] entries,boolean de){java.util.ArrayList<String>o=new java.util.ArrayList<>();for(String e:entries){String z=GlobalStockUniverse.code(e);if("SPCX".equals(z))continue;o.add(de?z+".DE":z);}return o.toArray(new String[0]);}
- private String[] radarUniverse(){if("Almanya".equals(selectedMarket))return germanyRadarSymbols;if("ABD".equals(selectedMarket))return usaRadarSymbols;if("Tümü".equals(selectedMarket)){String[] all=new String[radarSymbols.length+germanyRadarSymbols.length+usaRadarSymbols.length];System.arraycopy(radarSymbols,0,all,0,radarSymbols.length);System.arraycopy(germanyRadarSymbols,0,all,radarSymbols.length,germanyRadarSymbols.length);System.arraycopy(usaRadarSymbols,0,all,radarSymbols.length+germanyRadarSymbols.length,usaRadarSymbols.length);return all;}
- return radarSymbols;
+ private String[] radarUniverse(){String[] bist=expandedBistUniverse();if("Almanya".equals(selectedMarket))return germanyRadarSymbols;if("ABD".equals(selectedMarket))return usaRadarSymbols;if("Tümü".equals(selectedMarket)){String[] all=new String[bist.length+germanyRadarSymbols.length+usaRadarSymbols.length];System.arraycopy(bist,0,all,0,bist.length);System.arraycopy(germanyRadarSymbols,0,all,bist.length,germanyRadarSymbols.length);System.arraycopy(usaRadarSymbols,0,all,bist.length+germanyRadarSymbols.length,usaRadarSymbols.length);return all;}
+ return bist;
  }
  private String[][] featuredForMarket(){
   if("Almanya".equals(selectedMarket))return new String[][]{{"SAP.DE","","",""},{"SIE.DE","","",""},{"ALV.DE","","",""}};
