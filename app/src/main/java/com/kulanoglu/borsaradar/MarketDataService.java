@@ -71,7 +71,7 @@ public final class MarketDataService {
             if(raw==null){if(cached!=null){raw=new ArrayList<>(cached.data);source=cached.source+"/cache";}else throw last==null?new Exception("Veri alınamadı: "+symbol):last;}
             else {CACHE.put(key,new Cache(now,raw,source));LAST_GOOD_SOURCE.put(symbol,source);}
         }
-        cacheYahooSpotFromSeries(symbol,raw,source); scheduleGoogleSpot(inputSymbol,symbol);
+        cacheYahooSpotFromSeries(symbol,raw,source); cacheYahooSpotFromSeries(symbol,raw,source); scheduleGoogleSpot(inputSymbol,symbol);
         if(maxPoints>0)return downsample(raw,maxPoints);
         return raw;
     }
@@ -90,6 +90,8 @@ public final class MarketDataService {
         double bv=q.optDouble("bookValue",Double.NaN),pb=q.optDouble("priceToBook",Double.NaN),pe=q.optDouble("trailingPE",Double.NaN),eq=q.optDouble("totalStockholderEquity",Double.NaN),ni=q.optDouble("netIncomeToCommon",Double.NaN);
         if(Double.isNaN(bv)&&Double.isNaN(pb))throw new Exception("Defter değeri/PD-DD yok");Fundamentals out=new Fundamentals(bv,pb,pe,eq,ni,"Yahoo Finance");FUND_CACHE.put(symbol,new FundCache(now,out));return out;
     }
+
+    private static void cacheYahooSpotFromSeries(String symbol,List<Candle> raw,String source){if(raw==null||raw.size()<2)return;Candle last=raw.get(raw.size()-1),prev=raw.get(raw.size()-2);double pc=prev.close,cp=pc==0?Double.NaN:(last.close/pc-1d)*100d;SPOT_CACHE.put(symbol,new Spot(last.close,pc,cp,source,System.currentTimeMillis(),last.time));}
 
     private static void cacheYahooSpotFromSeries(String symbol,List<Candle> raw,String source){if(raw==null||raw.size()<2)return;Candle last=raw.get(raw.size()-1),prev=raw.get(raw.size()-2);double pc=prev.close,cp=pc==0?Double.NaN:(last.close/pc-1d)*100d;SPOT_CACHE.put(symbol,new Spot(last.close,pc,cp,source,System.currentTimeMillis(),last.time));}
 
