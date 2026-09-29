@@ -217,7 +217,7 @@ public class ReferenceUiActivity extends Activity {
   String trend=pulse.trendStrength>=20?"YÜKSELEN":pulse.trendStrength<=-20?"DÜŞEN":"YATAY";
   int confirmations=(pulse.trendStrength>10?1:0)+(pulse.flowStrength>8?1:0)+(pulse.momentumStrength>10?1:0)+(pulse.brtv>20?1:0)+(pulse.brm>1?1:0)+(pulse.brh>7?1:0)+(pulse.macdValue>0?1:0)+(pulse.stochastic>35&&pulse.stochastic<82?1:0)+(pulse.bollingerPosition>35&&pulse.bollingerPosition<88?1:0)+(pulse.qualityScore>=55?1:0)+(pulse.brx>20?1:0)+(pulse.brq>58?1:0)+(pulse.brf>20?1:0)+(pulse.regimeScore>20?1:0)+(pulse.reversalScore>62?1:0)+(pulse.breakoutQuality>62?1:0);
   int warnings=(pulse.trendStrength<-20?1:0)+(pulse.flowStrength<-15?1:0)+(pulse.momentumStrength<-20?1:0)+(pulse.chaseRisk?1:0)+(pulse.riskScore>=55?1:0)+(pulse.stochastic>90?1:0)+(pulse.bollingerPosition>95?1:0);
-  MarketDataService.Fundamentals fund=null;try{fund=MarketDataService.fetchFundamentals(s);}catch(Exception ignored){}double pb=fund==null?Double.NaN:fund.priceToBook,bv=fund==null?Double.NaN:fund.bookValuePerShare;boolean pbExtreme=!Double.isNaN(pb)&&pb>=4,pbHigh=!Double.isNaN(pb)&&pb>=2,pbDiscount=!Double.isNaN(pb)&&pb>0&&pb<=.75;boolean fallingNow=pctFromCandles(d,5)<-2||pctFromCandles(d,10)<-4;
+  MarketDataService.Fundamentals fund=null;try{fund=MarketDataService.fetchFundamentals(s);}catch(Exception ignored){}double pb=fund==null?Double.NaN:fund.priceToBook,bv=fund==null?Double.NaN:fund.bookValuePerShare;boolean pbExtreme=!Double.isNaN(pb)&&pb>=4,pbHigh=!Double.isNaN(pb)&&pb>=2,pbDiscount=!Double.isNaN(pb)&&pb>0&&pb<=.75;double liveDayPct=(sp!=null&&!Double.isNaN(sp.changePercent))?sp.changePercent:(prev==0?0:(price-prev)/prev*100d);boolean fallingNow=liveDayPct<=-3||pctFromCandles(d,5)<-2||pctFromCandles(d,10)<-4;
   String sig;
   if(pbExtreme||fallingNow) sig="İZLE";
   else if(cheap&&bearish) sig="İZLE"; // ucuz ama düşüş sürüyor: dönüş teyidi bekle
@@ -227,7 +227,7 @@ public class ReferenceUiActivity extends Activity {
   else if(total>=4&&pulse.score>=3.0&&confirmations>=7&&warnings<=2&&pulse.qualityScore>=58&&pulse.riskScore<60&&pulse.profitProbability>=62) sig="AL";
   else if(total<=-4&&pulse.score<=-1.5&&!cheap&&warnings>=2&&pulse.profitProbability<45) sig="SAT";
   else sig="İZLE";
-  int confidence=Math.min(97,Math.max(50,(int)Math.round(pulse.confidence)+Math.abs(valueScore)*3));double pct=prev==0?0:(price-prev)/prev*100d;
+  int confidence=Math.min(97,Math.max(50,(int)Math.round(pulse.confidence)+Math.abs(valueScore)*3));double pct=(sp!=null&&!Double.isNaN(sp.changePercent))?sp.changePercent:(prev==0?0:(price-prev)/prev*100d);
   String state=pbExtreme?"DEFTER DEĞERİNE GÖRE ÇOK PAHALI":pbDiscount?"DEFTER DEĞERİNE GÖRE İSKONTOLU":cheap&&bearish?"UCUZ • DÜŞÜŞTE • DÖNÜŞ TEYİDİ BEKLE":cheap&&bullish?"UCUZ • MOMENTUM TEYİTLİ":expensive&&bullish?"PAHALI • MOMENTUM VAR":(cheap?"UCUZ":expensive?"PAHALI":"NORMAL")+" • "+trend;
   String fundamentalNote=Double.isNaN(pb)?"PD/DD —":String.format(java.util.Locale.GERMANY,"PD/DD %.2f • Defter %.2f%s",pb,bv,currency(s));
   String setup=pulse.earlyBreakout?"KIRILIM HAZIRLIĞI":pulse.breakout?"KIRILIM":pulse.resistanceDistancePct<=3?"DİRENCE YAKIN":pulse.supportDistancePct<=3?"DESTEĞE YAKIN":"NORMAL";
