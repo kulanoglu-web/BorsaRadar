@@ -218,14 +218,18 @@ public class ReferenceUiActivity extends Activity {
   int confirmations=(pulse.trendStrength>10?1:0)+(pulse.flowStrength>8?1:0)+(pulse.momentumStrength>10?1:0)+(pulse.brtv>20?1:0)+(pulse.brm>1?1:0)+(pulse.brh>7?1:0)+(pulse.macdValue>0?1:0)+(pulse.stochastic>35&&pulse.stochastic<82?1:0)+(pulse.bollingerPosition>35&&pulse.bollingerPosition<88?1:0)+(pulse.qualityScore>=55?1:0)+(pulse.brx>20?1:0)+(pulse.brq>58?1:0)+(pulse.brf>20?1:0)+(pulse.regimeScore>20?1:0)+(pulse.reversalScore>62?1:0)+(pulse.breakoutQuality>62?1:0);
   int warnings=(pulse.trendStrength<-20?1:0)+(pulse.flowStrength<-15?1:0)+(pulse.momentumStrength<-20?1:0)+(pulse.chaseRisk?1:0)+(pulse.riskScore>=55?1:0)+(pulse.stochastic>90?1:0)+(pulse.bollingerPosition>95?1:0);
   MarketDataService.Fundamentals fund=MarketDataService.cachedFundamentals(s);double pb=fund==null?Double.NaN:fund.priceToBook,bv=fund==null?Double.NaN:fund.bookValuePerShare;boolean pbExtreme=!Double.isNaN(pb)&&pb>=4,pbHigh=!Double.isNaN(pb)&&pb>=2,pbDiscount=!Double.isNaN(pb)&&pb>0&&pb<=.75;double liveDayPct=(sp!=null&&!Double.isNaN(sp.changePercent))?sp.changePercent:(prev==0?0:(price-prev)/prev*100d);boolean fallingNow=liveDayPct<=-3||pctFromCandles(d,5)<-2||pctFromCandles(d,10)<-4;
-  boolean overheated=pulse.chaseRisk&&pulse.stochastic>=88&&pulse.bollingerPosition>=90;
+  boolean overheated=pulse.chaseRisk&&(pulse.stochastic>=88||pulse.bollingerPosition>=94);
   boolean eliteBreakout=pulse.breakout&&pulse.breakoutQuality>=72&&pulse.qualityScore>=62&&pulse.riskScore<55&&pulse.profitProbability>=64&&confirmations>=8;
+  // Do not kill genuine early opportunities: reward broad confirmation, but demand more proof when chasing.
+  boolean broadBuy=pulse.score>=2.2&&confirmations>=7&&warnings<=2&&pulse.qualityScore>=55&&pulse.riskScore<62&&pulse.profitProbability>=60;
+  boolean earlyBuy=pulse.earlyBreakout&&pulse.score>=1.8&&confirmations>=6&&pulse.qualityScore>=54&&pulse.riskScore<58&&pulse.profitProbability>=59;
   String sig;
   if(pbExtreme||fallingNow) sig="İZLE";
   else if(overheated&&!eliteBreakout) sig="İZLE"; // kovalama + aşırı ısınma: güçlü kırılım yoksa giriş yok
   else if(cheap&&bearish) sig="İZLE"; // ucuz ama düşüş sürüyor: dönüş teyidi bekle
   else if(expensive&&bullish&&pulse.score<2.5) sig="İZLE"; // momentum var fakat değerleme gerilmiş
-  else if(bullish&&total>=2&&pulse.confidence>=55&&confirmations>=6&&pulse.qualityScore>=52&&pulse.riskScore<65&&pulse.profitProbability>=58) sig="AL";
+  else if(!overheated&&(earlyBuy||broadBuy)) sig="AL";
+  else if(bullish&&total>=2&&pulse.confidence>=58&&confirmations>=7&&pulse.qualityScore>=55&&pulse.riskScore<62&&pulse.profitProbability>=60) sig="AL";
   else if(bearish&&pulse.score<=-1.5&&total<=-2&&warnings>=2) sig="SAT";
   else if(total>=4&&pulse.score>=3.0&&confirmations>=7&&warnings<=2&&pulse.qualityScore>=58&&pulse.riskScore<60&&pulse.profitProbability>=62) sig="AL";
   else if(total<=-4&&pulse.score<=-1.5&&!cheap&&warnings>=2&&pulse.profitProbability<45) sig="SAT";
