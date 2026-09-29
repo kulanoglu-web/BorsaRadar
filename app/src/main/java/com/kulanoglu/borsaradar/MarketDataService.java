@@ -71,7 +71,7 @@ public final class MarketDataService {
             if(raw==null){if(cached!=null){raw=new ArrayList<>(cached.data);source=cached.source+"/cache";}else throw last==null?new Exception("Veri alınamadı: "+symbol):last;}
             else {CACHE.put(key,new Cache(now,raw,source));LAST_GOOD_SOURCE.put(symbol,source);}
         }
-        cacheYahooSpotFromSeries(symbol,raw,source); scheduleGoogleSpot(inputSymbol,symbol);
+        if(!source.startsWith("Yahoo"))cacheYahooSpotFromSeries(symbol,raw,source); scheduleGoogleSpot(inputSymbol,symbol);
         if(maxPoints>0)return downsample(raw,maxPoints);
         return raw;
     }
