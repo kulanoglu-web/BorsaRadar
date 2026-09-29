@@ -94,7 +94,7 @@ public final class MarketDataService {
     private static void cacheYahooSpotFromSeries(String symbol,List<Candle> raw,String source){if(raw==null||raw.size()<2)return;Candle last=raw.get(raw.size()-1),prev=raw.get(raw.size()-2);double pc=prev.close,cp=pc==0?Double.NaN:(last.close/pc-1d)*100d;SPOT_CACHE.put(symbol,new Spot(last.close,pc,cp,source,System.currentTimeMillis(),last.time));}
 
 
-    public static Spot latestSpot(String inputSymbol){String symbol=normalizeSymbol(inputSymbol);Spot s=SPOT_CACHE.get(symbol);if(s!=null&&System.currentTimeMillis()-s.at<120_000L)return s;return null;}
+    public static Fundamentals cachedFundamentals(String inputSymbol){FundCache fc=FUND_CACHE.get(normalizeSymbol(inputSymbol));return fc!=null&&System.currentTimeMillis()-fc.at<21600000L?fc.data:null;}\n\n    public static Spot latestSpot(String inputSymbol){String symbol=normalizeSymbol(inputSymbol);Spot s=SPOT_CACHE.get(symbol);if(s!=null&&System.currentTimeMillis()-s.at<120_000L)return s;return null;}
     public static String sourceFor(String inputSymbol,String range,String interval){Cache c=CACHE.get(normalizeSymbol(inputSymbol)+"|"+range+"|"+interval);return c==null?"":c.source;}
     public static String[] dataSourcePlan(){return DATA_SOURCE_PLAN.clone();}
     public static String lastGoodSource(String inputSymbol){String s=LAST_GOOD_SOURCE.get(normalizeSymbol(inputSymbol));return s==null?"":s;}
