@@ -45,8 +45,9 @@ public final class MarketDataService {
         public Candle(long time,double open,double high,double low,double close,double volume,String symbol){this.time=time;this.open=open;this.high=high;this.low=low;this.close=close;this.volume=volume;this.symbol=symbol==null?"":symbol;}
     }
     public static final class Spot {
-        public final double price; public final String source; public final long at;
-        Spot(double p,String s,long t){price=p;source=s;at=t;}
+        public final double price,previousClose,changePercent; public final String source; public final long at,marketTime;
+        Spot(double p,double pc,double cp,String s,long t,long mt){price=p;previousClose=pc;changePercent=cp;source=s;at=t;marketTime=mt;}
+        Spot(double p,String s,long t){this(p,Double.NaN,Double.NaN,s,t,0L);}
     }
     private static final class Cache { final long at; final List<Candle> data; final String source; Cache(long a,List<Candle>d,String s){at=a;data=d;source=s;} }
     private static final class FundCache { final long at; final Fundamentals data; FundCache(long a,Fundamentals d){at=a;data=d;} }
@@ -70,7 +71,7 @@ public final class MarketDataService {
             if(raw==null){if(cached!=null){raw=new ArrayList<>(cached.data);source=cached.source+"/cache";}else throw last==null?new Exception("Veri alınamadı: "+symbol):last;}
             else {CACHE.put(key,new Cache(now,raw,source));LAST_GOOD_SOURCE.put(symbol,source);}
         }
-        scheduleGoogleSpot(inputSymbol,symbol);
+        cacheYahooSpotFromSeries(symbol,raw,source); scheduleGoogleSpot(inputSymbol,symbol);
         if(maxPoints>0)return downsample(raw,maxPoints);
         return raw;
     }
@@ -89,6 +90,8 @@ public final class MarketDataService {
         double bv=q.optDouble("bookValue",Double.NaN),pb=q.optDouble("priceToBook",Double.NaN),pe=q.optDouble("trailingPE",Double.NaN),eq=q.optDouble("totalStockholderEquity",Double.NaN),ni=q.optDouble("netIncomeToCommon",Double.NaN);
         if(Double.isNaN(bv)&&Double.isNaN(pb))throw new Exception("Defter değeri/PD-DD yok");Fundamentals out=new Fundamentals(bv,pb,pe,eq,ni,"Yahoo Finance");FUND_CACHE.put(symbol,new FundCache(now,out));return out;
     }
+
+    private static void cacheYahooSpotFromSeries(String symbol,List<Candle> raw,String source){if(raw==null||raw.size()<2)return;Candle last=raw.get(raw.size()-1),prev=raw.get(raw.size()-2);double pc=prev.close,cp=pc==0?Double.NaN:(last.close/pc-1d)*100d;SPOT_CACHE.put(symbol,new Spot(last.close,pc,cp,source,System.currentTimeMillis(),last.time));}
 
     public static Spot latestSpot(String inputSymbol){String symbol=normalizeSymbol(inputSymbol);Spot s=SPOT_CACHE.get(symbol);if(s!=null&&System.currentTimeMillis()-s.at<120_000L)return s;return null;}
     public static String sourceFor(String inputSymbol,String range,String interval){Cache c=CACHE.get(normalizeSymbol(inputSymbol)+"|"+range+"|"+interval);return c==null?"":c.source;}
