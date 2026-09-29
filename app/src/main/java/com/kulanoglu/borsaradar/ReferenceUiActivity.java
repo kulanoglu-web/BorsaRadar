@@ -200,6 +200,7 @@ public class ReferenceUiActivity extends Activity {
  }
 
  private void renderRadarLoading(){if(radarRows==null)return;radarRows.removeAllViews();for(String s:radarUniverse()){if(!sectorMatches(s))continue;LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);String[] a={s,"…","…","…"};for(int i=0;i<4;i++){TextView x=t(a[i],10,i==0?Color.WHITE:MUTED,i==0);x.setGravity(Gravity.CENTER);row.addView(x,new LinearLayout.LayoutParams(0,dp(34),1));}radarRows.addView(row);}}
+ private int bistMarketGate(){try{java.util.List<MarketDataService.Candle>x=MarketDataService.fetchSeries("^XU100","1mo","1d",30);if(x==null||x.size()<6)return 0;int n=x.size();double p=x.get(n-1).close,p1=x.get(n-2).close,p5=x.get(n-6).close;double d1=p1==0?0:(p/p1-1d)*100d,d5=p5==0?0:(p/p5-1d)*100d;if(d1<=-2||d5<=-4)return -2;if(d1<0&&d5<0)return -1;if(d1>=1&&d5>=2)return 2;if(d5>0)return 1;return 0;}catch(Exception e){return 0;}}
  private String[] analyzeRadarSymbol(String s){try{
   java.util.List<MarketDataService.Candle>d=MarketDataService.fetchSeries(s,"1y","1d",280);if(d==null||d.size()<35)throw new Exception("Yetersiz geçmiş veri: "+(d==null?0:d.size()));
   int n=d.size(),end=n-1;double price=d.get(end).close,prev=d.get(end-1).close;MarketDataService.Spot sp=MarketDataService.latestSpot(s);if(sp!=null&&sp.price>0)price=sp.price;
@@ -223,8 +224,10 @@ public class ReferenceUiActivity extends Activity {
   // Do not kill genuine early opportunities: reward broad confirmation, but demand more proof when chasing.
   boolean broadBuy=pulse.score>=2.2&&confirmations>=7&&warnings<=2&&pulse.qualityScore>=55&&pulse.riskScore<62&&pulse.profitProbability>=60;
   boolean earlyBuy=pulse.earlyBreakout&&pulse.score>=1.8&&confirmations>=6&&pulse.qualityScore>=54&&pulse.riskScore<58&&pulse.profitProbability>=59;
+  int marketGate=s.endsWith(".IS")?bistMarketGate():0;boolean marketStress=marketGate<=-2,marketWeak=marketGate==-1;
   String sig;
-  if(staleQuote) sig="İZLE"; // eski fiyatla yeni AL/SAT üretme
+  if(staleQuote) sig="İZLE";
+  else if(marketStress&&!eliteBreakout&&!reboundConfirmed) sig="İZLE"; // eski fiyatla yeni AL/SAT üretme
   else if(pbExtreme) sig="İZLE";
   else if(fallingNow&&!reboundConfirmed) sig="İZLE";
   else if(overheated&&!eliteBreakout) sig="İZLE"; // kovalama + aşırı ısınma: güçlü kırılım yoksa giriş yok
@@ -240,8 +243,9 @@ public class ReferenceUiActivity extends Activity {
   int confidence=Math.min(97,Math.max(50,(int)Math.round(pulse.confidence)+Math.abs(valueScore)*3));double pct=(sp!=null&&!Double.isNaN(sp.changePercent))?sp.changePercent:(prev==0?0:(price-prev)/prev*100d);
   String state=staleQuote?"VERİ GECİKMELİ • SİNYAL BEKLETİLDİ":pbExtreme?"DEFTER DEĞERİNE GÖRE ÇOK PAHALI":pbDiscount?"DEFTER DEĞERİNE GÖRE İSKONTOLU":cheap&&bearish?"UCUZ • DÜŞÜŞTE • DÖNÜŞ TEYİDİ BEKLE":cheap&&bullish?"UCUZ • MOMENTUM TEYİTLİ":expensive&&bullish?"PAHALI • MOMENTUM VAR":(cheap?"UCUZ":expensive?"PAHALI":"NORMAL")+" • "+trend;
   String fundamentalNote=Double.isNaN(pb)?"PD/DD —":String.format(java.util.Locale.GERMANY,"PD/DD %.2f • Defter %.2f%s",pb,bv,currency(s));
+  String marketNote=marketGate<=-2?"BIST SERT ZAYIF":marketGate==-1?"BIST ZAYIF":marketGate>=2?"BIST GÜÇLÜ":marketGate==1?"BIST POZİTİF":"BIST NÖTR";
   String setup=reboundConfirmed?"DÖNÜŞ TEYİTLİ":reboundCandidate?"DÖNÜŞ ADAYI":pulse.earlyBreakout?"KIRILIM HAZIRLIĞI":pulse.breakout?"KIRILIM":pulse.resistanceDistancePct<=3?"DİRENCE YAKIN":pulse.supportDistancePct<=3?"DESTEĞE YAKIN":"NORMAL";
-  String note=String.format(java.util.Locale.GERMANY,"Güven %d%% • Model olasılığı %.0f%% • %s\n%s\nModel %.2f%s (%+.1f%%) • 1Y ort %.2f%s (%+.1f%%) • tarama ort %.2f%s (%+.1f%%)\nBRTV %.1f • BRM %.2f • BRH %.1f • Teyit %d/16 • Uyarı %d/7 • Kalite %.0f • Risk %.0f • BRX %.0f • BRQ %.0f • BRF %.0f • Rejim %.0f • Dönüş %.0f • Kırılım %.0f • %s",confidence,pulse.profitProbability,pulse.recommendation,state+" • "+fundamentalNote,paper,currency(s),paperGap,avg1,currency(s),disc1,avg2,currency(s),disc2,pulse.brtv,pulse.brm,pulse.brh,confirmations,warnings,pulse.qualityScore,pulse.riskScore,pulse.brx,pulse.brq,pulse.brf,pulse.regimeScore,pulse.reversalScore,pulse.breakoutQuality,setup);
+  String note=String.format(java.util.Locale.GERMANY,"Güven %d%% • Model olasılığı %.0f%% • %s\n%s\nModel %.2f%s (%+.1f%%) • 1Y ort %.2f%s (%+.1f%%) • tarama ort %.2f%s (%+.1f%%)\nBRTV %.1f • BRM %.2f • BRH %.1f • Teyit %d/16 • Uyarı %d/7 • Kalite %.0f • Risk %.0f • BRX %.0f • BRQ %.0f • BRF %.0f • Rejim %.0f • Dönüş %.0f • Kırılım %.0f • %s",confidence,pulse.profitProbability,pulse.recommendation,state+" • "+fundamentalNote,paper,currency(s),paperGap,avg1,currency(s),disc1,avg2,currency(s),disc2,pulse.brtv,pulse.brm,pulse.brh,confirmations,warnings,pulse.qualityScore,pulse.riskScore,pulse.brx,pulse.brq,pulse.brf,pulse.regimeScore,pulse.reversalScore,pulse.breakoutQuality,setup+" • "+marketNote);
   return new String[]{s,String.format(java.util.Locale.GERMANY,"%.2f",price),String.format(java.util.Locale.GERMANY,"%+.2f%%",pct),sig,String.valueOf(total),note,String.valueOf(confidence),pulse.recommendation,valueScore>=2?"UCUZ":valueScore<=-2?"PAHALI":"NORMAL",String.format(java.util.Locale.GERMANY,"%.1f",paperGap)};
  }catch(Exception ex){String msg=ex.getMessage()==null?ex.getClass().getSimpleName():ex.getMessage();return new String[]{s,"—","—","İZLE","-8","Veri alınamadı: "+msg,"50","VERİ YOK","NORMAL","0"};}}
 
