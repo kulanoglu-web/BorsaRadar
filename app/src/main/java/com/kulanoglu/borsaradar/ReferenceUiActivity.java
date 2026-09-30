@@ -222,9 +222,9 @@ public class ReferenceUiActivity extends Activity {
   boolean overheated=pulse.chaseRisk&&(pulse.stochastic>=88||pulse.bollingerPosition>=94);
   boolean eliteBreakout=pulse.breakout&&pulse.breakoutQuality>=72&&pulse.qualityScore>=62&&pulse.riskScore<55&&pulse.profitProbability>=64&&confirmations>=8;
   // Do not kill genuine early opportunities: reward broad confirmation, but demand more proof when chasing.
-  boolean broadBuy=pulse.score>=2.2&&confirmations>=7&&warnings<=2&&pulse.qualityScore>=55&&pulse.riskScore<62&&pulse.profitProbability>=60;
+  boolean broadBuy=pulse.score>=2.2&&confirmations>=7&&warnings<=2&&pulse.qualityScore>=55&&pulse.riskScore<62&&pulse.profitProbability>=60;\n  if(marketWeak) broadBuy=broadBuy&&pulse.score>=2.7&&confirmations>=8&&pulse.profitProbability>=63;
   boolean earlyBuy=pulse.earlyBreakout&&pulse.score>=1.8&&confirmations>=6&&pulse.qualityScore>=54&&pulse.riskScore<58&&pulse.profitProbability>=59;
-  int marketGate=s.endsWith(".IS")?bistMarketGate():0;boolean marketStress=marketGate<=-2,marketWeak=marketGate==-1;
+  int marketGate=s.endsWith(".IS")?bistMarketGate():0;boolean marketStress=marketGate<=-2,marketWeak=marketGate==-1;boolean marketTailwind=marketGate>=1;\n  if(marketWeak){confirmations=Math.max(0,confirmations-1);warnings++;}else if(marketTailwind&&bullish){confirmations++;}
   String sig;
   if(staleQuote) sig="İZLE";
   else if(marketStress&&!eliteBreakout&&!reboundConfirmed) sig="İZLE"; // eski fiyatla yeni AL/SAT üretme
