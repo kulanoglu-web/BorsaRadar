@@ -55,9 +55,17 @@ public final class MacroRegimeEngine {
             else if(oil5<=-5){if(oilSensitivity>1d)r.confirmations++;else r.warnings++;}
         }
 
+        double fxSensitivity=SectorMacroSensitivityEngine.multiplier(bare,"KUR");
         if(bist&&!Double.isNaN(usdtry5)){
-            if(usdtry5>=3)r.warnings++;
-            else if(usdtry5<=-2)r.confirmations++;
+            if(usdtry5>=3){
+                if(fxSensitivity>1d)r.warnings++;
+                else if(fxSensitivity<1d)r.confirmations++;
+                else r.warnings++;
+            }else if(usdtry5<=-2){
+                if(fxSensitivity>1d)r.confirmations++;
+                else if(fxSensitivity<1d)r.warnings++;
+                else r.confirmations++;
+            }
         }
 
         // Gold is used as a broad defensive-stress clue, never as a standalone trade trigger.
@@ -66,7 +74,7 @@ public final class MacroRegimeEngine {
         r.score=Math.max(-4d,Math.min(4d,r.confirmations-r.warnings));
         r.riskOff=r.warnings>=3||r.score<=-2;
         r.label=r.score>=2?"DESTEKLEYICI":r.score<=-2?"RISKLI":"NOTR";
-        r.summary="Makro "+r.label+" • teyit "+r.confirmations+" • risk "+r.warnings+
+        r.summary="Makro "+r.label+" • "+SectorMacroSensitivityEngine.group(bare)+" • teyit "+r.confirmations+" • risk "+r.warnings+
                 " • Endeks5 "+fmt(eq5)+" • Endeks20 "+fmt(eq20)+
                 (bist?" • USDTRY5 "+fmt(usdtry5):"")+" • Petrol5 "+fmt(oil5);
         return r;
