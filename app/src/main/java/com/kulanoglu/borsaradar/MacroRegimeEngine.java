@@ -7,7 +7,7 @@ import java.util.List;
  * Makro tek basina AL uretmez; teknik sinyali destekler veya risk nedeniyle zayiflatir.
  */
 public final class MacroRegimeEngine {
-    private MacroRegimeEngine(){}
+    private MacroRegimeEngine(){}\n\n    private static final long CACHE_MS=120000L;\n    private static final java.util.Map<String,Cache> CACHE=new java.util.concurrent.ConcurrentHashMap<>();\n    private static final class Cache{final long at;final double value;Cache(long at,double value){this.at=at;this.value=value;}}
 
     public static final class Result {
         public double score;
