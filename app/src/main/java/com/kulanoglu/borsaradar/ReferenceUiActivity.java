@@ -232,7 +232,7 @@ public class ReferenceUiActivity extends Activity {
   // Do not kill genuine early opportunities: reward broad confirmation, but demand more proof when chasing.
   boolean broadBuy=pulse.score>=(isBist?2.5:2.2)&&confirmations>=(isBist?8:7)&&warnings<=2&&pulse.qualityScore>=(isBist?58:55)&&pulse.riskScore<(isBist?58:62)&&pulse.profitProbability>=(isBist?63:60);
   if(marketWeak) broadBuy=broadBuy&&pulse.score>=2.7&&confirmations>=8&&pulse.profitProbability>=63;
-  boolean earlyBuy=pulse.earlyBreakout&&pulse.score>=(isBist?2.1:1.8)&&confirmations>=(isBist?7:6)&&pulse.qualityScore>=(isBist?57:54)&&pulse.riskScore<(isBist?55:58)&&pulse.profitProbability>=(isBist?62:59);
+  boolean earlyBuy=pulse.earlyBreakout&&pulse.score>=(isBist?2.1:1.8)&&confirmations>=(isBist?7:6)&&pulse.qualityScore>=(isBist?57:54)&&pulse.riskScore<(isBist?55:58)&&pulse.profitProbability>=(isBist?62:59);boolean breakdownExit=isBist&&liveDayPct<=-1.25&&pct5<=-2.0&&pulse.momentumStrength<-8&&pulse.trendStrength<5&&warnings>=2;boolean momentumExit=isBist&&bearish&&pulse.score<=-1.0&&pulse.momentumStrength<-15&&pulse.flowStrength<-8&&warnings>=2;
   String sig;
   if(staleQuote||invalidDayPct) sig="İZLE";
   else if(marketStress&&!eliteBreakout&&!reboundConfirmed) sig="İZLE"; // eski fiyatla yeni AL/SAT üretme
@@ -244,7 +244,7 @@ public class ReferenceUiActivity extends Activity {
   else if(reboundConfirmed&&!overheated) sig="AL";
   else if(!overheated&&(earlyBuy||broadBuy)) sig="AL";
   else if(bullish&&total>=2&&pulse.confidence>=58&&confirmations>=7&&pulse.qualityScore>=55&&pulse.riskScore<62&&pulse.profitProbability>=60) sig="AL";
-  else if(bearish&&pulse.score<=-1.5&&total<=-2&&warnings>=2) sig="SAT";
+  else if(breakdownExit||momentumExit) sig="SAT";else if(bearish&&pulse.score<=-1.5&&total<=-2&&warnings>=2) sig="SAT";
   else if(total>=4&&pulse.score>=3.0&&confirmations>=7&&warnings<=2&&pulse.qualityScore>=58&&pulse.riskScore<60&&pulse.profitProbability>=62) sig="AL";
   else if(total<=-4&&pulse.score<=-1.5&&!cheap&&warnings>=2&&pulse.profitProbability<45) sig="SAT";
   else sig="İZLE";
@@ -252,7 +252,7 @@ public class ReferenceUiActivity extends Activity {
   String state=invalidDayPct?"VERİ DOĞRULANAMADI • SİNYAL BEKLETİLDİ":dayPctConflict?"FİYAT KAYNAKLARI FARKLI • MUM VERİSİ KULLANILDI":staleQuote?"VERİ GECİKMELİ • SİNYAL BEKLETİLDİ":!sessionOpen?"PİYASA KAPALI • SON KAPANIŞ":pbExtreme?"DEFTER DEĞERİNE GÖRE ÇOK PAHALI":pbDiscount?"DEFTER DEĞERİNE GÖRE İSKONTOLU":cheap&&bearish?"UCUZ • DÜŞÜŞTE • DÖNÜŞ TEYİDİ BEKLE":cheap&&bullish?"UCUZ • MOMENTUM TEYİTLİ":expensive&&bullish?"PAHALI • MOMENTUM VAR":(cheap?"UCUZ":expensive?"PAHALI":"NORMAL")+" • "+trend;
   String fundamentalNote=Double.isNaN(pb)?"PD/DD —":String.format(java.util.Locale.GERMANY,"PD/DD %.2f • Defter %.2f%s",pb,bv,currency(s));
   String marketNote=marketGate<=-2?"BIST SERT ZAYIF":marketGate==-1?"BIST ZAYIF":marketGate>=2?"BIST GÜÇLÜ":marketGate==1?"BIST POZİTİF":"BIST NÖTR";
-  String setup=reboundConfirmed?"DÖNÜŞ TEYİTLİ":reboundCandidate?"DÖNÜŞ ADAYI":pulse.earlyBreakout?"KIRILIM HAZIRLIĞI":pulse.breakout?"KIRILIM":pulse.resistanceDistancePct<=3?"DİRENCE YAKIN":pulse.supportDistancePct<=3?"DESTEĞE YAKIN":"NORMAL";
+  String setup=breakdownExit?"GERİ KIRILIM":momentumExit?"MOMENTUM BOZULDU":reboundConfirmed?"DÖNÜŞ TEYİTLİ":reboundCandidate?"DÖNÜŞ ADAYI":pulse.earlyBreakout?"KIRILIM HAZIRLIĞI":pulse.breakout?"KIRILIM":pulse.resistanceDistancePct<=3?"DİRENCE YAKIN":pulse.supportDistancePct<=3?"DESTEĞE YAKIN":"NORMAL";
   String note=String.format(java.util.Locale.GERMANY,"Güven %d%% • Model olasılığı %.0f%% • %s\n%s\nModel %.2f%s (%+.1f%%) • 1Y ort %.2f%s (%+.1f%%) • tarama ort %.2f%s (%+.1f%%)\nBRTV %.1f • BRM %.2f • BRH %.1f • Teyit %d/16 • Uyarı %d/7 • Kalite %.0f • Risk %.0f • BRX %.0f • BRQ %.0f • BRF %.0f • Rejim %.0f • Dönüş %.0f • Kırılım %.0f • %s",confidence,pulse.profitProbability,pulse.recommendation,state+" • "+fundamentalNote,paper,currency(s),paperGap,avg1,currency(s),disc1,avg2,currency(s),disc2,pulse.brtv,pulse.brm,pulse.brh,confirmations,warnings,pulse.qualityScore,pulse.riskScore,pulse.brx,pulse.brq,pulse.brf,pulse.regimeScore,pulse.reversalScore,pulse.breakoutQuality,setup+" • "+marketNote);
   return new String[]{s,String.format(java.util.Locale.GERMANY,"%.2f",price),Double.isNaN(pct)?"—":String.format(java.util.Locale.GERMANY,"%+.2f%%",pct),sig,String.valueOf(total),note,String.valueOf(confidence),pulse.recommendation,valueScore>=2?"UCUZ":valueScore<=-2?"PAHALI":"NORMAL",String.format(java.util.Locale.GERMANY,"%.1f",paperGap)};
  }catch(Exception ex){String msg=ex.getMessage()==null?ex.getClass().getSimpleName():ex.getMessage();return new String[]{s,"—","—","İZLE","-8","Veri alınamadı: "+msg,"50","VERİ YOK","NORMAL","0"};}}
