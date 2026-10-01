@@ -25,7 +25,7 @@ public final class MarketDataService {
     private static final Map<String,Long> HOST_LAST_REQUEST=new ConcurrentHashMap<>();
     private static final Map<String,Cache> CACHE=new ConcurrentHashMap<>();
     private static final Map<String,Spot> SPOT_CACHE=new ConcurrentHashMap<>();
-    private static final Map<String,FundCache> FUND_CACHE=new ConcurrentHashMap<>();
+    private static final Map<String,FundCache> FUND_CACHE=new ConcurrentHashMap<>();\n    private static final Map<String,Long> FUND_MISS_CACHE=new ConcurrentHashMap<>();
     private static final Map<String,String> LAST_GOOD_SOURCE=new ConcurrentHashMap<>();
     private static final Map<String,Long> SOURCE_LATENCY_MS=new ConcurrentHashMap<>();
     private static final Map<String,Integer> SOURCE_SUCCESS=new ConcurrentHashMap<>();
@@ -88,7 +88,12 @@ public final class MarketDataService {
         String u="https://query1.finance.yahoo.com/v7/finance/quote?symbols="+enc;String body=httpGet(u,"query1.finance.yahoo.com",1800,2600,"application/json");
         JSONObject qr=new JSONObject(body).getJSONObject("quoteResponse");JSONArray a=qr.getJSONArray("result");if(a.length()==0)throw new Exception("Temel veri yok");JSONObject q=a.getJSONObject(0);
         double bv=q.optDouble("bookValue",Double.NaN),pb=q.optDouble("priceToBook",Double.NaN),pe=q.optDouble("trailingPE",Double.NaN),eq=q.optDouble("totalStockholderEquity",Double.NaN),ni=q.optDouble("netIncomeToCommon",Double.NaN);
-        if(Double.isNaN(bv)&&Double.isNaN(pb))throw new Exception("Defter değeri/PD-DD yok");Fundamentals out=new Fundamentals(bv,pb,pe,eq,ni,"Yahoo Finance");FUND_CACHE.put(symbol,new FundCache(now,out));return out;
+        if(Double.isNaN(bv)&&Double.isNaN(pb))throw new Exception("Defter değeri/PD-DD yok");Fundamentals out=new Fundamentals(bv,pb,pe,eq,ni,"Yahoo Finance");FUND_CACHE.put(symbol,new FundCache(now,out));FUND_MISS_CACHE.remove(symbol);return out;
+    }
+    public static Fundamentals fetchFundamentalsForScan(String inputSymbol){
+        String symbol=normalizeSymbol(inputSymbol),key=symbol;long now=System.currentTimeMillis();FundCache fc=FUND_CACHE.get(key);if(fc!=null&&now-fc.at<21600000L)return fc.data;
+        Long miss=FUND_MISS_CACHE.get(key);if(miss!=null&&now-miss<1800000L)return null;
+        try{return fetchFundamentals(symbol);}catch(Exception e){FUND_MISS_CACHE.put(key,now);return null;}
     }
 
     private static void cacheYahooSpotFromSeries(String symbol,List<Candle> raw,String source){if(raw==null||raw.size()<2)return;Candle last=raw.get(raw.size()-1),prev=raw.get(raw.size()-2);double pc=prev.close,cp=pc==0?Double.NaN:(last.close/pc-1d)*100d;SPOT_CACHE.put(symbol,new Spot(last.close,pc,cp,source,System.currentTimeMillis(),last.time));}
