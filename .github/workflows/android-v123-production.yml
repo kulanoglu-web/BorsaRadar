@@ -1,7 +1,5 @@
 name: Build BorsaRadar v156 Production APK
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 permissions:
   contents: read
