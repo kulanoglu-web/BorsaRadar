@@ -1,0 +1,1 @@
+BorsaRadar APK build trigger for BIST radar fixes through commit cad21d42d49ad3280309716175c9083aef412589
