@@ -7,7 +7,11 @@ import java.util.List;
  * Makro tek basina AL uretmez; teknik sinyali destekler veya risk nedeniyle zayiflatir.
  */
 public final class MacroRegimeEngine {
-    private MacroRegimeEngine(){}\n\n    private static final long CACHE_MS=120000L;\n    private static final java.util.Map<String,Cache> CACHE=new java.util.concurrent.ConcurrentHashMap<>();\n    private static final class Cache{final long at;final double value;Cache(long at,double value){this.at=at;this.value=value;}}
+    private MacroRegimeEngine(){}
+
+    private static final long CACHE_MS=120000L;
+    private static final java.util.Map<String,Cache> CACHE=new java.util.concurrent.ConcurrentHashMap<>();
+    private static final class Cache{final long at;final double value;Cache(long at,double value){this.at=at;this.value=value;}}
 
     public static final class Result {
         public double score;
@@ -19,11 +23,17 @@ public final class MacroRegimeEngine {
     }
 
     private static double move(String symbol,int days){
+        String key=symbol+"#"+days;
+        long nowMs=System.currentTimeMillis();
+        Cache cached=CACHE.get(key);
+        if(cached!=null&&nowMs-cached.at<CACHE_MS)return cached.value;
         try{
             List<MarketDataService.Candle>d=MarketDataService.fetchSeries(symbol,"3mo","1d",90);
             if(d==null||d.size()<days+2)return Double.NaN;
-            double now=d.get(d.size()-1).close,old=d.get(Math.max(0,d.size()-1-days)).close;
-            return old==0?Double.NaN:(now/old-1d)*100d;
+            double latest=d.get(d.size()-1).close,old=d.get(Math.max(0,d.size()-1-days)).close;
+            double value=old==0?Double.NaN:(latest/old-1d)*100d;
+            CACHE.put(key,new Cache(System.currentTimeMillis(),value));
+            return value;
         }catch(Exception e){return Double.NaN;}
     }
 
