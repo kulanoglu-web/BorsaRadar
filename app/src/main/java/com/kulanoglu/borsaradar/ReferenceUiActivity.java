@@ -235,27 +235,28 @@ public class ReferenceUiActivity extends Activity {
   boolean broadBuy=pulse.score>=(isBist?2.5:2.2)&&confirmations>=(isBist?8:7)&&warnings<=2&&pulse.qualityScore>=(isBist?58:55)&&pulse.riskScore<(isBist?58:62)&&pulse.profitProbability>=(isBist?63:60);
   if(marketWeak) broadBuy=broadBuy&&pulse.score>=2.7&&confirmations>=8&&pulse.profitProbability>=63;
   boolean earlyBuy=pulse.earlyBreakout&&pulse.score>=(isBist?2.1:1.8)&&confirmations>=(isBist?7:6)&&pulse.qualityScore>=(isBist?57:54)&&pulse.riskScore<(isBist?55:58)&&pulse.profitProbability>=(isBist?62:59);boolean breakdownExit=isBist&&liveDayPct<=-1.25&&pct5<=-2.0&&pulse.momentumStrength<-8&&pulse.trendStrength<5&&warnings>=2;boolean momentumExit=isBist&&bearish&&pulse.score<=-1.0&&pulse.momentumStrength<-15&&pulse.flowStrength<-8&&warnings>=2;android.content.SharedPreferences signalPrefs=getSharedPreferences("borsaradar_signals",MODE_PRIVATE);double entryPrice=Double.longBitsToDouble(signalPrefs.getLong("entry_"+s,Double.doubleToLongBits(Double.NaN)));double sinceEntry=Double.isNaN(entryPrice)||entryPrice<=0?Double.NaN:(price/entryPrice-1d)*100d;boolean trackedBreakdown=isBist&&!Double.isNaN(sinceEntry)&&sinceEntry<=-2.5&&liveDayPct<0&&pulse.momentumStrength<-8&&warnings>=2;boolean protectGain=isBist&&!Double.isNaN(sinceEntry)&&sinceEntry>=3.0&&liveDayPct<=-1.0&&pulse.momentumStrength<0&&pulse.flowStrength<0;
-  String sig;
-  if(staleQuote||invalidDayPct) sig="İZLE";
-  else if(marketStress&&!eliteBreakout&&!reboundConfirmed) sig="İZLE"; // eski fiyatla yeni AL/SAT üretme
-  else if(pbExtreme) sig="İZLE";
-  else if(fallingNow&&!reboundConfirmed) sig="İZLE";
-  else if(overheated&&!eliteBreakout) sig="İZLE"; // kovalama + aşırı ısınma: güçlü kırılım yoksa giriş yok
-  else if(cheap&&bearish) sig="İZLE"; // ucuz ama düşüş sürüyor: dönüş teyidi bekle
-  else if(expensive&&bullish&&pulse.score<2.5) sig="İZLE"; // momentum var fakat değerleme gerilmiş
-  else if(reboundConfirmed&&!overheated) sig="AL";
-  else if(!overheated&&(earlyBuy||broadBuy)) sig="AL";
-  else if(bullish&&total>=2&&pulse.confidence>=58&&confirmations>=7&&pulse.qualityScore>=55&&pulse.riskScore<62&&pulse.profitProbability>=60) sig="AL";
-  else if(trackedBreakdown||protectGain||breakdownExit||momentumExit) sig="SAT";else if(bearish&&pulse.score<=-1.5&&total<=-2&&warnings>=2) sig="SAT";
-  else if(total>=4&&pulse.score>=3.0&&confirmations>=7&&warnings<=2&&pulse.qualityScore>=58&&pulse.riskScore<60&&pulse.profitProbability>=62) sig="AL";
-  else if(total<=-4&&pulse.score<=-1.5&&!cheap&&warnings>=2&&pulse.profitProbability<45) sig="SAT";
-  else sig="İZLE";
+  String sig,gateReason;
+  if(staleQuote||invalidDayPct){sig="İZLE";gateReason=staleQuote?"GECİKMİŞ FİYAT":"FİYAT DOĞRULANAMADI";}
+  else if(marketStress&&!eliteBreakout&&!reboundConfirmed){sig="İZLE";gateReason="PİYASA/MAKRO RİSKİ";}
+  else if(pbExtreme){sig="İZLE";gateReason="TEMEL DEĞERLEME GERGİN";}
+  else if(fallingNow&&!reboundConfirmed){sig="İZLE";gateReason="DÜŞÜŞ SÜRÜYOR";}
+  else if(overheated&&!eliteBreakout){sig="İZLE";gateReason="AŞIRI ISINMIŞ / KOVALAMA RİSKİ";}
+  else if(cheap&&bearish){sig="İZLE";gateReason="UCUZ AMA TEKNİK ZAYIF";}
+  else if(expensive&&bullish&&pulse.score<2.5){sig="İZLE";gateReason="PAHALI / TEKNİK TEYİT YETERSİZ";}
+  else if(reboundConfirmed&&!overheated){sig="AL";gateReason="DÖNÜŞ TEYİTLİ";}
+  else if(!overheated&&(earlyBuy||broadBuy)){sig="AL";gateReason=earlyBuy?"ERKEN KIRILIM TEYİTLİ":"GENİŞ TEYİTLİ AL";}
+  else if(bullish&&total>=2&&pulse.confidence>=58&&confirmations>=7&&pulse.qualityScore>=55&&pulse.riskScore<62&&pulse.profitProbability>=60){sig="AL";gateReason="TEKNİK KONSENSÜS";}
+  else if(trackedBreakdown||protectGain||breakdownExit||momentumExit){sig="SAT";gateReason=trackedBreakdown?"AL SONRASI ZARAR KES":protectGain?"KÂR KORUMA":breakdownExit?"GERİ KIRILIM":"MOMENTUM BOZULDU";}
+  else if(bearish&&pulse.score<=-1.5&&total<=-2&&warnings>=2){sig="SAT";gateReason="NEGATİF TEKNİK KONSENSÜS";}
+  else if(total>=4&&pulse.score>=3.0&&confirmations>=7&&warnings<=2&&pulse.qualityScore>=58&&pulse.riskScore<60&&pulse.profitProbability>=62){sig="AL";gateReason="YÜKSEK SKOR / KALİTE";}
+  else if(total<=-4&&pulse.score<=-1.5&&!cheap&&warnings>=2&&pulse.profitProbability<45){sig="SAT";gateReason="YÜKSEK SAT RİSKİ";}
+  else {sig="İZLE";gateReason="AL/SAT EŞİKLERİ TAMAMLANMADI";}
   int fundamentalConfidenceAdj=!fundamentalKnown?0:(fundamental.discounted&&fundamental.risk.equals("NORMAL")?3:(fundamental.stretched||fundamental.risk.equals("YUKSEK")?-4:0));int confidence=Math.min(97,Math.max(45,(int)Math.round(pulse.confidence)+Math.abs(valueScore)*3+fundamentalConfidenceAdj));double pct=invalidDayPct?Double.NaN:liveDayPct;
   String state=invalidDayPct?"VERİ DOĞRULANAMADI • SİNYAL BEKLETİLDİ":dayPctConflict?"FİYAT KAYNAKLARI FARKLI • MUM VERİSİ KULLANILDI":staleQuote?"VERİ GECİKMELİ • SİNYAL BEKLETİLDİ":!sessionOpen?"PİYASA KAPALI • SON KAPANIŞ":pbExtreme?"TEMEL DEĞERLEME GERGİN":pbDiscount?"TEMEL DEĞERLEME İSKONTOLU":cheap&&bearish?"UCUZ • DÜŞÜŞTE • DÖNÜŞ TEYİDİ BEKLE":cheap&&bullish?"UCUZ • MOMENTUM TEYİTLİ":expensive&&bullish?"PAHALI • MOMENTUM VAR":(cheap?"UCUZ":expensive?"PAHALI":"NORMAL")+" • "+trend;
   String fundamentalNote=fundamental.summary+(Double.isNaN(bv)?"":String.format(java.util.Locale.GERMANY," • Defter %.2f%s",bv,currency(s)));
   String marketNote=(marketGate<=-2?"BIST SERT ZAYIF":marketGate==-1?"BIST ZAYIF":marketGate>=2?"BIST GÜÇLÜ":marketGate==1?"BIST POZİTİF":"BIST NÖTR")+" • "+macro.summary;
   String setup=trackedBreakdown?"AL SONRASI ZARAR KES":protectGain?"KÂR KORUMA":breakdownExit?"GERİ KIRILIM":momentumExit?"MOMENTUM BOZULDU":reboundConfirmed?"DÖNÜŞ TEYİTLİ":reboundCandidate?"DÖNÜŞ ADAYI":pulse.earlyBreakout?"KIRILIM HAZIRLIĞI":pulse.breakout?"KIRILIM":pulse.resistanceDistancePct<=3?"DİRENCE YAKIN":pulse.supportDistancePct<=3?"DESTEĞE YAKIN":"NORMAL";
-  String entryNote=Double.isNaN(sinceEntry)?"":" • AL→Şimdi "+String.format(java.util.Locale.GERMANY,"%+.2f%%",sinceEntry)+" (giriş "+String.format(java.util.Locale.GERMANY,"%.2f",entryPrice)+currency(s)+")";String note=String.format(java.util.Locale.GERMANY,"Güven %d%% • Model olasılığı %.0f%% • %s%s\n%s\nModel %.2f%s (%+.1f%%) • 1Y ort %.2f%s (%+.1f%%) • tarama ort %.2f%s (%+.1f%%)\nBRTV %.1f • BRM %.2f • BRH %.1f • Teyit %d/16 • Uyarı %d/7 • Kalite %.0f • Risk %.0f • BRX %.0f • BRQ %.0f • BRF %.0f • Rejim %.0f • Dönüş %.0f • Kırılım %.0f • %s",confidence,pulse.profitProbability,pulse.recommendation,entryNote,state+" • "+fundamentalNote,paper,currency(s),paperGap,avg1,currency(s),disc1,avg2,currency(s),disc2,pulse.brtv,pulse.brm,pulse.brh,confirmations,warnings,pulse.qualityScore,pulse.riskScore,pulse.brx,pulse.brq,pulse.brf,pulse.regimeScore,pulse.reversalScore,pulse.breakoutQuality,setup+" • "+marketNote);
+  String entryNote=Double.isNaN(sinceEntry)?"":" • AL→Şimdi "+String.format(java.util.Locale.GERMANY,"%+.2f%%",sinceEntry)+" (giriş "+String.format(java.util.Locale.GERMANY,"%.2f",entryPrice)+currency(s)+")";String note=String.format(java.util.Locale.GERMANY,"Güven %d%% • Model olasılığı %.0f%% • %s%s\nKarar nedeni: %s\n%s\nModel %.2f%s (%+.1f%%) • 1Y ort %.2f%s (%+.1f%%) • tarama ort %.2f%s (%+.1f%%)\nBRTV %.1f • BRM %.2f • BRH %.1f • Teyit %d/16 • Uyarı %d/7 • Kalite %.0f • Risk %.0f • BRX %.0f • BRQ %.0f • BRF %.0f • Rejim %.0f • Dönüş %.0f • Kırılım %.0f • %s",confidence,pulse.profitProbability,pulse.recommendation,entryNote,gateReason,state+" • "+fundamentalNote,paper,currency(s),paperGap,avg1,currency(s),disc1,avg2,currency(s),disc2,pulse.brtv,pulse.brm,pulse.brh,confirmations,warnings,pulse.qualityScore,pulse.riskScore,pulse.brx,pulse.brq,pulse.brf,pulse.regimeScore,pulse.reversalScore,pulse.breakoutQuality,setup+" • "+marketNote);
   if(isBist&&"AL".equals(sig)&&(Double.isNaN(entryPrice)||entryPrice<=0))signalPrefs.edit().putLong("entry_"+s,Double.doubleToRawLongBits(price)).apply();else if(isBist&&"SAT".equals(sig)&&!Double.isNaN(entryPrice))signalPrefs.edit().remove("entry_"+s).apply();return new String[]{s,String.format(java.util.Locale.GERMANY,"%.2f",price),Double.isNaN(pct)?"—":String.format(java.util.Locale.GERMANY,"%+.2f%%",pct),sig,String.valueOf(total),note,String.valueOf(confidence),pulse.recommendation,valueScore>=2?"UCUZ":valueScore<=-2?"PAHALI":"NORMAL",String.format(java.util.Locale.GERMANY,"%.1f",paperGap)};
  }catch(Exception ex){String msg=ex.getMessage()==null?ex.getClass().getSimpleName():ex.getMessage();return new String[]{s,"—","—","İZLE","-8","Veri alınamadı: "+msg,"50","VERİ YOK","NORMAL","0"};}}
 
