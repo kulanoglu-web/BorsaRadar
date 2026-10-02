@@ -17,7 +17,7 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
       - name: Build debug APK
-        run: chmod +x gradlew && ./gradlew assembleDebug --stacktrace
+        run: gradle assembleDebug --stacktrace
       - name: Boot Pixel 7 emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
