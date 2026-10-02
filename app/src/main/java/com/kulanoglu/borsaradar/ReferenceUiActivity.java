@@ -229,7 +229,8 @@ public class ReferenceUiActivity extends Activity {
   int marketGate=s.endsWith(".IS")?bistMarketGate():0;
   MacroRegimeEngine.Result macro=MacroRegimeEngine.analyze(s);
   boolean marketStress=marketGate<=-2||macro.riskOff,marketWeak=marketGate==-1||macro.score<=-1,marketTailwind=marketGate>=1&&macro.score>=0;
-  confirmations=Math.max(0,confirmations+macro.confirmations);warnings+=macro.warnings;\n  if(fundamentalKnown){if(fundamental.discounted&&fundamental.risk.equals("NORMAL"))confirmations++;if(fundamental.stretched||fundamental.risk.equals("YUKSEK"))warnings++;}
+  confirmations=Math.max(0,confirmations+macro.confirmations);warnings+=macro.warnings;
+  if(fundamentalKnown){if(fundamental.discounted&&fundamental.risk.equals("NORMAL"))confirmations++;if(fundamental.stretched||fundamental.risk.equals("YUKSEK"))warnings++;}
   if(marketWeak){confirmations=Math.max(0,confirmations-1);warnings++;}else if(marketTailwind&&bullish){confirmations++;}
   // Do not kill genuine early opportunities: reward broad confirmation, but demand more proof when chasing.
   boolean broadBuy=pulse.score>=(isBist?2.5:2.2)&&confirmations>=(isBist?8:7)&&warnings<=2&&pulse.qualityScore>=(isBist?58:55)&&pulse.riskScore<(isBist?58:62)&&pulse.profitProbability>=(isBist?63:60);
