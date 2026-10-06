@@ -16,6 +16,10 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
+      - name: Create CI debug keystore
+        run: |
+          mkdir -p .ci
+          keytool -genkeypair -v -keystore .ci/borsaradar-final.keystore -storepass BorsaRadar2026 -keypass BorsaRadar2026 -alias borsaradar -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=BorsaRadar CI, OU=CI, O=BorsaRadar, L=Berlin, C=DE"
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
       - name: Boot Pixel 7 emulator
