@@ -16,6 +16,8 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
+      - name: Restore signing keystore
+        run: base64 --decode .ci/borsaradar-final.keystore.b64 > .ci/borsaradar-final.keystore
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
       - name: Boot Pixel 7 emulator
